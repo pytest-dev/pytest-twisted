@@ -14,11 +14,15 @@ pytest-twisted is a plugin for pytest, which allows to test code,
 which uses the twisted framework. test functions can return Deferred
 objects and pytest will wait for their completion with this plugin.
 
-Using the plugin
+Installation
 ==================
 Install the plugin with::
 
     pip install pytest-twisted
+
+
+Using the plugin
+==================
 
 The plugin must be enabled. This can be done in the following ways:
 
@@ -32,3 +36,5 @@ The plugin must be enabled. This can be done in the following ways:
 
     [pytest]
     twisted = 1
+
+That's all.
