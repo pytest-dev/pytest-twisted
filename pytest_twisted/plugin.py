@@ -39,9 +39,12 @@ def _pytest_pyfunc_call(pyfuncitem):
         return testfunction(*pyfuncitem._args)
     else:
         funcargs = pyfuncitem.funcargs
-        testargs = {}
-        for arg in pyfuncitem._fixtureinfo.argnames:
-            testargs[arg] = funcargs[arg]
+        if hasattr(pyfuncitem, "_fixtureinfo"):
+            testargs = {}
+            for arg in pyfuncitem._fixtureinfo.argnames:
+                testargs[arg] = funcargs[arg]
+        else:
+            testargs = funcargs
         return testfunction(**testargs)
 
 
