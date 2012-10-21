@@ -28,16 +28,9 @@ def blockon(d):
 
 def pytest_configure(config):
     global gr_twisted
-    gr_twisted = greenlet.greenlet(_reactor_run)
+    reactor.callLater(0.0, greenlet.getcurrent().switch)
+    gr_twisted = greenlet.greenlet(reactor.run)
     gr_twisted.switch()
-
-
-def _reactor_run():
-    print "starting twisted reactor"
-    reactor.callLater(0.0, lambda: greenlet.getcurrent().parent.switch())
-    reactor.run()
-    print "twisted reactor stopped"
-
 
 
 def pytest_pyfunc_call(pyfuncitem):
