@@ -1,6 +1,6 @@
-import sys, greenlet
+import greenlet
 from twisted.internet import reactor, defer
-from twisted.python import failure, log
+from twisted.python import failure
 
 gr_twisted = None
 
