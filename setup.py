@@ -16,4 +16,4 @@ setup(
                  'Operating System :: OS Independent',
                  'Programming Language :: Python',
                  'Topic :: Software Development :: Testing'],
-    entry_points=dict(pytest11=['twisted = pytest_twisted']))
+    entry_points=dict(pytest11=['twisted = pytest_twisted:_loader']))
