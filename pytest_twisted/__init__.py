@@ -1,3 +1,8 @@
+def pytest_configure(config):
+    from pytest_twisted import plugin
+    config.pluginmanager.register(plugin)
+
+
 class _loader_plugin(object):
 
     def pytest_addoption(self, parser):
@@ -6,7 +11,7 @@ class _loader_plugin(object):
                         help="run tests with the twisted reactor")
         # group.addoption('--reactor', help="reactor to use", default=None)
         parser.addini("twisted", "run tests with the twisted reactor")
-        parser.addini("reactor", "reactor to use")
+        # parser.addini("reactor", "reactor to use")
 
     def pytest_configure(self, config):
         enable = config.getvalue("twisted") or config.getini("twisted") in ("yes", "true", "on", "1")
@@ -14,7 +19,3 @@ class _loader_plugin(object):
             pytest_configure(config)
 
 _loader = _loader_plugin()
-
-def pytest_configure(config):
-    from pytest_twisted import plugin
-    config.pluginmanager.register(plugin)
