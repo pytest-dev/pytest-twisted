@@ -33,18 +33,22 @@ def pytest_configure(config):
     gr_twisted.switch()
 
 
-def pytest_pyfunc_call(pyfuncitem):
+def _pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
-
     if pyfuncitem._isyieldedfunction():
-        res = defer.maybeDeferred(testfunction, *pyfuncitem._args)
+        return testfunction(*pyfuncitem._args)
     else:
         funcargs = pyfuncitem.funcargs
         testargs = {}
         for arg in pyfuncitem._fixtureinfo.argnames:
             testargs[arg] = funcargs[arg]
-        res = defer.maybeDeferred(testfunction, **testargs)
-    blockon(res)
+        return testfunction(**testargs)
+
+
+def pytest_pyfunc_call(pyfuncitem):
+    d = defer.Deferred()
+    reactor.callLater(0.0, lambda: defer.maybeDeferred(_pytest_pyfunc_call, pyfuncitem).chainDeferred(d))
+    blockon(d)
     return True
 
 
