@@ -1,0 +1,8 @@
+include MANIFEST.in
+include README.rst
+include pytest_twisted/__init__.py
+include pytest_twisted/plugin.py
+include setup.cfg
+include setup.py
+include testing/conftest.py
+include testing/test_basic.py
