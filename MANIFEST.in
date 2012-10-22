@@ -6,3 +6,4 @@ include setup.cfg
 include setup.py
 include testing/conftest.py
 include testing/test_basic.py
+include tox.ini
