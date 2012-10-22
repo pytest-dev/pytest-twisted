@@ -6,8 +6,8 @@ pytest-twisted - test twisted code with pytest
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.0
-:Date:    2012-10-21
+:Version: 1.1
+:Date:    2012-10-22
 
 
 pytest-twisted is a plugin for pytest, which allows to test code,

@@ -4,7 +4,7 @@ from setuptools import setup
 
 
 setup(name='pytest-twisted',
-      version='1.0',
+      version='1.1',
       description='A twisted plugin for py.test.',
       long_description=open("README.rst").read(),
       author='Ralf Schmitt',
