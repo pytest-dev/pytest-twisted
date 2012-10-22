@@ -49,6 +49,9 @@ def _pytest_pyfunc_call(pyfuncitem):
 
 
 def pytest_pyfunc_call(pyfuncitem):
+    if not gr_twisted:
+        raise RuntimeError("twisted reactor has stopped")
+
     d = defer.Deferred()
     reactor.callLater(0.0, lambda: defer.maybeDeferred(_pytest_pyfunc_call, pyfuncitem).chainDeferred(d))
     blockon(d)
@@ -56,5 +59,6 @@ def pytest_pyfunc_call(pyfuncitem):
 
 
 def pytest_unconfigure(config):
-    reactor.stop()
-    gr_twisted.switch()
+    if gr_twisted:
+        reactor.stop()
+        gr_twisted.switch()
