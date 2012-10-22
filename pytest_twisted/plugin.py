@@ -28,9 +28,7 @@ def blockon(d):
 
 def pytest_configure(config):
     global gr_twisted
-    reactor.callLater(0.0, greenlet.getcurrent().switch)
     gr_twisted = greenlet.greenlet(reactor.run)
-    gr_twisted.switch()
 
 
 def _pytest_pyfunc_call(pyfuncitem):
@@ -49,7 +47,7 @@ def _pytest_pyfunc_call(pyfuncitem):
 
 
 def pytest_pyfunc_call(pyfuncitem):
-    if not gr_twisted:
+    if gr_twisted.dead:
         raise RuntimeError("twisted reactor has stopped")
 
     d = defer.Deferred()
