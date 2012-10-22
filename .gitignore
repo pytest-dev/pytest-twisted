@@ -18,3 +18,5 @@ ID
 __pycache__/
 /pytest_twisted.egg-info/
 /dist/
+/.tox/
+/README.html
