@@ -29,6 +29,7 @@ def blockon(d):
 def pytest_configure(config):
     global gr_twisted
     gr_twisted = greenlet.greenlet(reactor.run)
+    failure.Failure.cleanFailure = lambda self: None  # give me better tracebacks
 
 
 def _pytest_pyfunc_call(pyfuncitem):
