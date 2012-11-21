@@ -1,6 +1,7 @@
 import greenlet
 from twisted.internet import reactor, defer
 from twisted.python import failure
+from decorator import decorator
 
 gr_twisted = None
 
@@ -24,6 +25,15 @@ def blockon(d):
         result[0].raiseException()
 
     return result[0]
+
+
+@decorator
+def inlineCallbacks(fun, *args, **kw):
+    return defer.inlineCallbacks(fun)(*args, **kw)
+
+
+def pytest_namespace():
+    return dict(inlineCallbacks=inlineCallbacks)
 
 
 def pytest_configure(config):

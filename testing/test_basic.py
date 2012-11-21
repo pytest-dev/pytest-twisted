@@ -63,3 +63,26 @@ def test_more_fail():
     rr = testdir.run(sys.executable, "-m", "pytest")
     outcomes = rr.parseoutcomes()
     assert outcomes.get("failed") == 1
+
+
+def test_inlineCallbacks(testdir):
+    testdir.makepyfile("""
+from twisted.internet import reactor, defer
+import pytest
+
+@pytest.fixture(scope="module",
+                params=["fs", "imap", "web"])
+def foo(request):
+    return request.param
+
+
+@pytest.inlineCallbacks
+def test_succeed(foo):
+    yield defer.succeed(foo)
+    if foo == "web":
+        raise RuntimeError("baz")
+""")
+    rr = testdir.run(sys.executable, "-m", "pytest", "--twisted", "-v")
+    outcomes = rr.parseoutcomes()
+    assert outcomes.get("passed") == 2
+    assert outcomes.get("failed") == 1
