@@ -6,8 +6,10 @@ pytest-twisted - test twisted code with pytest
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.1
-:Date:    2012-10-22
+:Version: 1.3
+:Date:    2012-11-22
+:Download: http://pypi.python.org/pypi/pytest-twisted#downloads
+:Code: https://github.com/schmir/pytest-twisted
 
 
 pytest-twisted is a plugin for pytest, which allows to test code,
@@ -36,5 +38,18 @@ The plugin must be enabled. This can be done in the following ways:
 
     [pytest]
     twisted = 1
+
+
+inlineCallbacks
+=================
+Using `twisted.internet.defer.inlineCallbacks` as a decorator for test
+functions, which take funcargs, does not work. Please use
+`pytest.inlineCallbacks` instead::
+
+  @pytest.inlineCallbacks
+  def test_some_stuff(tmpdir):
+      res = yield threads.deferToThread(os.listdir, tmpdir.strpath)
+      assert res == []
+
 
 That's all.
