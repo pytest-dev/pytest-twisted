@@ -1,4 +1,4 @@
-import greenlet
+import greenlet, pytest
 from twisted.internet import reactor, defer
 from twisted.python import failure
 from decorator import decorator
@@ -36,10 +36,19 @@ def pytest_namespace():
     return dict(inlineCallbacks=inlineCallbacks)
 
 
-def pytest_configure(config):
+def stop_twisted_greenlet():
+    if gr_twisted:
+        reactor.stop()
+        gr_twisted.switch()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def twisted_greenlet(request):
     global gr_twisted
     gr_twisted = greenlet.greenlet(reactor.run)
     failure.Failure.cleanFailure = lambda self: None  # give me better tracebacks
+    request.addfinalizer(stop_twisted_greenlet)
+    return gr_twisted
 
 
 def _pytest_pyfunc_call(pyfuncitem):
@@ -65,9 +74,3 @@ def pytest_pyfunc_call(pyfuncitem):
     reactor.callLater(0.0, lambda: defer.maybeDeferred(_pytest_pyfunc_call, pyfuncitem).chainDeferred(d))
     blockon(d)
     return True
-
-
-def pytest_unconfigure(config):
-    if gr_twisted:
-        reactor.stop()
-        gr_twisted.switch()
