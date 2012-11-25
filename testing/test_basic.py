@@ -86,3 +86,26 @@ def test_succeed(foo):
     outcomes = rr.parseoutcomes()
     assert outcomes.get("passed") == 2
     assert outcomes.get("failed") == 1
+
+
+def test_inlineCallbacks(testdir):
+    testdir.makepyfile("""
+import pytest, greenlet
+
+MAIN = None
+
+
+@pytest.fixture(scope="session", autouse=True)
+def set_MAIN(request, twisted_greenlet):
+    global MAIN
+    MAIN = twisted_greenlet
+
+
+def test_MAIN():
+    assert MAIN is not None
+    assert MAIN is greenlet.getcurrent()
+
+""")
+    rr = testdir.run(sys.executable, "-m", "pytest", "--twisted", "-v")
+    outcomes = rr.parseoutcomes()
+    assert outcomes.get("passed") == 1
