@@ -6,8 +6,8 @@ pytest-twisted - test twisted code with pytest
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.3
-:Date:    2012-11-22
+:Version: 1.4
+:Date:    2012-11-26
 :Download: http://pypi.python.org/pypi/pytest-twisted#downloads
 :Code: https://github.com/schmir/pytest-twisted
 
@@ -50,6 +50,18 @@ functions, which take funcargs, does not work. Please use
   def test_some_stuff(tmpdir):
       res = yield threads.deferToThread(os.listdir, tmpdir.strpath)
       assert res == []
+
+The twisted greenlet
+====================
+Some libraries (e.g. corotwine) need to know the greenlet, which is
+running the twisted reactor. It's available from the
+`twisted_greenlet` funcarg. The following code can be used to make
+corotwine work with pytest-twisted::
+
+  @pytest.fixture(scope="session", autouse=True)
+  def set_MAIN(request, twisted_greenlet):
+      from corotwine import protocol
+      protocol.MAIN = twisted_greenlet
 
 
 That's all.
