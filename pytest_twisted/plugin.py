@@ -33,7 +33,7 @@ def inlineCallbacks(fun, *args, **kw):
 
 
 def pytest_namespace():
-    return dict(inlineCallbacks=inlineCallbacks)
+    return dict(inlineCallbacks=inlineCallbacks, blockon=blockon)
 
 
 def stop_twisted_greenlet():
