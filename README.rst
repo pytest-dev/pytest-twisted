@@ -6,9 +6,9 @@ pytest-twisted - test twisted code with pytest
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.4
-:Date:    2012-11-26
-:Download: http://pypi.python.org/pypi/pytest-twisted#downloads
+:Version: 1.5
+:Date:    2014-02-04
+:Download: https://pypi.python.org/pypi/pytest-twisted#downloads
 :Code: https://github.com/schmir/pytest-twisted
 
 
@@ -50,6 +50,17 @@ functions, which take funcargs, does not work. Please use
   def test_some_stuff(tmpdir):
       res = yield threads.deferToThread(os.listdir, tmpdir.strpath)
       assert res == []
+
+Waiting for deferreds in fixtures
+=================================
+`pytest.blockon` allows fixtures to wait for deferreds::
+
+  @pytest.fixture
+  def val():
+      d = defer.Deferred()
+      reactor.callLater(1.0, d.callback, 10)
+      return pytest.blockon(d)
+
 
 The twisted greenlet
 ====================
