@@ -88,7 +88,7 @@ def test_succeed(foo):
     assert outcomes.get("failed") == 1
 
 
-def test_inlineCallbacks(testdir):
+def test_twisted_greenlet(testdir):
     testdir.makepyfile("""
 import pytest, greenlet
 
