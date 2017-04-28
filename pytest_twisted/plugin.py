@@ -42,13 +42,18 @@ def stop_twisted_greenlet():
         gr_twisted.switch()
 
 
+def start_twisted_greenlet():
+    global gr_twisted
+    if not gr_twisted:
+        gr_twisted = greenlet.greenlet(reactor.run)
+        failure.Failure.cleanFailure = lambda self: None  # give me better tracebacks
+    return gr_twisted
+
+
 @pytest.fixture(scope="session", autouse=True)
 def twisted_greenlet(request):
-    global gr_twisted
-    gr_twisted = greenlet.greenlet(reactor.run)
-    failure.Failure.cleanFailure = lambda self: None  # give me better tracebacks
     request.addfinalizer(stop_twisted_greenlet)
-    return gr_twisted
+    return start_twisted_greenlet()
 
 
 def _pytest_pyfunc_call(pyfuncitem):
