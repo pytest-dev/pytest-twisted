@@ -5,8 +5,6 @@ import sys
 
 def test_fail_later(testdir):
     testdir.makepyfile("""
-pytest_plugins = "pytest_twisted"
-
 from twisted.internet import reactor, defer
 
 def test_fail():
@@ -34,15 +32,13 @@ def test_succeed():
     reactor.callLater(0.01, d.callback, 1)
     return d
 """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "--twisted")
+    rr = testdir.run(sys.executable, "-m", "pytest")
     outcomes = rr.parseoutcomes()
     assert outcomes.get("passed") == 1
 
 
 def test_non_deferred(testdir):
     testdir.makepyfile("""
-pytest_plugins = "pytest_twisted"
-
 from twisted.internet import reactor, defer
 
 def test_succeed():
@@ -55,8 +51,6 @@ def test_succeed():
 
 def test_exception(testdir):
     testdir.makepyfile("""
-pytest_plugins = "pytest_twisted"
-
 def test_more_fail():
     raise RuntimeError("foo")
 """)
@@ -82,7 +76,7 @@ def test_succeed(foo):
     if foo == "web":
         raise RuntimeError("baz")
 """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "--twisted", "-v")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
     outcomes = rr.parseoutcomes()
     assert outcomes.get("passed") == 2
     assert outcomes.get("failed") == 1
@@ -106,6 +100,6 @@ def test_MAIN():
     assert MAIN is greenlet.getcurrent()
 
 """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "--twisted", "-v")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
     outcomes = rr.parseoutcomes()
     assert outcomes.get("passed") == 1
