@@ -54,6 +54,10 @@ def stop_twisted_greenlet():
         gr_twisted.switch()
 
 
+def pytest_addhooks(pluginmanager):
+    init_twisted_greenlet()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def twisted_greenlet(request):
     request.addfinalizer(stop_twisted_greenlet)

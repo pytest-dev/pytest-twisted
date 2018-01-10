@@ -103,3 +103,26 @@ def test_MAIN():
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
     outcomes = rr.parseoutcomes()
     assert outcomes.get("passed") == 1
+
+
+def test_blocon_in_hook(testdir):
+    testdir.makeconftest("""
+import pytest
+from twisted.internet import reactor, defer
+
+def pytest_configure(config):
+    d = defer.Deferred()
+    reactor.callLater(0.01, d.callback, 1)
+    pytest.blockon(d)
+""")
+    testdir.makepyfile("""
+from twisted.internet import reactor, defer
+
+def test_succeed():
+    d = defer.Deferred()
+    reactor.callLater(0.01, d.callback, 1)
+    return d
+""")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    outcomes = rr.parseoutcomes()
+    assert outcomes.get("passed") == 1
