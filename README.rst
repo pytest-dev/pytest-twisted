@@ -5,11 +5,11 @@ pytest-twisted - test twisted code with pytest
 ==============================================================================
 
 
-:Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.5
-:Date:    2014-02-04
+:Authors: Ralf Schmitt, Victor Titor
+:Version: 1.6
+:Date:    2018-01-12
 :Download: https://pypi.python.org/pypi/pytest-twisted#downloads
-:Code: https://github.com/schmir/pytest-twisted
+:Code: https://github.com/pytest-dev/pytest-twisted
 
 
 pytest-twisted is a plugin for pytest, which allows to test code,
@@ -26,18 +26,8 @@ Install the plugin with::
 Using the plugin
 ==================
 
-The plugin must be enabled. This can be done in the following ways:
-
-1. Run py.test with the --twisted command line option
-
-2. Put the following into conftest.py::
-
-    pytest_plugins = "pytest_twisted"
-
-3. Put the following into pytest.ini::
-
-    [pytest]
-    twisted = 1
+The plugin is available after installation and can be disabled using
+``-p no:twisted``.
 
 
 inlineCallbacks

@@ -4,12 +4,12 @@ from setuptools import setup
 
 setup(
     name='pytest-twisted',
-    version='1.5',
+    version='1.6',
     description='A twisted plugin for py.test.',
     long_description=open("README.rst").read(),
-    author='Ralf Schmitt',
+    author='Ralf Schmitt, Victor Titor',
     author_email='ralf@brainbot.com',
-    url='https://github.com/schmir/pytest-twisted',
+    url='https://github.com/pytest-dev/pytest-twisted',
     py_modules=['pytest_twisted'],
     install_requires=["greenlet", "pytest>=2.3", "decorator"],
     classifiers=[
