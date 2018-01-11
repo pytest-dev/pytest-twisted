@@ -33,11 +33,7 @@ def inlineCallbacks(fun, *args, **kw):
 
 
 def pytest_namespace():
-    return dict(
-        inlineCallbacks=inlineCallbacks,
-        blockon=blockon,
-        init_twisted_greenlet=init_twisted_greenlet
-    )
+    return dict(inlineCallbacks=inlineCallbacks, blockon=blockon)
 
 
 def init_twisted_greenlet():
@@ -54,10 +50,14 @@ def stop_twisted_greenlet():
         gr_twisted.switch()
 
 
+def pytest_addhooks(pluginmanager):
+    init_twisted_greenlet()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def twisted_greenlet(request):
     request.addfinalizer(stop_twisted_greenlet)
-    return init_twisted_greenlet()
+    return gr_twisted
 
 
 def _pytest_pyfunc_call(pyfuncitem):
