@@ -1,5 +1,6 @@
 import greenlet, pytest
 from twisted.internet import reactor, defer
+from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
 from decorator import decorator
 
@@ -8,7 +9,8 @@ gr_twisted = None
 
 def blockon(d):
     current = greenlet.getcurrent()
-    assert current is not gr_twisted, "blockon cannot be called from the twisted greenlet"
+    assert current is not gr_twisted, \
+        "blockon cannot be called from the twisted greenlet"
     result = []
 
     def cb(r):
@@ -27,21 +29,18 @@ def blockon(d):
     return result[0]
 
 
+def block_from_thread(d):
+    return blockingCallFromThread(reactor, lambda x: x, d)
+
+
 @decorator
 def inlineCallbacks(fun, *args, **kw):
     return defer.inlineCallbacks(fun)(*args, **kw)
 
 
 def pytest_namespace():
-    return dict(inlineCallbacks=inlineCallbacks, blockon=blockon)
-
-
-def init_twisted_greenlet():
-    global gr_twisted
-    if not gr_twisted:
-        gr_twisted = greenlet.greenlet(reactor.run)
-        failure.Failure.cleanFailure = lambda self: None  # give me better tracebacks
-    return gr_twisted
+    return dict(inlineCallbacks=inlineCallbacks,
+                blockon=block_from_thread if reactor.running else blockon)
 
 
 def stop_twisted_greenlet():
@@ -51,7 +50,11 @@ def stop_twisted_greenlet():
 
 
 def pytest_addhooks(pluginmanager):
-    init_twisted_greenlet()
+    global gr_twisted
+    if not gr_twisted and not reactor.running:
+        gr_twisted = greenlet.greenlet(reactor.run)
+        # give me better tracebacks:
+        failure.Failure.cleanFailure = lambda self: None
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -76,10 +79,18 @@ def _pytest_pyfunc_call(pyfuncitem):
 
 
 def pytest_pyfunc_call(pyfuncitem):
-    if gr_twisted.dead:
-        raise RuntimeError("twisted reactor has stopped")
+    if gr_twisted is not None:
+        if gr_twisted.dead:
+            raise RuntimeError("twisted reactor has stopped")
 
-    d = defer.Deferred()
-    reactor.callLater(0.0, lambda: defer.maybeDeferred(_pytest_pyfunc_call, pyfuncitem).chainDeferred(d))
-    blockon(d)
+        def in_reactor(d, f, *args):
+            return defer.maybeDeferred(f, *args).chainDeferred(d)
+
+        d = defer.Deferred()
+        reactor.callLater(0.0, in_reactor, d, _pytest_pyfunc_call, pyfuncitem)
+        blockon(d)
+    else:
+        if not reactor.running:
+            raise RuntimeError("twisted reactor is not running")
+        blockingCallFromThread(reactor, _pytest_pyfunc_call, pyfuncitem)
     return True

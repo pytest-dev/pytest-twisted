@@ -126,3 +126,55 @@ def test_blocon_in_hook(testdir):
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
     outcomes = rr.parseoutcomes()
     assert outcomes.get("passed") == 1
+
+
+def test_pytest_from_reactor_thread(testdir):
+    testdir.makepyfile("""
+        import pytest
+        from twisted.internet import reactor, defer
+
+        @pytest.fixture
+        def fix():
+            d = defer.Deferred()
+            reactor.callLater(0.01, d.callback, 42)
+            return pytest.blockon(d)
+
+        def test_simple(fix):
+            assert fix == 42
+
+        @pytest.inlineCallbacks
+        def test_fail():
+            d = defer.Deferred()
+            reactor.callLater(0.01, d.callback, 1)
+            yield d
+            assert False
+    """)
+    testdir.makepyfile(runner="""
+        import pytest
+
+        from twisted.internet import reactor
+        from twisted.internet.defer import inlineCallbacks
+        from twisted.internet.threads import deferToThread
+        
+        codes = []
+
+        @inlineCallbacks
+        def main():
+            try:
+                codes.append((yield deferToThread(pytest.main, ['-k simple'])))
+                codes.append((yield deferToThread(pytest.main, ['-k fail'])))
+            finally:
+                reactor.stop()
+
+        if __name__ == '__main__':
+            reactor.callLater(0, main)
+            reactor.run()
+            codes == [0, 1] or exit(1)
+    """)
+    # check test file is ok in standalone mode:
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    outcomes = rr.parseoutcomes()
+    assert outcomes.get("passed") == 1
+    assert outcomes.get("failed") == 1
+    # test embedded mode:
+    assert testdir.run(sys.executable, "runner.py").ret == 0
