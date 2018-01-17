@@ -1,8 +1,10 @@
-import greenlet, pytest
-from twisted.internet import reactor, defer
+import decorator
+import greenlet
+import pytest
+
+from twisted.internet import defer, reactor
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
-from decorator import decorator
 
 gr_twisted = None
 
@@ -33,7 +35,7 @@ def block_from_thread(d):
     return blockingCallFromThread(reactor, lambda x: x, d)
 
 
-@decorator
+@decorator.decorator
 def inlineCallbacks(fun, *args, **kw):
     return defer.inlineCallbacks(fun)(*args, **kw)
 

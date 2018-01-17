@@ -6,14 +6,14 @@ import sys
 def test_fail_later(testdir):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
-        
+
         def test_fail():
             def doit():
                 try:
                     1 / 0
                 except:
                     d.errback()
-        
+
             d = defer.Deferred()
             reactor.callLater(0.01, doit)
             return d
@@ -26,7 +26,7 @@ def test_fail_later(testdir):
 def test_succeed_later(testdir):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
-        
+
         def test_succeed():
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 1)
@@ -40,7 +40,7 @@ def test_succeed_later(testdir):
 def test_non_deferred(testdir):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
-        
+
         def test_succeed():
             return 42
     """)
@@ -63,13 +63,13 @@ def test_inlineCallbacks(testdir):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
         import pytest
-        
+
         @pytest.fixture(scope="module",
                         params=["fs", "imap", "web"])
         def foo(request):
             return request.param
-        
-        
+
+
         @pytest.inlineCallbacks
         def test_succeed(foo):
             yield defer.succeed(foo)
@@ -85,16 +85,16 @@ def test_inlineCallbacks(testdir):
 def test_twisted_greenlet(testdir):
     testdir.makepyfile("""
         import pytest, greenlet
-        
+
         MAIN = None
-        
-        
+
+
         @pytest.fixture(scope="session", autouse=True)
         def set_MAIN(request, twisted_greenlet):
             global MAIN
             MAIN = twisted_greenlet
-        
-        
+
+
         def test_MAIN():
             assert MAIN is not None
             assert MAIN is greenlet.getcurrent()
@@ -109,7 +109,7 @@ def test_blocon_in_hook(testdir):
     testdir.makeconftest("""
         import pytest
         from twisted.internet import reactor, defer
-        
+
         def pytest_configure(config):
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 1)
@@ -117,7 +117,7 @@ def test_blocon_in_hook(testdir):
     """)
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
-        
+
         def test_succeed():
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 1)
@@ -155,7 +155,7 @@ def test_pytest_from_reactor_thread(testdir):
         from twisted.internet import reactor
         from twisted.internet.defer import inlineCallbacks
         from twisted.internet.threads import deferToThread
-        
+
         codes = []
 
         @inlineCallbacks
