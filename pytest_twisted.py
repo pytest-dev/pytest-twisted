@@ -1,3 +1,5 @@
+import sys
+
 import decorator
 import greenlet
 import pytest
@@ -51,12 +53,31 @@ def stop_twisted_greenlet():
         gr_twisted.switch()
 
 
-def pytest_addhooks(pluginmanager):
+@pytest.hookimpl(trylast=True)
+def pytest_configure(config):
     global gr_twisted
+    global reactor
+
     if not gr_twisted and not reactor.running:
+        if config.getoption('qt5reactor'):
+            if 'twisted.internet.reactor' in sys.modules:
+                del sys.modules['twisted.internet.reactor']
+
+            import qt5reactor
+            qt5reactor.install()
+
+            import twisted.internet.reactor
+            reactor = twisted.internet.reactor
+
         gr_twisted = greenlet.greenlet(reactor.run)
         # give me better tracebacks:
         failure.Failure.cleanFailure = lambda self: None
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup('twisted')
+    group.addoption('--qt5reactor', dest='qt5reactor', action='store_true',
+                    help='prepare for use with qt5reactor')
 
 
 @pytest.fixture(scope="session", autouse=True)
