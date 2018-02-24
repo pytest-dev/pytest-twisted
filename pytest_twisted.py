@@ -4,7 +4,7 @@ import decorator
 import greenlet
 import pytest
 
-from twisted.internet import defer, reactor
+from twisted.internet import error, defer, reactor
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
 
@@ -39,6 +39,7 @@ def block_from_thread(d):
 
 @decorator.decorator
 def inlineCallbacks(fun, *args, **kw):
+    print('checkpoint', 'pytest-twisted', 'inlineCallbacks')
     return defer.inlineCallbacks(fun)(*args, **kw)
 
 
@@ -53,25 +54,16 @@ def stop_twisted_greenlet():
         gr_twisted.switch()
 
 
-@pytest.hookimpl(trylast=True)
-def pytest_configure(config):
+def create_twisted_greenlet():
     global gr_twisted
-    global reactor
-
     if not gr_twisted and not reactor.running:
-        if config.getoption('qt5reactor'):
-            if 'twisted.internet.reactor' in sys.modules:
-                del sys.modules['twisted.internet.reactor']
-
-            import qt5reactor
-            qt5reactor.install()
-
-            import twisted.internet.reactor
-            reactor = twisted.internet.reactor
-
         gr_twisted = greenlet.greenlet(reactor.run)
         # give me better tracebacks:
         failure.Failure.cleanFailure = lambda self: None
+
+
+def pytest_addhooks(pluginmanager):
+    create_twisted_greenlet()
 
 
 def pytest_addoption(parser):
@@ -80,13 +72,57 @@ def pytest_addoption(parser):
                     help='prepare for use with qt5reactor')
 
 
+def pytest_configure(config):
+    # TODO: why is the parameter needed?
+    def default_reactor(_):
+        print('checkpoint', 'pytest-twisted', 'reactor (default)')
+        global reactor
+        from twisted.internet import reactor
+        create_twisted_greenlet()
+
+    def qt5_reactor(qapp):
+        print('checkpoint', 'pytest-twisted', 'reactor (qt5)')
+        global gr_twisted
+        global reactor
+        import qt5reactor
+
+        try:
+            qt5reactor.install()
+        except error.ReactorAlreadyInstalledError:
+            if not isinstance(reactor, qt5reactor.QtReactor):
+                stop_twisted_greenlet()
+                gr_twisted = None
+                del sys.modules['twisted.internet.reactor']
+                qt5reactor.install()
+                print('checkpoint', 'pytest-twisted', 'qt5reactor installed')
+                from twisted.internet import reactor
+
+                create_twisted_greenlet()
+        else:
+            create_twisted_greenlet()
+
+    if config.getoption('qt5reactor'):
+        reactor_fixture = qt5_reactor
+    else:
+        reactor_fixture = default_reactor
+
+    class ReactorPlugin(object):
+        reactor = (
+            pytest.fixture(scope='session', autouse=True)(reactor_fixture)
+        )
+
+    config.pluginmanager.register(ReactorPlugin())
+
+
 @pytest.fixture(scope="session", autouse=True)
-def twisted_greenlet(request):
+def twisted_greenlet(request, reactor):
+    print('checkpoint', 'pytest-twisted', 'twisted_greenlet')
     request.addfinalizer(stop_twisted_greenlet)
     return gr_twisted
 
 
 def _pytest_pyfunc_call(pyfuncitem):
+    print('checkpoint', 'pytest-twisted', '_pytest_pyfunc_call')
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
         return testfunction(*pyfuncitem._args)
@@ -102,6 +138,7 @@ def _pytest_pyfunc_call(pyfuncitem):
 
 
 def pytest_pyfunc_call(pyfuncitem):
+    print('checkpoint', 'pytest-twisted', 'pytest_pyfunc_call')
     if gr_twisted is not None:
         if gr_twisted.dead:
             raise RuntimeError("twisted reactor has stopped")
