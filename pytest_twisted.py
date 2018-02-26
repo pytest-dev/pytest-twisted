@@ -74,7 +74,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     # TODO: why is the parameter needed?
-    def default_reactor(_):
+    def default_reactor():
         print('checkpoint', 'pytest-twisted', 'reactor (default)')
         global reactor
         from twisted.internet import reactor
@@ -107,7 +107,7 @@ def pytest_configure(config):
         reactor_fixture = default_reactor
 
     class ReactorPlugin(object):
-        reactor = (
+        reactor = staticmethod(
             pytest.fixture(scope='session', autouse=True)(reactor_fixture)
         )
 
