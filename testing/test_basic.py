@@ -2,6 +2,8 @@
 
 import sys
 
+import pytest
+
 
 def test_fail_later(testdir):
     testdir.makepyfile("""
@@ -106,6 +108,7 @@ def test_twisted_greenlet(testdir):
     assert outcomes.get("passed") == 1
 
 
+@pytest.mark.skip
 def test_blocon_in_hook(testdir):
     testdir.makeconftest("""
         import pytest_twisted as pt
