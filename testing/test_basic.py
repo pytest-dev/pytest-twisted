@@ -133,19 +133,19 @@ def test_blocon_in_hook(testdir):
 def test_pytest_from_reactor_thread(testdir):
     testdir.makepyfile("""
         import pytest
-        import pytest_twisted as pt
+        import pytest_twisted
         from twisted.internet import reactor, defer
 
         @pytest.fixture
         def fix():
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 42)
-            return pt.blockon(d)
+            return pytest_twisted.blockon(d)
 
         def test_simple(fix):
             assert fix == 42
 
-        @pt.inlineCallbacks
+        @pytest_twisted.inlineCallbacks
         def test_fail():
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 1)
