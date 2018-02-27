@@ -63,6 +63,7 @@ def test_inlineCallbacks(testdir):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
         import pytest
+        import pytest_twisted
 
         @pytest.fixture(scope="module",
                         params=["fs", "imap", "web"])
@@ -70,7 +71,7 @@ def test_inlineCallbacks(testdir):
             return request.param
 
 
-        @pytest.inlineCallbacks
+        @pytest_twisted.inlineCallbacks
         def test_succeed(foo):
             yield defer.succeed(foo)
             if foo == "web":
@@ -108,12 +109,13 @@ def test_twisted_greenlet(testdir):
 def test_blocon_in_hook(testdir):
     testdir.makeconftest("""
         import pytest
+        import pytest_twisted as pt
         from twisted.internet import reactor, defer
 
         def pytest_configure(config):
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 1)
-            pytest.blockon(d)
+            pt.blockon(d)
     """)
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
@@ -131,18 +133,19 @@ def test_blocon_in_hook(testdir):
 def test_pytest_from_reactor_thread(testdir):
     testdir.makepyfile("""
         import pytest
+        import pytest_twisted as pt
         from twisted.internet import reactor, defer
 
         @pytest.fixture
         def fix():
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 42)
-            return pytest.blockon(d)
+            return pt.blockon(d)
 
         def test_simple(fix):
             assert fix == 42
 
-        @pytest.inlineCallbacks
+        @pt.inlineCallbacks
         def test_fail():
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 1)

@@ -10,6 +10,13 @@ gr_twisted = None
 
 
 def blockon(d):
+    if reactor.running:
+        return block_from_thread(d)
+
+    return blockon_default(d)
+
+
+def blockon_default(d):
     current = greenlet.getcurrent()
     assert current is not gr_twisted, \
         "blockon cannot be called from the twisted greenlet"
@@ -42,7 +49,7 @@ def inlineCallbacks(fun, *args, **kw):
 
 def pytest_namespace():
     return dict(inlineCallbacks=inlineCallbacks,
-                blockon=block_from_thread if reactor.running else blockon)
+                blockon=blockon)
 
 
 def stop_twisted_greenlet():
@@ -90,7 +97,7 @@ def pytest_pyfunc_call(pyfuncitem):
 
         d = defer.Deferred()
         reactor.callLater(0.0, in_reactor, d, _pytest_pyfunc_call, pyfuncitem)
-        blockon(d)
+        blockon_default(d)
     else:
         if not reactor.running:
             raise RuntimeError("twisted reactor is not running")

@@ -34,22 +34,22 @@ inlineCallbacks
 =================
 Using `twisted.internet.defer.inlineCallbacks` as a decorator for test
 functions, which take funcargs, does not work. Please use
-`pytest.inlineCallbacks` instead::
+`pytest_twisted.inlineCallbacks` instead::
 
-  @pytest.inlineCallbacks
+  @pytest_twisted.inlineCallbacks
   def test_some_stuff(tmpdir):
       res = yield threads.deferToThread(os.listdir, tmpdir.strpath)
       assert res == []
 
 Waiting for deferreds in fixtures
 =================================
-`pytest.blockon` allows fixtures to wait for deferreds::
+`pytest_twisted.blockon` allows fixtures to wait for deferreds::
 
   @pytest.fixture
   def val():
       d = defer.Deferred()
       reactor.callLater(1.0, d.callback, 10)
-      return pytest.blockon(d)
+      return pytest_twisted.blockon(d)
 
 
 The twisted greenlet
