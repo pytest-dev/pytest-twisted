@@ -86,7 +86,8 @@ def pytest_configure(config):
     # TODO: why is the parameter needed?
     def default_reactor():
         global reactor
-        from twisted.internet import reactor
+        import twisted.internet.reactor
+        reactor = twisted.internet.reactor
         create_twisted_greenlet()
 
     def qt5_reactor(qapp):
