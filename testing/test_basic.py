@@ -108,7 +108,6 @@ def test_twisted_greenlet(testdir):
 
 def test_blocon_in_hook(testdir):
     testdir.makeconftest("""
-        import pytest
         import pytest_twisted as pt
         from twisted.internet import reactor, defer
 
