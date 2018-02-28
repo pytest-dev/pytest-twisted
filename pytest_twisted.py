@@ -136,14 +136,18 @@ def init_qt5_reactor(qapp):
 
 def pytest_addoption(parser):
     group = parser.getgroup('twisted')
-    group.addoption('--qt5reactor', dest='qt5reactor', action='store_true',
-                    help='prepare for use with qt5reactor')
+    group.addoption(
+        '--reactor',
+        default='default',
+        choices=('default', 'qt5reactor'),
+    )
 
 
 def pytest_configure(config):
-    reactor_fixture = init_reactor
-    if config.getoption('qt5reactor'):
-        reactor_fixture = init_qt5_reactor
+    reactor_fixture = {
+        'default': init_reactor,
+        'qt5reactor': init_qt5_reactor,
+    }[config.getoption('reactor')]
 
     class ReactorPlugin(object):
         reactor = staticmethod(
