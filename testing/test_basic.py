@@ -1,8 +1,34 @@
 #! /usr/bin/env py.test
 
 import sys
+import textwrap
 
 import pytest
+
+
+def assert_outcomes(run_result, outcomes):
+    formatted_output = format_run_result_output_for_assert(run_result)
+
+    try:
+        outcomes = run_result.parseoutcomes()
+    except ValueError:
+        assert False, formatted_output
+
+    for name, value in outcomes.items():
+        assert outcomes.get(name) == value, formatted_output
+
+
+def format_run_result_output_for_assert(run_result):
+    return textwrap.dedent('''\
+
+        ---- stdout
+        {0}
+        ---- stderr
+        {1}
+        ----''').format(
+        run_result.stdout.str(),
+        run_result.stderr.str(),
+    )
 
 
 def skip_if_reactor_not(expected_reactor):
@@ -32,8 +58,7 @@ def test_fail_later(testdir):
             return d
     """)
     rr = testdir.run(sys.executable, "-m", "pytest")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("failed") == 1
+    assert_outcomes(rr, {'failed': 1})
 
 
 def test_succeed_later(testdir):
@@ -46,8 +71,7 @@ def test_succeed_later(testdir):
             return d
     """)
     rr = testdir.run(sys.executable, "-m", "pytest")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("passed") == 1
+    assert_outcomes(rr, {'passed': 1})
 
 
 def test_non_deferred(testdir):
@@ -58,8 +82,7 @@ def test_non_deferred(testdir):
             return 42
     """)
     rr = testdir.run(sys.executable, "-m", "pytest")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("passed") == 1
+    assert_outcomes(rr, {'passed': 1})
 
 
 def test_exception(testdir):
@@ -68,8 +91,7 @@ def test_exception(testdir):
             raise RuntimeError("foo")
     """)
     rr = testdir.run(sys.executable, "-m", "pytest")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("failed") == 1
+    assert_outcomes(rr, {'failed': 1})
 
 
 def test_inlineCallbacks(testdir):
@@ -91,9 +113,7 @@ def test_inlineCallbacks(testdir):
                 raise RuntimeError("baz")
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("passed") == 2
-    assert outcomes.get("failed") == 1
+    assert_outcomes(rr, {'passed': 2, 'failed': 1})
 
 
 def test_twisted_greenlet(testdir):
@@ -115,8 +135,7 @@ def test_twisted_greenlet(testdir):
 
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("passed") == 1
+    assert_outcomes(rr, {'passed': 1})
 
 
 @skip_if_reactor_not('default')
@@ -140,8 +159,7 @@ def test_blockon_in_hook(testdir):
             return d
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("passed") == 1
+    assert_outcomes(rr, {'passed': 1})
 
 
 @skip_if_reactor_not('qt5reactor')
@@ -171,8 +189,7 @@ def test_blockon_in_hook_with_qt5reactor(testdir):
             return d
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("passed") == 1
+    assert_outcomes(rr, {'passed': 1})
 
 
 @skip_if_reactor_not('qt5reactor')
@@ -187,9 +204,8 @@ def test_wrong_reactor_with_qt5reactor(testdir):
     rr = testdir.run(
         sys.executable, "-m", "pytest", "-v", "--reactor=qt5reactor"
     )
-    outcomes = rr.parseoutcomes()
     assert 'WrongReactorAlreadyInstalledError' in rr.stdout.str()
-    assert outcomes.get("error") == 1
+    assert_outcomes(rr, {'error': 1})
 
 
 def test_pytest_from_reactor_thread(testdir):
@@ -238,8 +254,6 @@ def test_pytest_from_reactor_thread(testdir):
     """)
     # check test file is ok in standalone mode:
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
-    outcomes = rr.parseoutcomes()
-    assert outcomes.get("passed") == 1
-    assert outcomes.get("failed") == 1
+    assert_outcomes(rr, {'passed': 1, 'failed': 1})
     # test embedded mode:
     assert testdir.run(sys.executable, "runner.py").ret == 0
