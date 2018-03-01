@@ -1,5 +1,3 @@
-import sys
-
 import decorator
 import greenlet
 import pytest
@@ -7,6 +5,10 @@ import pytest
 from twisted.internet import error, defer
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
+
+
+class WrongReactorAlreadyInstalledError(Exception):
+    pass
 
 
 class _instances:
@@ -126,11 +128,14 @@ def init_qt5_reactor(qapp):
     try:
         qt5reactor.install()
     except error.ReactorAlreadyInstalledError:
-        if not isinstance(_instances.reactor, qt5reactor.QtReactor):
-            stop_twisted_greenlet()
-            _instances.gr_twisted = None
-            del sys.modules['twisted.internet.reactor']
-            qt5reactor.install()
+        import twisted.internet.reactor
+        if not isinstance(twisted.internet.reactor, qt5reactor.QtReactor):
+            raise WrongReactorAlreadyInstalledError(
+                'expected {0} but found {1}'.format(
+                    qt5reactor.QtReactor,
+                    type(twisted.internet.reactor),
+                )
+            )
     init_reactor()
 
 

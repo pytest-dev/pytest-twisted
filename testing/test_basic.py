@@ -2,6 +2,19 @@
 
 import sys
 
+import pytest
+
+
+def skip_if_reactor_not(expected_reactor):
+    actual_reactor = pytest.config.getoption('reactor')
+    return pytest.mark.skipif(
+        actual_reactor != expected_reactor,
+        reason='reactor is {0} not {1}'.format(
+            actual_reactor,
+            expected_reactor,
+        ),
+    )
+
 
 def test_fail_later(testdir):
     testdir.makepyfile("""
@@ -106,6 +119,7 @@ def test_twisted_greenlet(testdir):
     assert outcomes.get("passed") == 1
 
 
+@skip_if_reactor_not('default')
 def test_blockon_in_hook(testdir):
     testdir.makeconftest("""
         import pytest_twisted as pt
@@ -128,6 +142,54 @@ def test_blockon_in_hook(testdir):
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
     outcomes = rr.parseoutcomes()
     assert outcomes.get("passed") == 1
+
+
+@skip_if_reactor_not('qt5reactor')
+def test_blockon_in_hook_with_qt5reactor(testdir):
+    testdir.makeconftest("""
+    import pytest_twisted as pt
+    import pytestqt
+    from twisted.internet import defer
+
+
+    def pytest_configure(config):
+        qapp = pytestqt.plugin.qapp(pytestqt.plugin.qapp_args())
+
+        pt.init_qt5_reactor(qapp)
+        d = defer.Deferred()
+
+        from twisted.internet import reactor
+        reactor.callLater(0.01, d.callback, 1)
+        pt.blockon(d)
+    """)
+    testdir.makepyfile("""
+        from twisted.internet import reactor, defer
+
+        def test_succeed():
+            d = defer.Deferred()
+            reactor.callLater(0.01, d.callback, 1)
+            return d
+    """)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    outcomes = rr.parseoutcomes()
+    assert outcomes.get("passed") == 1
+
+
+@skip_if_reactor_not('qt5reactor')
+def test_wrong_reactor_with_qt5reactor(testdir):
+    testdir.makepyfile("""
+        import twisted.internet.default
+        twisted.internet.default.install()
+
+        def test_succeed():
+            pass
+    """)
+    rr = testdir.run(
+        sys.executable, "-m", "pytest", "-v", "--reactor=qt5reactor"
+    )
+    outcomes = rr.parseoutcomes()
+    assert 'WrongReactorAlreadyInstalledError' in rr.stdout.str()
+    assert outcomes.get("error") == 1
 
 
 def test_pytest_from_reactor_thread(testdir):
