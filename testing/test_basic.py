@@ -145,7 +145,7 @@ def test_blockon_in_hook(testdir):
         from twisted.internet import reactor, defer
 
         def pytest_configure(config):
-            pt.init_reactor()
+            pt.init_default_reactor()
             d = defer.Deferred()
             reactor.callLater(0.01, d.callback, 1)
             pt.blockon(d)
@@ -160,6 +160,20 @@ def test_blockon_in_hook(testdir):
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v")
     assert_outcomes(rr, {'passed': 1})
+
+
+@skip_if_reactor_not('default')
+def test_wrong_reactor(testdir):
+    testdir.makepyfile("""
+        import twisted.internet.reactor
+        twisted.internet.reactor = None
+
+        def test_succeed():
+            pass
+    """)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    assert 'WrongReactorAlreadyInstalledError' in rr.stdout.str()
+    assert_outcomes(rr, {'error': 1})
 
 
 @skip_if_reactor_not('qt5reactor')

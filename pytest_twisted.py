@@ -1,3 +1,5 @@
+import inspect
+
 import decorator
 import greenlet
 import pytest
@@ -117,26 +119,53 @@ def twisted_greenlet(request, reactor):
     return _instances.gr_twisted
 
 
-def init_reactor():
+def init_default_reactor():
+    import twisted.internet.default
+
+    module = inspect.getmodule(twisted.internet.default.install)
+
+    module_name = module.__name__.split('.')[-1]
+    reactor_type_name, = (
+        x
+        for x in dir(module)
+        if x.lower() == module_name
+    )
+    reactor_type = getattr(module, reactor_type_name)
+
+    _install_reactor(
+        reactor_installer=twisted.internet.default.install,
+        reactor_type=reactor_type,
+    )
+
+
+def init_qt5_reactor(qapp):
+    import qt5reactor
+
+    _install_reactor(
+        reactor_installer=qt5reactor.install,
+        reactor_type=qt5reactor.QtReactor,
+    )
+
+
+def _init_reactor():
     import twisted.internet.reactor
     _instances.reactor = twisted.internet.reactor
     init_twisted_greenlet()
 
 
-def init_qt5_reactor(qapp):
-    import qt5reactor
+def _install_reactor(reactor_installer, reactor_type):
     try:
-        qt5reactor.install()
+        reactor_installer()
     except error.ReactorAlreadyInstalledError:
         import twisted.internet.reactor
-        if not isinstance(twisted.internet.reactor, qt5reactor.QtReactor):
+        if not isinstance(twisted.internet.reactor, reactor_type):
             raise WrongReactorAlreadyInstalledError(
                 'expected {0} but found {1}'.format(
-                    qt5reactor.QtReactor,
+                    reactor_type,
                     type(twisted.internet.reactor),
                 )
             )
-    init_reactor()
+    _init_reactor()
 
 
 def pytest_addoption(parser):
@@ -150,7 +179,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     reactor_fixture = {
-        'default': init_reactor,
+        'default': init_default_reactor,
         'qt5reactor': init_qt5_reactor,
     }[config.getoption('reactor')]
 
