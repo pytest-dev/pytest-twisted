@@ -147,6 +147,12 @@ def init_qt5_reactor(qapp):
     )
 
 
+_reactor_fixtures = {
+    'default': init_default_reactor,
+    'qt5reactor': init_qt5_reactor,
+}
+
+
 def _init_reactor():
     import twisted.internet.reactor
     _instances.reactor = twisted.internet.reactor
@@ -173,15 +179,12 @@ def pytest_addoption(parser):
     group.addoption(
         '--reactor',
         default='default',
-        choices=('default', 'qt5reactor'),
+        choices=tuple(_reactor_fixtures.keys()),
     )
 
 
 def pytest_configure(config):
-    reactor_fixture = {
-        'default': init_default_reactor,
-        'qt5reactor': init_qt5_reactor,
-    }[config.getoption('reactor')]
+    reactor_fixture = _reactor_fixtures[config.getoption('reactor')]
 
     class ReactorPlugin(object):
         reactor = staticmethod(
