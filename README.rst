@@ -4,6 +4,7 @@
 pytest-twisted - test twisted code with pytest
 ==============================================================================
 
+|Travis|_ |AppVeyor|_ |Pythons|
 
 :Authors: Ralf Schmitt, Victor Titor
 :Version: 1.6
@@ -66,3 +67,15 @@ corotwine work with pytest-twisted::
 
 
 That's all.
+
+
+.. |Travis| image:: https://travis-ci.org/pytest-dev/pytest-twisted.svg?branch=master
+   :alt: Travis build status
+.. _Travis: https://travis-ci.org/pytest-dev/pytest-twisted
+
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/us5l0l9p7hyp2k6x/branch/master?svg=true
+   :alt: AppVeyor build status
+.. _AppVeyor: https://ci.appveyor.com/project/vtitor/pytest-twisted
+
+.. |Pythons| image:: https://img.shields.io/pypi/pyversions/pytest-twisted.svg
+   :alt: supported Python versions
