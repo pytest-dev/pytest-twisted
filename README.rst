@@ -29,6 +29,20 @@ Using the plugin
 The plugin is available after installation and can be disabled using
 ``-p no:twisted``.
 
+By default ``twisted.internet.default`` is used to install the reactor.
+This creates the same reactor that ``import twisted.internet.reactor``
+would.  Alternative reactors can be specified using the ``--reactor``
+option.  Presently only ``qt5reactor`` is supported for use with
+``pyqt5`` and ``pytest-qt``.
+
+The reactor is automatically created prior to the first test but can
+be explicitly installed earlier by calling
+``pytest_twisted.init_default_reactor()`` or the corresponding function
+for the desired alternate reactor.  Beware that in situations such as
+a ``conftest.py`` file that the name ``pytest_twisted`` may be
+undesirably detected by ``pytest`` as an unknown hook.  One alternative
+is to ``import pytest_twisted as pt``.
+
 
 inlineCallbacks
 =================
