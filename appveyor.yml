@@ -49,6 +49,8 @@ install:
 build: off
 
 test_script:
+  - where tox
+  - tox --version
   - tox
 
 # https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
