@@ -6,7 +6,7 @@ pytest-twisted - test twisted code with pytest
 
 |Travis|_ |AppVeyor|_ |Pythons|
 
-:Authors: Ralf Schmitt, Victor Titor
+:Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
 :Version: 1.6
 :Date:    2018-01-12
 :Download: https://pypi.python.org/pypi/pytest-twisted#downloads
@@ -33,13 +33,18 @@ The plugin is available after installation and can be disabled using
 By default ``twisted.internet.default`` is used to install the reactor.
 This creates the same reactor that ``import twisted.internet.reactor``
 would.  Alternative reactors can be specified using the ``--reactor``
-option.  Presently only ``qt5reactor`` is supported for use with
-``pyqt5`` and ``pytest-qt``.
+option.
+
+Presently only ``qt5reactor`` is supported for use with ``pyqt5``
+and ``pytest-qt``. This `guide`_ describes how to add support for
+a new reactor.
 
 The reactor is automatically created prior to the first test but can
 be explicitly installed earlier by calling
 ``pytest_twisted.init_default_reactor()`` or the corresponding function
-for the desired alternate reactor.  Beware that in situations such as
+for the desired alternate reactor.
+
+Beware that in situations such as
 a ``conftest.py`` file that the name ``pytest_twisted`` may be
 undesirably detected by ``pytest`` as an unknown hook.  One alternative
 is to ``import pytest_twisted as pt``.
@@ -93,3 +98,5 @@ That's all.
 
 .. |Pythons| image:: https://img.shields.io/pypi/pyversions/pytest-twisted.svg
    :alt: supported Python versions
+
+.. _guide: CONTRIBUTING.rst
