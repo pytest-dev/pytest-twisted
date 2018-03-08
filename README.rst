@@ -7,7 +7,7 @@ pytest-twisted - test twisted code with pytest
 |Travis|_ |AppVeyor|_ |Pythons|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
-:Version: 1.7
+:Version: 1.7.1
 :Date:    2018-03-08
 :Download: https://pypi.python.org/pypi/pytest-twisted#downloads
 :Code: https://github.com/pytest-dev/pytest-twisted
