@@ -146,8 +146,10 @@ def test_blockon_in_hook(testdir):
 
         def pytest_configure(config):
             pt.init_default_reactor()
-            d = defer.Deferred()
+            d, d2 = defer.Deferred(), defer.Deferred()
             reactor.callLater(0.01, d.callback, 1)
+            reactor.callLater(0.02, d2.callback, 1)
+            pt.blockon(d)
             pt.blockon(d)
     """)
     testdir.makepyfile("""

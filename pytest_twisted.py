@@ -13,6 +13,10 @@ class WrongReactorAlreadyInstalledError(Exception):
     pass
 
 
+class _config:
+    external_reactor = False
+
+
 class _instances:
     gr_twisted = None
     reactor = None
@@ -23,7 +27,7 @@ def pytest_namespace():
 
 
 def blockon(d):
-    if _instances.reactor.running:
+    if _config.external_reactor:
         return block_from_thread(d)
 
     return blockon_default(d)
@@ -61,13 +65,15 @@ def inlineCallbacks(fun, *args, **kw):
 
 
 def init_twisted_greenlet():
-    if _instances.reactor is None:
+    if _instances.reactor is None or _instances.gr_twisted:
         return
 
-    if not _instances.gr_twisted and not _instances.reactor.running:
+    if not _instances.reactor.running:
         _instances.gr_twisted = greenlet.greenlet(_instances.reactor.run)
         # give me better tracebacks:
         failure.Failure.cleanFailure = lambda self: None
+    else:
+        _config.external_reactor = True
 
 
 def stop_twisted_greenlet():
