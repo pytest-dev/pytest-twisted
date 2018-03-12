@@ -23,7 +23,7 @@ class _instances:
 
 
 def pytest_namespace():
-    return dict(inlineCallbacks=inlineCallbacks, blockon=blockon)
+    return {'inlineCallbacks': inlineCallbacks, 'blockon': blockon}
 
 
 def blockon(d):
