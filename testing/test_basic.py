@@ -10,12 +10,12 @@ def assert_outcomes(run_result, outcomes):
     formatted_output = format_run_result_output_for_assert(run_result)
 
     try:
-        outcomes = run_result.parseoutcomes()
+        result_outcomes = run_result.parseoutcomes()
     except ValueError:
         assert False, formatted_output
 
     for name, value in outcomes.items():
-        assert outcomes.get(name) == value, formatted_output
+        assert result_outcomes.get(name) == value, formatted_output
 
 
 def format_run_result_output_for_assert(run_result):
@@ -138,6 +138,33 @@ def test_twisted_greenlet(testdir):
     assert_outcomes(rr, {'passed': 1})
 
 
+def test_blockon_in_fixture(testdir):
+    testdir.makepyfile("""
+        from twisted.internet import reactor, defer
+        import pytest
+        import pytest_twisted
+
+        @pytest.fixture(scope="module",
+                        params=["fs", "imap", "web"])
+        def foo(request):
+            d1, d2 = defer.Deferred(), defer.Deferred()
+            reactor.callLater(0.01, d1.callback, 1)
+            reactor.callLater(0.02, d2.callback, request.param)
+            pytest_twisted.blockon(d1)
+            return d2
+
+
+        @pytest_twisted.inlineCallbacks
+        def test_succeed(foo):
+            x = yield foo
+            if x == "web":
+                raise RuntimeError("baz")
+    """)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    # assert not rr
+    assert_outcomes(rr, {'passed': 2, 'failed': 1})
+
+
 @skip_if_reactor_not('default')
 def test_blockon_in_hook(testdir):
     testdir.makeconftest("""
@@ -146,11 +173,11 @@ def test_blockon_in_hook(testdir):
 
         def pytest_configure(config):
             pt.init_default_reactor()
-            d, d2 = defer.Deferred(), defer.Deferred()
-            reactor.callLater(0.01, d.callback, 1)
+            d1, d2 = defer.Deferred(), defer.Deferred()
+            reactor.callLater(0.01, d1.callback, 1)
             reactor.callLater(0.02, d2.callback, 1)
-            pt.blockon(d)
-            pt.blockon(d)
+            pt.blockon(d1)
+            pt.blockon(d2)
     """)
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
