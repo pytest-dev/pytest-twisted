@@ -4,7 +4,7 @@
 pytest-twisted - test twisted code with pytest
 ==============================================================================
 
-|Travis|_ |AppVeyor|_ |Pythons|
+|PyPI| |Pythons| |Travis| |AppVeyor|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
 :Version: 1.7.1
@@ -88,15 +88,20 @@ corotwine work with pytest-twisted::
 That's all.
 
 
+.. |PyPI| image:: https://img.shields.io/pypi/v/pytest-twisted.svg
+   :alt: PyPI version
+   :target: https://pypi.python.org/pypi/pytest-twisted
+
+.. |Pythons| image:: https://img.shields.io/pypi/pyversions/pytest-twisted.svg
+   :alt: Supported Python versions
+   :target: https://pypi.python.org/pypi/pytest-twisted
+
 .. |Travis| image:: https://travis-ci.org/pytest-dev/pytest-twisted.svg?branch=master
    :alt: Travis build status
-.. _Travis: https://travis-ci.org/pytest-dev/pytest-twisted
+   :target: https://travis-ci.org/pytest-dev/pytest-twisted
 
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/us5l0l9p7hyp2k6x/branch/master?svg=true
    :alt: AppVeyor build status
-.. _AppVeyor: https://ci.appveyor.com/project/vtitor/pytest-twisted
-
-.. |Pythons| image:: https://img.shields.io/pypi/pyversions/pytest-twisted.svg
-   :alt: supported Python versions
+   :target: https://ci.appveyor.com/project/vtitor/pytest-twisted
 
 .. _guide: CONTRIBUTING.rst

@@ -23,7 +23,7 @@ class _instances:
 
 
 def pytest_namespace():
-    return dict(inlineCallbacks=inlineCallbacks, blockon=blockon)
+    return {'inlineCallbacks': inlineCallbacks, 'blockon': blockon}
 
 
 def blockon(d):
@@ -172,7 +172,7 @@ def _install_reactor(reactor_installer, reactor_type):
         import twisted.internet.reactor
         if not isinstance(twisted.internet.reactor, reactor_type):
             raise WrongReactorAlreadyInstalledError(
-                'expected {0} but found {1}'.format(
+                'expected {} but found {}'.format(
                     reactor_type,
                     type(twisted.internet.reactor),
                 )

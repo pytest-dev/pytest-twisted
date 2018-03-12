@@ -22,9 +22,9 @@ def format_run_result_output_for_assert(run_result):
     return textwrap.dedent('''\
 
         ---- stdout
-        {0}
+        {}
         ---- stderr
-        {1}
+        {}
         ----''').format(
         run_result.stdout.str(),
         run_result.stderr.str(),
@@ -35,7 +35,7 @@ def skip_if_reactor_not(expected_reactor):
     actual_reactor = pytest.config.getoption('reactor')
     return pytest.mark.skipif(
         actual_reactor != expected_reactor,
-        reason='reactor is {0} not {1}'.format(
+        reason='reactor is {} not {}'.format(
             actual_reactor,
             expected_reactor,
         ),

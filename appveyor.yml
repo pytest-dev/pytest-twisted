@@ -2,12 +2,6 @@ environment:
   VENV: "%APPVEYOR_BUILD_FOLDER%\\venv"
 
   matrix:
-    - TOXENV: py26
-      PYTHON: "C:\\Python26"
-
-    - TOXENV: py26
-      PYTHON: "C:\\Python26-x64"
-
     - TOXENV: py27
       PYTHON: "C:\\Python27"
 
