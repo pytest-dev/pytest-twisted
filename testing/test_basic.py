@@ -198,16 +198,17 @@ def test_blockon_in_hook(testdir, cmd_opts):
 
 @skip_if_reactor_not('default')
 def test_wrong_reactor(testdir, cmd_opts):
-    testdir.makepyfile("""
+    testdir.makeconftest("""
+    def pytest_addhooks():
         import twisted.internet.reactor
         twisted.internet.reactor = None
-
+    """)
+    testdir.makepyfile("""
         def test_succeed():
             pass
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert 'WrongReactorAlreadyInstalledError' in rr.stdout.str()
-    assert_outcomes(rr, {'error': 1})
+    assert 'WrongReactorAlreadyInstalledError' in rr.stderr.str()
 
 
 @skip_if_reactor_not('qt5reactor')
@@ -219,9 +220,7 @@ def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts):
 
 
     def pytest_configure(config):
-        qapp = pytestqt.plugin.qapp(pytestqt.plugin.qapp_args())
-
-        pt.init_qt5_reactor(qapp)
+        pt.init_qt5_reactor()
         d = defer.Deferred()
 
         from twisted.internet import reactor
@@ -242,16 +241,18 @@ def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts):
 
 @skip_if_reactor_not('qt5reactor')
 def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts):
-    testdir.makepyfile("""
+    testdir.makeconftest("""
+    def pytest_addhooks():
         import twisted.internet.default
         twisted.internet.default.install()
-
+    """)
+    testdir.makepyfile("""
         def test_succeed():
             pass
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert 'WrongReactorAlreadyInstalledError' in rr.stdout.str()
-    assert_outcomes(rr, {'error': 1})
+    assert 'WrongReactorAlreadyInstalledError' in rr.stderr.str()
+    # assert_outcomes(rr, {'error': 1})
 
 
 @skip_if_reactor_not('default')
