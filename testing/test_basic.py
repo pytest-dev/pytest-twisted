@@ -42,7 +42,12 @@ def skip_if_reactor_not(expected_reactor):
     )
 
 
-def test_fail_later(testdir):
+@pytest.fixture
+def cmd_opts(request):
+    return '--reactor={}'.format(request.config.getoption('reactor')),
+
+
+def test_fail_later(testdir, cmd_opts):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
 
@@ -57,11 +62,11 @@ def test_fail_later(testdir):
             reactor.callLater(0.01, doit)
             return d
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest")
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
     assert_outcomes(rr, {'failed': 1})
 
 
-def test_succeed_later(testdir):
+def test_succeed_later(testdir, cmd_opts):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
 
@@ -70,31 +75,31 @@ def test_succeed_later(testdir):
             reactor.callLater(0.01, d.callback, 1)
             return d
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest")
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
     assert_outcomes(rr, {'passed': 1})
 
 
-def test_non_deferred(testdir):
+def test_non_deferred(testdir, cmd_opts):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
 
         def test_succeed():
             return 42
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest")
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
     assert_outcomes(rr, {'passed': 1})
 
 
-def test_exception(testdir):
+def test_exception(testdir, cmd_opts):
     testdir.makepyfile("""
         def test_more_fail():
             raise RuntimeError("foo")
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest")
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
     assert_outcomes(rr, {'failed': 1})
 
 
-def test_inlineCallbacks(testdir):
+def test_inlineCallbacks(testdir, cmd_opts):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
         import pytest
@@ -112,11 +117,11 @@ def test_inlineCallbacks(testdir):
             if foo == "web":
                 raise RuntimeError("baz")
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {'passed': 2, 'failed': 1})
 
 
-def test_twisted_greenlet(testdir):
+def test_twisted_greenlet(testdir, cmd_opts):
     testdir.makepyfile("""
         import pytest, greenlet
 
@@ -134,11 +139,11 @@ def test_twisted_greenlet(testdir):
             assert MAIN is greenlet.getcurrent()
 
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {'passed': 1})
 
 
-def test_blockon_in_fixture(testdir):
+def test_blockon_in_fixture(testdir, cmd_opts):
     testdir.makepyfile("""
         from twisted.internet import reactor, defer
         import pytest
@@ -160,13 +165,13 @@ def test_blockon_in_fixture(testdir):
             if x == "web":
                 raise RuntimeError("baz")
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     # assert not rr
     assert_outcomes(rr, {'passed': 2, 'failed': 1})
 
 
 @skip_if_reactor_not('default')
-def test_blockon_in_hook(testdir):
+def test_blockon_in_hook(testdir, cmd_opts):
     testdir.makeconftest("""
         import pytest_twisted as pt
         from twisted.internet import reactor, defer
@@ -187,12 +192,12 @@ def test_blockon_in_hook(testdir):
             reactor.callLater(0.01, d.callback, 1)
             return d
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {'passed': 1})
 
 
 @skip_if_reactor_not('default')
-def test_wrong_reactor(testdir):
+def test_wrong_reactor(testdir, cmd_opts):
     testdir.makepyfile("""
         import twisted.internet.reactor
         twisted.internet.reactor = None
@@ -200,13 +205,13 @@ def test_wrong_reactor(testdir):
         def test_succeed():
             pass
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert 'WrongReactorAlreadyInstalledError' in rr.stdout.str()
     assert_outcomes(rr, {'error': 1})
 
 
 @skip_if_reactor_not('qt5reactor')
-def test_blockon_in_hook_with_qt5reactor(testdir):
+def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts):
     testdir.makeconftest("""
     import pytest_twisted as pt
     import pytestqt
@@ -231,12 +236,12 @@ def test_blockon_in_hook_with_qt5reactor(testdir):
             reactor.callLater(0.01, d.callback, 1)
             return d
     """)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {'passed': 1})
 
 
 @skip_if_reactor_not('qt5reactor')
-def test_wrong_reactor_with_qt5reactor(testdir):
+def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts):
     testdir.makepyfile("""
         import twisted.internet.default
         twisted.internet.default.install()
@@ -244,13 +249,12 @@ def test_wrong_reactor_with_qt5reactor(testdir):
         def test_succeed():
             pass
     """)
-    rr = testdir.run(
-        sys.executable, "-m", "pytest", "-v", "--reactor=qt5reactor"
-    )
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert 'WrongReactorAlreadyInstalledError' in rr.stdout.str()
     assert_outcomes(rr, {'error': 1})
 
 
+@skip_if_reactor_not('default')
 def test_pytest_from_reactor_thread(testdir):
     testdir.makepyfile("""
         import pytest
