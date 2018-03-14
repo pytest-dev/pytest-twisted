@@ -2,28 +2,28 @@ environment:
   VENV: "%APPVEYOR_BUILD_FOLDER%\\venv"
 
   matrix:
-    - TOXENV: py27
+    - TOXENV: py27-defaultreactor
       PYTHON: "C:\\Python27"
 
-    - TOXENV: py27
+    - TOXENV: py27-defaultreactor
       PYTHON: "C:\\Python27-x64"
 
-    - TOXENV: py34
+    - TOXENV: py34-defaultreactor
       PYTHON: "C:\\Python34"
 
-    - TOXENV: py34
+    - TOXENV: py34-defaultreactor
       PYTHON: "C:\\Python34-x64"
 
-    - TOXENV: py35
+    - TOXENV: py35-defaultreactor, py35-qt5reactor
       PYTHON: "C:\\Python35"
 
-    - TOXENV: py35
+    - TOXENV: py35-defaultreactor, py35-qt5reactor
       PYTHON: "C:\\Python35-x64"
 
-    - TOXENV: py36
+    - TOXENV: py36-defaultreactor, py36-qt5reactor
       PYTHON: "C:\\Python36"
 
-    - TOXENV: py36
+    - TOXENV: py36-defaultreactor, py36-qt5reactor
       PYTHON: "C:\\Python36-x64"
 
 # https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
