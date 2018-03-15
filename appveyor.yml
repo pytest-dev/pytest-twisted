@@ -2,51 +2,38 @@ environment:
   VENV: "%APPVEYOR_BUILD_FOLDER%\\venv"
 
   matrix:
-    - TOXENV: py27
+    - TOXENV: py27-defaultreactor
       PYTHON: "C:\\Python27"
 
-    - TOXENV: py27
+    - TOXENV: py27-defaultreactor
       PYTHON: "C:\\Python27-x64"
 
-    - TOXENV: py34
+    - TOXENV: py34-defaultreactor
       PYTHON: "C:\\Python34"
 
-    - TOXENV: py34
+    - TOXENV: py34-defaultreactor
       PYTHON: "C:\\Python34-x64"
 
-    - TOXENV: py35
+    - TOXENV: py35-defaultreactor, win-py35-qt5reactor
       PYTHON: "C:\\Python35"
 
-    - TOXENV: py35
+    - TOXENV: py35-defaultreactor, win-py35-qt5reactor
       PYTHON: "C:\\Python35-x64"
 
-    - TOXENV: py36
+    - TOXENV: py36-defaultreactor, win-py36-qt5reactor
       PYTHON: "C:\\Python36"
 
-    - TOXENV: py36
+    - TOXENV: py36-defaultreactor, win-py36-qt5reactor
       PYTHON: "C:\\Python36-x64"
-
-# https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
-init:
-  - ps: if (Get-ChildItem Env:ENABLE_RDP -ErrorAction SilentlyContinue) {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))} else {echo RDP not enabled}
-  - echo "TOXENV- %TOXENV%"
 
 install:
   # https://github.com/pypa/virtualenv/issues/1050
   - pip install -U git+https://github.com/pypa/virtualenv@e8163e83a92c9098f51d390289323232ece15e3b
   - virtualenv -p "%PYTHON%\\python.exe" "%VENV%"
   - "%VENV%\\Scripts\\activate"
-  # https://github.com/pypa/virtualenv/issues/1050
-  - pip install git+https://github.com/pypa/virtualenv@e8163e83a92c9098f51d390289323232ece15e3b
   - pip install tox
 
 build: off
 
 test_script:
-  - where tox
-  - tox --version
   - tox
-
-# https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
-on_finish:
-  - ps: if (Get-ChildItem Env:ENABLE_RDP -ErrorAction SilentlyContinue) {$blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))} else {echo RDP not enabled}
