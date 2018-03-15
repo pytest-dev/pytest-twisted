@@ -15,6 +15,6 @@ addons:
 
 install:
   - pip install tox
-  - export TOX_ENV=`tox --listenvs | grep "py${TRAVIS_PYTHON_VERSION/./}" | tr '\n' ','`
+  - export TOX_ENV=`tox --listenvs | grep -v win | grep "py${TRAVIS_PYTHON_VERSION/./}" | tr '\n' ','`
 
 script: tox -e $TOX_ENV
