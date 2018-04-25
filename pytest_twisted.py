@@ -119,7 +119,7 @@ def pytest_pyfunc_call(pyfuncitem):
     return True
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def twisted_greenlet(request):
     request.addfinalizer(stop_twisted_greenlet)
     return _instances.gr_twisted
@@ -140,7 +140,7 @@ def init_default_reactor():
 
     _install_reactor(
         reactor_installer=twisted.internet.default.install,
-        reactor_type=reactor_type,
+        reactor_type=reactor_type
     )
 
 
@@ -149,13 +149,13 @@ def init_qt5_reactor():
 
     _install_reactor(
         reactor_installer=qt5reactor.install,
-        reactor_type=qt5reactor.QtReactor,
+        reactor_type=qt5reactor.QtReactor
     )
 
 
-_reactor_installers = {
+reactor_installers = {
     'default': init_default_reactor,
-    'qt5reactor': init_qt5_reactor,
+    'qt5reactor': init_qt5_reactor
 }
 
 
@@ -168,7 +168,7 @@ def _install_reactor(reactor_installer, reactor_type):
             raise WrongReactorAlreadyInstalledError(
                 'expected {} but found {}'.format(
                     reactor_type,
-                    type(twisted.internet.reactor),
+                    type(twisted.internet.reactor)
                 )
             )
     import twisted.internet.reactor
@@ -181,9 +181,9 @@ def pytest_addoption(parser):
     group.addoption(
         '--reactor',
         default='default',
-        choices=tuple(_reactor_installers.keys()),
+        choices=tuple(reactor_installers.keys())
     )
 
 
 def pytest_configure(config):
-    _reactor_installers[config.getoption('reactor')]()
+    reactor_installers[config.getoption('reactor')]()

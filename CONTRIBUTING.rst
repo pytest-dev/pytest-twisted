@@ -4,7 +4,7 @@ What it takes to add a new reactor:
 * In ``pytest_twisted.py``
 
   * Write an ``init_foo_reactor()`` function
-  * Add ``'foo': init_foo_reactor,`` to ``_reactor_fixtures`` where the key will be the string to be passed such as ``--reactor=foo``.
+  * Add ``'foo': init_foo_reactor,`` to ``reactor_installers`` where the key will be the string to be passed such as ``--reactor=foo``.
 
 * In ``testing/test_basic.py``
 
