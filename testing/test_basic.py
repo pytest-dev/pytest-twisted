@@ -32,19 +32,17 @@ def format_run_result_output_for_assert(run_result):
 
 
 def skip_if_reactor_not(expected_reactor):
-    actual_reactor = pytest.config.getoption('reactor')
+    actual_reactor = pytest.config.getoption('reactor', 'default')
     return pytest.mark.skipif(
         actual_reactor != expected_reactor,
-        reason='reactor is {} not {}'.format(
-            actual_reactor,
-            expected_reactor,
-        ),
+        reason='reactor is {} not {}'.format(actual_reactor, expected_reactor)
     )
 
 
 @pytest.fixture
 def cmd_opts(request):
-    return '--reactor={}'.format(request.config.getoption('reactor')),
+    reactor = request.config.getoption('reactor', 'default')
+    return '--reactor={}'.format(reactor),
 
 
 def test_fail_later(testdir, cmd_opts):
@@ -166,7 +164,6 @@ def test_blockon_in_fixture(testdir, cmd_opts):
                 raise RuntimeError("baz")
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    # assert not rr
     assert_outcomes(rr, {'passed': 2, 'failed': 1})
 
 
@@ -252,7 +249,6 @@ def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts):
     """)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert 'WrongReactorAlreadyInstalledError' in rr.stderr.str()
-    # assert_outcomes(rr, {'error': 1})
 
 
 @skip_if_reactor_not('default')
