@@ -23,7 +23,7 @@ class _instances:
 
 
 def pytest_namespace():
-    return {'inlineCallbacks': inlineCallbacks, 'blockon': blockon}
+    return {"inlineCallbacks": inlineCallbacks, "blockon": blockon}
 
 
 def blockon(d):
@@ -35,8 +35,9 @@ def blockon(d):
 
 def blockon_default(d):
     current = greenlet.getcurrent()
-    assert current is not _instances.gr_twisted, \
-        'blockon cannot be called from the twisted greenlet'
+    assert (
+        current is not _instances.gr_twisted
+    ), "blockon cannot be called from the twisted greenlet"
     result = []
 
     def cb(r):
@@ -47,7 +48,7 @@ def blockon_default(d):
     d.addCallbacks(cb, cb)
     if not result:
         _result = _instances.gr_twisted.switch()
-        assert _result is result, 'illegal switch in blockon'
+        assert _result is result, "illegal switch in blockon"
 
     if isinstance(result[0], failure.Failure):
         result[0].raiseException()
@@ -88,7 +89,7 @@ def _pytest_pyfunc_call(pyfuncitem):
         return testfunction(*pyfuncitem._args)
     else:
         funcargs = pyfuncitem.funcargs
-        if hasattr(pyfuncitem, '_fixtureinfo'):
+        if hasattr(pyfuncitem, "_fixtureinfo"):
             testargs = {}
             for arg in pyfuncitem._fixtureinfo.argnames:
                 testargs[arg] = funcargs[arg]
@@ -100,7 +101,7 @@ def _pytest_pyfunc_call(pyfuncitem):
 def pytest_pyfunc_call(pyfuncitem):
     if _instances.gr_twisted is not None:
         if _instances.gr_twisted.dead:
-            raise RuntimeError('twisted reactor has stopped')
+            raise RuntimeError("twisted reactor has stopped")
 
         def in_reactor(d, f, *args):
             return defer.maybeDeferred(f, *args).chainDeferred(d)
@@ -112,14 +113,14 @@ def pytest_pyfunc_call(pyfuncitem):
         blockon_default(d)
     else:
         if not _instances.reactor.running:
-            raise RuntimeError('twisted reactor is not running')
+            raise RuntimeError("twisted reactor is not running")
         blockingCallFromThread(
             _instances.reactor, _pytest_pyfunc_call, pyfuncitem
         )
     return True
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def twisted_greenlet(request):
     request.addfinalizer(stop_twisted_greenlet)
     return _instances.gr_twisted
@@ -130,17 +131,13 @@ def init_default_reactor():
 
     module = inspect.getmodule(twisted.internet.default.install)
 
-    module_name = module.__name__.split('.')[-1]
-    reactor_type_name, = (
-        x
-        for x in dir(module)
-        if x.lower() == module_name
-    )
+    module_name = module.__name__.split(".")[-1]
+    reactor_type_name, = (x for x in dir(module) if x.lower() == module_name)
     reactor_type = getattr(module, reactor_type_name)
 
     _install_reactor(
         reactor_installer=twisted.internet.default.install,
-        reactor_type=reactor_type
+        reactor_type=reactor_type,
     )
 
 
@@ -148,14 +145,13 @@ def init_qt5_reactor():
     import qt5reactor
 
     _install_reactor(
-        reactor_installer=qt5reactor.install,
-        reactor_type=qt5reactor.QtReactor
+        reactor_installer=qt5reactor.install, reactor_type=qt5reactor.QtReactor
     )
 
 
 reactor_installers = {
-    'default': init_default_reactor,
-    'qt5reactor': init_qt5_reactor
+    "default": init_default_reactor,
+    "qt5reactor": init_qt5_reactor,
 }
 
 
@@ -164,26 +160,28 @@ def _install_reactor(reactor_installer, reactor_type):
         reactor_installer()
     except error.ReactorAlreadyInstalledError:
         import twisted.internet.reactor
+
         if not isinstance(twisted.internet.reactor, reactor_type):
             raise WrongReactorAlreadyInstalledError(
-                'expected {} but found {}'.format(
-                    reactor_type,
-                    type(twisted.internet.reactor)
+                "expected {} but found {}".format(
+                    reactor_type, type(twisted.internet.reactor)
                 )
             )
+
     import twisted.internet.reactor
+
     _instances.reactor = twisted.internet.reactor
     init_twisted_greenlet()
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup('twisted')
+    group = parser.getgroup("twisted")
     group.addoption(
-        '--reactor',
-        default='default',
-        choices=tuple(reactor_installers.keys())
+        "--reactor",
+        default="default",
+        choices=tuple(reactor_installers.keys()),
     )
 
 
 def pytest_configure(config):
-    reactor_installers[config.getoption('reactor')]()
+    reactor_installers[config.getoption("reactor")]()
