@@ -23,7 +23,11 @@ class _instances:
 
 
 def pytest_namespace():
-    return {"inlineCallbacks": inlineCallbacks, "blockon": blockon}
+    return {
+        "inlineCallbacks": inlineCallbacks,
+        "async_callbacks": async_callbacks,
+        "blockon": blockon,
+    }
 
 
 def blockon(d):
@@ -63,6 +67,11 @@ def block_from_thread(d):
 @decorator.decorator
 def inlineCallbacks(fun, *args, **kw):
     return defer.inlineCallbacks(fun)(*args, **kw)
+
+
+@decorator.decorator
+def async_callbacks(fun, *args, **kw):
+    return defer.ensureDeferred(fun(*args, **kw))
 
 
 def init_twisted_greenlet():
