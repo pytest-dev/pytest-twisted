@@ -215,13 +215,23 @@ def test_async_fixture_yield(testdir, cmd_opts):
     import pytest
     import pytest_twisted
 
-    @pytest.fixture(scope="function", params=["fs", "imap", "web"])
+    @pytest.fixture(
+        scope="function",
+        params=["fs", "imap", "web", "gopher", "archie"],
+    )
     async def foo(request):
         d1, d2 = defer.Deferred(), defer.Deferred()
         reactor.callLater(0.01, d1.callback, 1)
         reactor.callLater(0.02, d2.callback, request.param)
         await d1
+
         yield d2,
+
+        if request.param == "gopher":
+            raise RuntimeError("gaz")
+
+        if request.param == "archie":
+            yield 42
 
     @pytest_twisted.inlineCallbacks
     def test_succeed(foo):
@@ -232,7 +242,7 @@ def test_async_fixture_yield(testdir, cmd_opts):
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert_outcomes(rr, {"passed": 2, "failed": 1})
+    assert_outcomes(rr, {"passed": 2, "failed": 3})
 
 
 @skip_if_reactor_not("default")

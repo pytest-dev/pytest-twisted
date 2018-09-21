@@ -110,6 +110,7 @@ def is_async_generator(something):
 @defer.inlineCallbacks
 def _pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
+    async_generators = []
     if pyfuncitem._isyieldedfunction():
         defer.returnValue(testfunction(*pyfuncitem._args))
     else:
@@ -121,6 +122,7 @@ def _pytest_pyfunc_call(pyfuncitem):
                 if is_coroutine(something):
                     something = yield defer.ensureDeferred(something)
                 elif is_async_generator(something):
+                    async_generators.append(something)
                     something = yield defer.ensureDeferred(
                         something.__anext__(),
                     )
@@ -128,6 +130,17 @@ def _pytest_pyfunc_call(pyfuncitem):
         else:
             testargs = funcargs
         result = yield testfunction(**testargs)
+
+        for async_generator in async_generators:
+            try:
+                yield defer.ensureDeferred(
+                    async_generator.__anext__(),
+                )
+            except StopAsyncIteration:
+                continue
+            else:
+                raise RuntimeError('async generator did not stop')
+
         defer.returnValue(result)
 
 
