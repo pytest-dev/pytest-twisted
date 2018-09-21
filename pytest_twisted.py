@@ -1,5 +1,13 @@
-import asyncio
 import inspect
+import sys
+
+ASYNC_AWAIT = sys.version_info >= (3, 5)
+
+if ASYNC_AWAIT:
+    import asyncio
+else:
+    asyncio = None
+
 
 import decorator
 import greenlet
@@ -93,18 +101,25 @@ def stop_twisted_greenlet():
         _instances.gr_twisted.switch()
 
 
+def is_coroutine(maybe_coroutine):
+    if ASYNC_AWAIT:
+        return asyncio.iscoroutine(maybe_coroutine)
+
+    return False
+
+
 @defer.inlineCallbacks
 def _pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
-        return testfunction(*pyfuncitem._args)
+        defer.returnValue(testfunction(*pyfuncitem._args))
     else:
         funcargs = pyfuncitem.funcargs
         if hasattr(pyfuncitem, "_fixtureinfo"):
             testargs = {}
             for arg in pyfuncitem._fixtureinfo.argnames:
                 maybe_coroutine = funcargs[arg]
-                if asyncio.iscoroutine(maybe_coroutine):
+                if is_coroutine(maybe_coroutine):
                     maybe_coroutine = yield defer.ensureDeferred(
                         maybe_coroutine,
                     )
