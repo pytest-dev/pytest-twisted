@@ -3,6 +3,8 @@ import textwrap
 
 import pytest
 
+import pytest_twisted
+
 
 def assert_outcomes(run_result, outcomes):
     formatted_output = format_run_result_output_for_assert(run_result)
@@ -34,6 +36,13 @@ def skip_if_reactor_not(expected_reactor):
     return pytest.mark.skipif(
         actual_reactor != expected_reactor,
         reason="reactor is {} not {}".format(actual_reactor, expected_reactor),
+    )
+
+
+def skip_if_no_async_await():
+    return pytest.mark.skipif(
+        not pytest_twisted.ASYNC_AWAIT,
+        reason="async/await syntax not support on Python <3.5",
     )
 
 
@@ -157,6 +166,33 @@ def test_blockon_in_fixture(testdir, cmd_opts):
     @pytest_twisted.inlineCallbacks
     def test_succeed(foo):
         x = yield foo
+        if x == "web":
+            raise RuntimeError("baz")
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2, "failed": 1})
+
+
+@skip_if_no_async_await()
+def test_async_fixture(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest.fixture(scope="function", params=["fs", "imap", "web"])
+    async def foo(request):
+        d1, d2 = defer.Deferred(), defer.Deferred()
+        reactor.callLater(0.01, d1.callback, 1)
+        reactor.callLater(0.02, d2.callback, request.param)
+        await d1
+        return d2,
+
+    @pytest_twisted.inlineCallbacks
+    def test_succeed(foo):
+        x = yield foo[0]
+        print('+++', x)
         if x == "web":
             raise RuntimeError("baz")
     """
