@@ -46,6 +46,13 @@ def skip_if_no_async_await():
     )
 
 
+def skip_if_no_async_generators():
+    return pytest.mark.skipif(
+        not pytest_twisted.ASYNC_GENERATORS,
+        reason="async generators not support on Python <3.6",
+    )
+
+
 @pytest.fixture
 def cmd_opts(request):
     reactor = request.config.getoption("reactor", "default")
@@ -188,6 +195,33 @@ def test_async_fixture(testdir, cmd_opts):
         reactor.callLater(0.02, d2.callback, request.param)
         await d1
         return d2,
+
+    @pytest_twisted.inlineCallbacks
+    def test_succeed(foo):
+        x = yield foo[0]
+        print('+++', x)
+        if x == "web":
+            raise RuntimeError("baz")
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2, "failed": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_fixture_yield(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest.fixture(scope="function", params=["fs", "imap", "web"])
+    async def foo(request):
+        d1, d2 = defer.Deferred(), defer.Deferred()
+        reactor.callLater(0.01, d1.callback, 1)
+        reactor.callLater(0.02, d2.callback, request.param)
+        await d1
+        yield d2,
 
     @pytest_twisted.inlineCallbacks
     def test_succeed(foo):

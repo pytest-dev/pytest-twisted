@@ -2,6 +2,7 @@ import inspect
 import sys
 
 ASYNC_AWAIT = sys.version_info >= (3, 5)
+ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
 if ASYNC_AWAIT:
     import asyncio
@@ -92,9 +93,16 @@ def stop_twisted_greenlet():
         _instances.gr_twisted.switch()
 
 
-def is_coroutine(maybe_coroutine):
+def is_coroutine(something):
     if ASYNC_AWAIT:
-        return asyncio.iscoroutine(maybe_coroutine)
+        return asyncio.iscoroutine(something)
+
+    return False
+
+
+def is_async_generator(something):
+    if ASYNC_GENERATORS:
+        return inspect.isasyncgen(something)
 
     return False
 
@@ -109,12 +117,14 @@ def _pytest_pyfunc_call(pyfuncitem):
         if hasattr(pyfuncitem, "_fixtureinfo"):
             testargs = {}
             for arg in pyfuncitem._fixtureinfo.argnames:
-                maybe_coroutine = funcargs[arg]
-                if is_coroutine(maybe_coroutine):
-                    maybe_coroutine = yield defer.ensureDeferred(
-                        maybe_coroutine,
+                something = funcargs[arg]
+                if is_coroutine(something):
+                    something = yield defer.ensureDeferred(something)
+                elif is_async_generator(something):
+                    something = yield defer.ensureDeferred(
+                        something.__anext__(),
                     )
-                testargs[arg] = maybe_coroutine
+                testargs[arg] = something
         else:
             testargs = funcargs
         result = yield testfunction(**testargs)
