@@ -236,32 +236,6 @@ def test_blockon_in_fixture_async(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
-# @skip_if_no_async_await()
-# def test_blockon_in_fixture_async(testdir, cmd_opts):
-#     test_file = """
-#     from twisted.internet import defer
-#     import pytest
-#     import pytest_twisted
-#
-#     @pytest.fixture(scope="module", params=["fs", "imap", "web"])
-#     async def foo(request, reactor):
-#         d1, d2 = defer.Deferred(), defer.Deferred()
-#         reactor.callLater(0.01, d1.callback, 1)
-#         reactor.callLater(0.02, d2.callback, request.param)
-#         await d1
-#         return d2,
-#
-#     @pytest_twisted.async_callbacks
-#     async def test_succeed(foo):
-#         x = await foo[0]
-#         if x == "web":
-#             raise RuntimeError("baz")
-#     """
-#     testdir.makepyfile(test_file)
-#     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-#     assert_outcomes(rr, {"passed": 2, "failed": 1})
-
-
 @skip_if_no_async_await()
 def test_async_fixture(testdir, cmd_opts):
     test_file = """
