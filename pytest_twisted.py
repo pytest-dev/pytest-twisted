@@ -112,7 +112,7 @@ def _pytest_pyfunc_call(pyfuncitem):
         else:
             testargs = funcargs
         result = yield testfunction(**testargs)
-        return result
+        defer.returnValue(result)
 
 
 def pytest_pyfunc_call(pyfuncitem):
