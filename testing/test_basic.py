@@ -3,6 +3,8 @@ import textwrap
 
 import pytest
 
+import pytest_twisted
+
 
 def assert_outcomes(run_result, outcomes):
     formatted_output = format_run_result_output_for_assert(run_result)
@@ -39,7 +41,7 @@ def skip_if_reactor_not(expected_reactor):
 
 def skip_if_no_async_await():
     return pytest.mark.skipif(
-        sys.version_info < (3, 5),
+        not pytest_twisted.ASYNC_AWAIT,
         reason="async/await syntax not support on Python <3.5",
     )
 

@@ -1,4 +1,13 @@
 import inspect
+import sys
+
+ASYNC_AWAIT = sys.version_info >= (3, 5)
+
+if ASYNC_AWAIT:
+    import asyncio
+else:
+    asyncio = None
+
 
 import decorator
 import greenlet
