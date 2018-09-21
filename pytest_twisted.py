@@ -1,4 +1,13 @@
 import inspect
+import sys
+
+ASYNC_AWAIT = sys.version_info >= (3, 5)
+
+if ASYNC_AWAIT:
+    import asyncio
+else:
+    asyncio = None
+
 
 import decorator
 import greenlet
@@ -23,7 +32,11 @@ class _instances:
 
 
 def pytest_namespace():
-    return {"inlineCallbacks": inlineCallbacks, "blockon": blockon}
+    return {
+        "inlineCallbacks": inlineCallbacks,
+        "async_callbacks": async_callbacks,
+        "blockon": blockon,
+    }
 
 
 def blockon(d):
@@ -65,6 +78,11 @@ def inlineCallbacks(fun, *args, **kw):
     return defer.inlineCallbacks(fun)(*args, **kw)
 
 
+@decorator.decorator
+def async_callbacks(fun, *args, **kw):
+    return defer.ensureDeferred(fun(*args, **kw))
+
+
 def init_twisted_greenlet():
     if _instances.reactor is None or _instances.gr_twisted:
         return
@@ -83,19 +101,33 @@ def stop_twisted_greenlet():
         _instances.gr_twisted.switch()
 
 
+def is_coroutine(maybe_coroutine):
+    if ASYNC_AWAIT:
+        return asyncio.iscoroutine(maybe_coroutine)
+
+    return False
+
+
+@defer.inlineCallbacks
 def _pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
-        return testfunction(*pyfuncitem._args)
+        defer.returnValue(testfunction(*pyfuncitem._args))
     else:
         funcargs = pyfuncitem.funcargs
         if hasattr(pyfuncitem, "_fixtureinfo"):
             testargs = {}
             for arg in pyfuncitem._fixtureinfo.argnames:
-                testargs[arg] = funcargs[arg]
+                maybe_coroutine = funcargs[arg]
+                if is_coroutine(maybe_coroutine):
+                    maybe_coroutine = yield defer.ensureDeferred(
+                        maybe_coroutine,
+                    )
+                testargs[arg] = maybe_coroutine
         else:
             testargs = funcargs
-        return testfunction(**testargs)
+        result = yield testfunction(**testargs)
+        defer.returnValue(result)
 
 
 def pytest_pyfunc_call(pyfuncitem):
@@ -103,8 +135,14 @@ def pytest_pyfunc_call(pyfuncitem):
         if _instances.gr_twisted.dead:
             raise RuntimeError("twisted reactor has stopped")
 
+        @defer.inlineCallbacks
         def in_reactor(d, f, *args):
-            return defer.maybeDeferred(f, *args).chainDeferred(d)
+            try:
+                result = yield f(*args)
+            except Exception as e:
+                d.callback(failure.Failure(e))
+            else:
+                d.callback(result)
 
         d = defer.Deferred()
         _instances.reactor.callLater(
