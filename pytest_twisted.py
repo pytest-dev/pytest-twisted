@@ -149,14 +149,8 @@ def pytest_pyfunc_call(pyfuncitem):
         if _instances.gr_twisted.dead:
             raise RuntimeError("twisted reactor has stopped")
 
-        @defer.inlineCallbacks
         def in_reactor(d, f, *args):
-            try:
-                result = yield f(*args)
-            except Exception as e:
-                d.callback(failure.Failure(e))
-            else:
-                d.callback(result)
+            return defer.maybeDeferred(f, *args).chainDeferred(d)
 
         d = defer.Deferred()
         _instances.reactor.callLater(
