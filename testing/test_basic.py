@@ -309,3 +309,19 @@ def test_pytest_from_reactor_thread(testdir):
     assert_outcomes(rr, {"passed": 1, "failed": 1})
     # test embedded mode:
     assert testdir.run(sys.executable, "runner.py").ret == 0
+
+
+@skip_if_reactor_not("qt5reactor")
+def test_qwidget(testdir, cmd_opts):
+    conftest_file = """
+    """
+    testdir.makeconftest(conftest_file)
+    test_file = """
+    from PyQt5 import QtWidgets
+
+    def test_construct_qwidget():
+        QtWidgets.QWidget()
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert rr.ret == 0
