@@ -75,7 +75,7 @@ Waiting for deferreds in fixtures
 async/await fixtures
 ====================
 ``async``/``await`` fixtures can be used along with ``yield`` for normal
-pytest fixture semantics of setup, value teardown.
+pytest fixture semantics of setup, value, and teardown.
 
   @pytest.fixture
   async def foo():
