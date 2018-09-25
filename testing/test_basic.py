@@ -311,14 +311,19 @@ def test_pytest_from_reactor_thread(testdir):
     assert testdir.run(sys.executable, "runner.py").ret == 0
 
 
-qt_fixtures = ('qapp', 'qtbot')
+qt_fixtures = ('qapp', 'qtbot', 'nothing')
 
 
 @skip_if_reactor_not("qt5reactor")
 @pytest.mark.parametrize("fixture", qt_fixtures, ids=qt_fixtures)
 def test_qwidget(testdir, cmd_opts, fixture):
     test_file = """
+    import pytest
     from PyQt5 import QtWidgets
+
+    @pytest.fixture
+    def nothing():
+        return
 
     def test_construct_qwidget({fixture}):
         QtWidgets.QWidget()
