@@ -319,7 +319,7 @@ def test_qwidget(testdir, cmd_opts):
     test_file = """
     from PyQt5 import QtWidgets
 
-    def test_construct_qwidget():
+    def test_construct_qwidget(qapp):
         QtWidgets.QWidget()
     """
     testdir.makepyfile(test_file)
