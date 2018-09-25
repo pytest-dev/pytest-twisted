@@ -209,8 +209,8 @@ def test_wrong_reactor(testdir, cmd_opts):
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     error_text = "WrongReactorAlreadyInstalledError"
     assert (
-        error_text in rr.stderr.str()
-        or error_text in rr.stdout.str()
+        error_text in rr.stderr.str() or
+        error_text in rr.stdout.str()
     )
 
 
@@ -262,8 +262,8 @@ def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts):
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     error_text = "WrongReactorAlreadyInstalledError"
     assert (
-        error_text in rr.stderr.str()
-        or error_text in rr.stdout.str()
+        error_text in rr.stderr.str() or
+        error_text in rr.stdout.str()
     )
 
 
