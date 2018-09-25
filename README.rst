@@ -72,6 +72,21 @@ Waiting for deferreds in fixtures
       return pytest_twisted.blockon(d)
 
 
+async/await fixtures
+====================
+``async``/``await`` fixtures can be used along with ``yield`` for normal
+pytest fixture semantics of setup, value teardown.
+
+  @pytest.fixture
+  async def foo():
+      d1, d2 = defer.Deferred(), defer.Deferred()
+      reactor.callLater(0.01, d1.callback, 42)
+      reactor.callLater(0.02, d2.callback, 37)
+      value = await d1
+      yield value
+      await d2
+
+
 The twisted greenlet
 ====================
 Some libraries (e.g. corotwine) need to know the greenlet, which is
