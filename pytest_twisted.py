@@ -141,7 +141,7 @@ def init_default_reactor():
     )
 
 
-def init_qt5_reactor(request):
+def init_qt5_reactor():
     import pytestqt.plugin
     next(pytestqt.plugin.qapp(pytestqt.plugin.qapp_args()))
 
