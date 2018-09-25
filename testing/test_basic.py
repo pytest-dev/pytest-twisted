@@ -213,10 +213,12 @@ def test_wrong_reactor(testdir, cmd_opts):
 @skip_if_reactor_not("qt5reactor")
 def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts):
     conftest_file = """
+    import pytest
     import pytest_twisted as pt
     import pytestqt
     from twisted.internet import defer
 
+    @pytest.mark.trylast
     def pytest_configure(config):
         pt.init_qt5_reactor()
         d = defer.Deferred()

@@ -186,5 +186,6 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.mark.trylast
 def pytest_configure(config):
     reactor_installers[config.getoption("reactor")]()
