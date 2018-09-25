@@ -199,7 +199,6 @@ def test_async_fixture(testdir, cmd_opts):
     @pytest_twisted.inlineCallbacks
     def test_succeed(foo):
         x = yield foo[0]
-        print('+++', x)
         if x == "web":
             raise RuntimeError("baz")
     """
@@ -236,7 +235,6 @@ def test_async_fixture_yield(testdir, cmd_opts):
     @pytest_twisted.inlineCallbacks
     def test_succeed(foo):
         x = yield foo[0]
-        print('+++', x)
         if x == "web":
             raise RuntimeError("baz")
     """
