@@ -224,6 +224,9 @@ def test_async_fixture_yield(testdir, cmd_opts):
         reactor.callLater(0.02, d2.callback, request.param)
         await d1
 
+        # Twisted doesn't allow calling back with a Deferred as a value.
+        # This deferred is being wrapped up in a tuple to sneak through.
+        # https://github.com/twisted/twisted/blob/c0f1394c7bfb04d97c725a353a1f678fa6a1c602/src/twisted/internet/defer.py#L459
         yield d2,
 
         if request.param == "gopher":
