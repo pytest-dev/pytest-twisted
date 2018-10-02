@@ -207,6 +207,60 @@ def test_async_fixture(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
+@skip_if_no_async_await()
+def test_async_fixture_concurrent_teardown(testdir, cmd_opts):
+    test_file = """
+    import time
+    
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    def sleep(seconds):
+        d = defer.Deferred()
+
+        reactor.callLater(seconds, d.callback, None)
+
+        return d
+
+    short_times = []
+    long_times = []
+
+    short_time = 0.100
+    long_time = 1
+
+    @pytest.fixture
+    async def short():
+        yield 42
+
+        short_times.append(time.time())
+        await sleep(short_time)
+        short_times.append(time.time())
+
+    @pytest.fixture
+    async def long():
+        yield 37
+
+        long_times.append(time.time())
+        await sleep(short_time)
+        long_times.append(time.time())
+
+        assert len(short_times) == 2
+
+        # long should start before short finishes
+        assert long_times[0] < short_times[1]
+        # short should finish before long finishes
+        assert short_times[1] < long_times[1]
+
+    @pytest_twisted.inlineCallbacks
+    def test_succeed(short, long):
+        yield sleep(0)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 1})
+
+
 @skip_if_no_async_generators()
 def test_async_fixture_yield(testdir, cmd_opts):
     test_file = """
