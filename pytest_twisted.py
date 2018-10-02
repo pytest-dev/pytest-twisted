@@ -1,7 +1,10 @@
 import inspect
 import sys
 
+# https://docs.python.org/3/whatsnew/3.5.html#pep-492-coroutines-with-async-and-await-syntax
 ASYNC_AWAIT = sys.version_info >= (3, 5)
+
+# https://docs.python.org/3/whatsnew/3.6.html#pep-525-asynchronous-generators
 ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
 if ASYNC_AWAIT:
