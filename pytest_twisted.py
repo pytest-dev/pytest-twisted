@@ -131,11 +131,14 @@ def _pytest_pyfunc_call(pyfuncitem):
             testargs = funcargs
         result = yield testfunction(**testargs)
 
-        for async_generator in async_generators:
+        async_generator_deferreds = [
+            defer.ensureDeferred(g.__anext__())
+            for g in async_generators
+        ]
+
+        for d in async_generator_deferreds:
             try:
-                yield defer.ensureDeferred(
-                    async_generator.__anext__(),
-                )
+                yield d
             except StopAsyncIteration:
                 continue
             else:
