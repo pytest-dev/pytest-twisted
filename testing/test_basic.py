@@ -207,7 +207,7 @@ def test_async_fixture(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
-@skip_if_no_async_await()
+@skip_if_no_async_generators()
 def test_async_fixture_concurrent_teardown(testdir, cmd_opts):
     test_file = """
     import time
