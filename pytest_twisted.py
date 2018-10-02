@@ -122,7 +122,7 @@ def _pytest_pyfunc_call(pyfuncitem):
                 if is_coroutine(something):
                     something = yield defer.ensureDeferred(something)
                 elif is_async_generator(something):
-                    async_generators.append(something)
+                    async_generators.append((arg, something))
                     something = yield defer.ensureDeferred(
                         something.__anext__(),
                     )
@@ -132,17 +132,19 @@ def _pytest_pyfunc_call(pyfuncitem):
         result = yield testfunction(**testargs)
 
         async_generator_deferreds = [
-            defer.ensureDeferred(g.__anext__())
-            for g in async_generators
+            (arg, defer.ensureDeferred(g.__anext__()))
+            for arg, g in async_generators
         ]
 
-        for d in async_generator_deferreds:
+        for arg, d in async_generator_deferreds:
             try:
                 yield d
             except StopAsyncIteration:
                 continue
             else:
-                raise RuntimeError('async generator did not stop')
+                raise RuntimeError(
+                    'async fixture did not stop: {}'.format(arg),
+                )
 
         defer.returnValue(result)
 
