@@ -223,6 +223,7 @@ def test_async_fixture_concurrent_teardown(testdir, cmd_opts):
         yield 42
 
         there.callback(None)
+        reactor.callLater(5, here.cancel)
         await here
 
     @pytest.fixture
@@ -230,6 +231,7 @@ def test_async_fixture_concurrent_teardown(testdir, cmd_opts):
         yield 37
 
         here.callback(None)
+        reactor.callLater(5, there.cancel)
         await there
 
     def test_succeed(this, that):
