@@ -71,6 +71,15 @@ Waiting for deferreds in fixtures
       reactor.callLater(1.0, d.callback, 10)
       return pytest_twisted.blockon(d)
 
+Using Python3 coroutines
+========================
+You may use ``pytest_twisted.ensureDeferred`` as a decorator for test
+methods using Python3 ``async def`` coroutines::
+
+  @pytest.ensureDeferred
+  async def test_something():
+      pass
+
 
 The twisted greenlet
 ====================

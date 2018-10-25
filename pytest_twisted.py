@@ -23,7 +23,11 @@ class _instances:
 
 
 def pytest_namespace():
-    return {"inlineCallbacks": inlineCallbacks, "blockon": blockon}
+    return {
+        "inlineCallbacks": inlineCallbacks,
+        "blockon": blockon,
+        "ensureDeferred": ensureDeferred,
+    }
 
 
 def blockon(d):
@@ -63,6 +67,19 @@ def block_from_thread(d):
 @decorator.decorator
 def inlineCallbacks(fun, *args, **kw):
     return defer.inlineCallbacks(fun)(*args, **kw)
+
+
+@decorator.decorator
+def ensureDeferred(fun, *args, **kw):
+    """
+    A version of Twisted's ensureDeferred that can be used as a
+    decorator, e.g. to use co-routines for top-level tests::
+
+        @pytest.ensureDeferred
+        async def test_something(a_fixture):
+            await something_async()
+    """
+    return defer.ensureDeferred(fun(*args, **kw))
 
 
 def init_twisted_greenlet():
