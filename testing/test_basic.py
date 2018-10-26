@@ -42,7 +42,7 @@ def skip_if_reactor_not(expected_reactor):
 def skip_if_no_async_await():
     return pytest.mark.skipif(
         not pytest_twisted.ASYNC_AWAIT,
-        reason="async/await syntax not support on Python <3.5",
+        reason="async/await syntax not supported on Python <3.5",
     )
 
 
