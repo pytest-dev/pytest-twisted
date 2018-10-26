@@ -29,6 +29,7 @@ class _instances:
 def pytest_namespace():
     return {
         "inlineCallbacks": inlineCallbacks,
+        "async_yield": async_yield,
         "async_await": async_await,
         "blockon": blockon,
     }
