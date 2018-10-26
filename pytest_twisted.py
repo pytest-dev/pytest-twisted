@@ -1,14 +1,6 @@
 import inspect
 import sys
 
-ASYNC_AWAIT = sys.version_info >= (3, 5)
-
-if ASYNC_AWAIT:
-    import asyncio
-else:
-    asyncio = None
-
-
 import decorator
 import greenlet
 import pytest
@@ -16,6 +8,9 @@ import pytest
 from twisted.internet import error, defer
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
+
+
+ASYNC_AWAIT = sys.version_info >= (3, 5)
 
 
 class WrongReactorAlreadyInstalledError(Exception):
