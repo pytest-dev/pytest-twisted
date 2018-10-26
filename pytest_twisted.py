@@ -29,7 +29,7 @@ class _instances:
 def pytest_namespace():
     return {
         "inlineCallbacks": inlineCallbacks,
-        "async_callbacks": async_callbacks,
+        "ensureDeferred": ensureDeferred,
         "blockon": blockon,
     }
 
@@ -74,7 +74,7 @@ def inlineCallbacks(fun, *args, **kw):
 
 
 @decorator.decorator
-def async_callbacks(fun, *args, **kw):
+def ensureDeferred(fun, *args, **kw):
     return defer.ensureDeferred(fun(*args, **kw))
 
 

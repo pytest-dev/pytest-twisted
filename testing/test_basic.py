@@ -130,7 +130,7 @@ def test_inlineCallbacks(testdir, cmd_opts):
 
 
 @skip_if_no_async_await()
-def test_async_callbacks(testdir, cmd_opts):
+def test_ensureDeferred(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
@@ -140,7 +140,7 @@ def test_async_callbacks(testdir, cmd_opts):
     def foo(request):
         return request.param
 
-    @pytest_twisted.async_callbacks
+    @pytest_twisted.ensureDeferred
     async def test_succeed(foo):
         await defer.succeed(foo)
         if foo == "web":
@@ -211,7 +211,7 @@ def test_blockon_in_fixture_async(testdir, cmd_opts):
         pytest_twisted.blockon(d1)
         return d2
 
-    @pytest_twisted.async_callbacks
+    @pytest_twisted.ensureDeferred
     async def test_succeed(foo):
         x = await foo
         if x == "web":

@@ -62,13 +62,13 @@ functions, which take funcargs, does not work. Please use
       assert res == []
 
 
-async_callbacks
+ensureDeferred
 =================
 Using ``twisted.internet.defer.ensureDeferred`` as a decorator for test
 functions, which take funcargs, does not work. Please use
-``pytest_twisted.async_callbacks`` instead::
+``pytest_twisted.ensureDeferred`` instead::
 
-  @pytest_twisted.async_callbacks
+  @pytest_twisted.ensureDeferred
   async def test_some_stuff(tmpdir):
       res = await threads.deferToThread(os.listdir, tmpdir.strpath)
       assert res == []
