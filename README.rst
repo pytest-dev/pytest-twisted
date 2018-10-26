@@ -50,8 +50,8 @@ undesirably detected by ``pytest`` as an unknown hook.  One alternative
 is to ``import pytest_twisted as pt``.
 
 
-inlineCallbacks
-=================
+inlineCallbacks (async_yield)
+=============================
 Using ``twisted.internet.defer.inlineCallbacks`` as a decorator for test
 functions, which take funcargs, does not work. Please use
 ``pytest_twisted.inlineCallbacks`` instead::
@@ -61,6 +61,9 @@ functions, which take funcargs, does not work. Please use
       res = yield threads.deferToThread(os.listdir, tmpdir.strpath)
       assert res == []
 
+
+For symmetry with ``async_await`` below, ``pytest_twisted.inlineCallbacks``
+is also available as ``pytest_twisted.async_yield``.
 
 async_await
 =================

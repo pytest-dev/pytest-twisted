@@ -73,6 +73,9 @@ def inlineCallbacks(fun, *args, **kw):
     return defer.inlineCallbacks(fun)(*args, **kw)
 
 
+async_yield = inlineCallbacks
+
+
 @decorator.decorator
 def async_await(fun, *args, **kw):
     return defer.ensureDeferred(fun(*args, **kw))

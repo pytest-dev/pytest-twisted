@@ -52,6 +52,10 @@ def cmd_opts(request):
     return ("--reactor={}".format(reactor),)
 
 
+def test_async_yield_is_inlineCallbacks()
+    assert pytest_twisted.async_yield is pytest_twisted.inlineCallbacks
+
+
 def test_fail_later(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
