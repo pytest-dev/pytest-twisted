@@ -188,7 +188,8 @@ def test_async_fixture(testdir, cmd_opts):
     import pytest
     import pytest_twisted
 
-    @pytest.fixture(scope="function", params=["fs", "imap", "web"])
+    @pytest_twisted.async_fixture(scope="function", params=["fs", "imap", "web"])
+    @pytest.mark.redgreenblue
     async def foo(request):
         d1, d2 = defer.Deferred(), defer.Deferred()
         reactor.callLater(0.01, d1.callback, 1)
@@ -197,7 +198,7 @@ def test_async_fixture(testdir, cmd_opts):
         return d2,
 
     @pytest_twisted.inlineCallbacks
-    def test_succeed(foo):
+    def test_succeed_blue(foo):
         x = yield foo[0]
         if x == "web":
             raise RuntimeError("baz")
@@ -218,7 +219,7 @@ def test_async_fixture_concurrent_teardown(testdir, cmd_opts):
     here = defer.Deferred()
     there = defer.Deferred()
 
-    @pytest.fixture
+    @pytest_twisted.async_yield_fixture()
     async def this():
         yield 42
 
@@ -226,7 +227,7 @@ def test_async_fixture_concurrent_teardown(testdir, cmd_opts):
         reactor.callLater(5, here.cancel)
         await here
 
-    @pytest.fixture
+    @pytest_twisted.async_yield_fixture()
     async def that():
         yield 37
 
@@ -251,7 +252,7 @@ def test_async_fixture_yield(testdir, cmd_opts):
     import pytest
     import pytest_twisted
 
-    @pytest.fixture(
+    @pytest_twisted.async_yield_fixture(
         scope="function",
         params=["fs", "imap", "web", "gopher", "archie"],
     )

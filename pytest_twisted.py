@@ -1,3 +1,4 @@
+import functools
 import inspect
 import sys
 
@@ -96,18 +97,36 @@ def stop_twisted_greenlet():
         _instances.gr_twisted.switch()
 
 
-def is_coroutine(something):
-    if ASYNC_AWAIT:
-        return asyncio.iscoroutine(something)
+class _CoroutineWrapper:
+    def __init__(self, coroutine, mark):
+        self.coroutine = coroutine
+        self.mark = mark
 
-    return False
+
+def _marked_async_fixture(mark):
+    def fixture(*args, **kwargs):
+        def marker(f):
+            @functools.wraps(f)
+            def w(*args, **kwargs):
+                return _CoroutineWrapper(
+                    coroutine=f(*args, **kwargs),
+                    mark=mark,
+                )
+
+            return w
+
+        def decorator(f):
+            result = pytest.fixture(*args, **kwargs)(marker(f))
+
+            return result
+
+        return decorator
+
+    return fixture
 
 
-def is_async_generator(something):
-    if ASYNC_GENERATORS:
-        return inspect.isasyncgen(something)
-
-    return False
+async_fixture = _marked_async_fixture('async_fixture')
+async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 
 
 @defer.inlineCallbacks
@@ -122,20 +141,23 @@ def _pytest_pyfunc_call(pyfuncitem):
             testargs = {}
             for arg in pyfuncitem._fixtureinfo.argnames:
                 something = funcargs[arg]
-                if is_coroutine(something):
-                    something = yield defer.ensureDeferred(something)
-                elif is_async_generator(something):
-                    async_generators.append((arg, something))
-                    something = yield defer.ensureDeferred(
-                        something.__anext__(),
-                    )
+                if isinstance(something, _CoroutineWrapper):
+                    if something.mark == 'async_fixture':
+                        something = yield defer.ensureDeferred(
+                            something.coroutine
+                        )
+                    elif something.mark == 'async_yield_fixture':
+                        async_generators.append((arg, something))
+                        something = yield defer.ensureDeferred(
+                            something.coroutine.__anext__(),
+                        )
                 testargs[arg] = something
         else:
             testargs = funcargs
         result = yield testfunction(**testargs)
 
         async_generator_deferreds = [
-            (arg, defer.ensureDeferred(g.__anext__()))
+            (arg, defer.ensureDeferred(g.coroutine.__anext__()))
             for arg, g in async_generators
         ]
 
