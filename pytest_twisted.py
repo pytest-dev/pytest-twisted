@@ -22,8 +22,9 @@ class _instances:
     reactor = None
 
 
-def pytest_namespace():
-    return {"inlineCallbacks": inlineCallbacks, "blockon": blockon}
+def pytest_configure():
+    pytest.inlineCallbacks = inlineCallbacks
+    pytest.blockon = blockon
 
 
 def blockon(d):
