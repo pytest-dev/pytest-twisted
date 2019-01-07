@@ -29,12 +29,10 @@ def format_run_result_output_for_assert(run_result):
     )
 
 
-def skip_if_reactor_not(expected_reactor):
-    actual_reactor = pytest.config.getoption("reactor", "default")
-    return pytest.mark.skipif(
-        actual_reactor != expected_reactor,
-        reason="reactor is {} not {}".format(actual_reactor, expected_reactor),
-    )
+def skip_if_reactor_not(request, expected_reactor):
+    actual_reactor = request.config.getoption("reactor", "default")
+    if actual_reactor != expected_reactor:
+        pytest.skip("reactor is {} not {}".format(actual_reactor, expected_reactor))
 
 
 @pytest.fixture
@@ -165,8 +163,8 @@ def test_blockon_in_fixture(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
-@skip_if_reactor_not("default")
-def test_blockon_in_hook(testdir, cmd_opts):
+def test_blockon_in_hook(testdir, cmd_opts, request):
+    skip_if_reactor_not(request, "default")
     conftest_file = """
     import pytest_twisted as pt
     from twisted.internet import reactor, defer
@@ -193,8 +191,8 @@ def test_blockon_in_hook(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 1})
 
 
-@skip_if_reactor_not("default")
-def test_wrong_reactor(testdir, cmd_opts):
+def test_wrong_reactor(testdir, cmd_opts, request):
+    skip_if_reactor_not(request, "default")
     conftest_file = """
     def pytest_addhooks():
         import twisted.internet.reactor
@@ -210,8 +208,8 @@ def test_wrong_reactor(testdir, cmd_opts):
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
 
 
-@skip_if_reactor_not("qt5reactor")
-def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts):
+def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts, request):
+    skip_if_reactor_not(request, "qt5reactor")
     conftest_file = """
     import pytest_twisted as pt
     import pytestqt
@@ -240,8 +238,8 @@ def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 1})
 
 
-@skip_if_reactor_not("qt5reactor")
-def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts):
+def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts, request):
+    skip_if_reactor_not(request, "qt5reactor")
     conftest_file = """
     def pytest_addhooks():
         import twisted.internet.default
@@ -257,8 +255,8 @@ def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts):
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
 
 
-@skip_if_reactor_not("default")
-def test_pytest_from_reactor_thread(testdir):
+def test_pytest_from_reactor_thread(testdir, request):
+    skip_if_reactor_not(request, "default")
     test_file = """
     import pytest
     import pytest_twisted
