@@ -41,6 +41,14 @@ def cmd_opts(request):
     return ("--reactor={}".format(reactor),)
 
 
+def test_inline_callbacks_in_pytest():
+    assert hasattr(pytest, 'inlineCallbacks')
+
+
+def test_blockon_in_pytest():
+    assert hasattr(pytest, 'blockon')
+
+
 def test_fail_later(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
