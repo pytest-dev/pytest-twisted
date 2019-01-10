@@ -26,15 +26,6 @@ class _instances:
     reactor = None
 
 
-def pytest_namespace():
-    return {
-        "inlineCallbacks": inlineCallbacks,
-        "async_yield": async_yield,
-        "async_await": async_await,
-        "blockon": blockon,
-    }
-
-
 def blockon(d):
     if _config.external_reactor:
         return block_from_thread(d)
@@ -201,4 +192,8 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    pytest.inlineCallbacks = inlineCallbacks
+    pytest.blockon = blockon
+    pytest.async_yield = async_yield
+    pytest.async_await = async_await
     reactor_installers[config.getoption("reactor")]()
