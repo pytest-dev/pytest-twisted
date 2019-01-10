@@ -42,7 +42,7 @@ def cmd_opts(request):
 
 
 def test_inline_callbacks_in_pytest():
-    assert hasattr(pytest, 'inlineCallacks')
+    assert hasattr(pytest, 'inlineCallbacks')
 
 
 def test_blockon_in_pytest():
