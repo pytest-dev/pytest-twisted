@@ -8,11 +8,6 @@ ASYNC_AWAIT = sys.version_info >= (3, 5)
 # https://docs.python.org/3/whatsnew/3.6.html#pep-525-asynchronous-generators
 ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
-if ASYNC_AWAIT:
-    import asyncio
-else:
-    asyncio = None
-
 
 import decorator
 import greenlet
