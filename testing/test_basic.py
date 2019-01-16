@@ -58,14 +58,6 @@ def test_blockon_in_pytest():
     assert hasattr(pytest, 'blockon')
 
 
-def test_async_yield_in_pytest():
-    assert hasattr(pytest, 'async_yield')
-
-
-def test_async_await_in_pytest():
-    assert hasattr(pytest, 'async_await')
-
-
 def test_async_yield_is_inlineCallbacks():
     assert pytest_twisted.async_yield is pytest_twisted.inlineCallbacks
 

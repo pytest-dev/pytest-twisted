@@ -194,6 +194,4 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     pytest.inlineCallbacks = inlineCallbacks
     pytest.blockon = blockon
-    pytest.async_yield = async_yield
-    pytest.async_await = async_await
     reactor_installers[config.getoption("reactor")]()
