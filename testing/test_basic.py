@@ -61,10 +61,6 @@ def test_blockon_in_pytest():
     assert hasattr(pytest, 'blockon')
 
 
-def test_async_yield_is_inlineCallbacks():
-    assert pytest_twisted.async_yield is pytest_twisted.inlineCallbacks
-
-
 def test_fail_later(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
@@ -153,7 +149,7 @@ def test_async_await(testdir, cmd_opts):
     def foo(request):
         return request.param
 
-    @pytest_twisted.async_await
+    @pytest_twisted.ensureDeferred
     async def test_succeed(foo):
         await defer.succeed(foo)
         if foo == "web":
@@ -224,7 +220,7 @@ def test_blockon_in_fixture_async(testdir, cmd_opts):
         pytest_twisted.blockon(d1)
         return d2
 
-    @pytest_twisted.async_await
+    @pytest_twisted.ensureDeferred
     async def test_succeed(foo):
         x = await foo
         if x == "web":
