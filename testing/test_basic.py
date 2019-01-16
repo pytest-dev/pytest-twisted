@@ -6,6 +6,13 @@ import pytest
 import pytest_twisted
 
 
+# https://docs.python.org/3/whatsnew/3.5.html#pep-492-coroutines-with-async-and-await-syntax
+ASYNC_AWAIT = sys.version_info >= (3, 5)
+
+# https://docs.python.org/3/whatsnew/3.6.html#pep-525-asynchronous-generators
+ASYNC_GENERATORS = sys.version_info >= (3, 6)
+
+
 def assert_outcomes(run_result, outcomes):
     formatted_output = format_run_result_output_for_assert(run_result)
 
@@ -39,14 +46,14 @@ def skip_if_reactor_not(request, expected_reactor):
 
 def skip_if_no_async_await():
     return pytest.mark.skipif(
-        not pytest_twisted.ASYNC_AWAIT,
+        not ASYNC_AWAIT,
         reason="async/await syntax not support on Python <3.5",
     )
 
 
 def skip_if_no_async_generators():
     return pytest.mark.skipif(
-        not pytest_twisted.ASYNC_GENERATORS,
+        not ASYNC_GENERATORS,
         reason="async generators not support on Python <3.6",
     )
 
