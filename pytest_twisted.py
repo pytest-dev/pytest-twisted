@@ -171,7 +171,7 @@ def _pytest_pyfunc_call(pyfuncitem):
 
         async_generator_deferreds = [
             (arg, defer.ensureDeferred(g.coroutine.__anext__()))
-            for arg, g in async_generators
+            for arg, g in reversed(async_generators)
         ]
 
         for arg, d in async_generator_deferreds:
