@@ -115,9 +115,9 @@ That's all.
    :alt: Travis build status
    :target: https://travis-ci.org/pytest-dev/pytest-twisted
 
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/us5l0l9p7hyp2k6x/branch/master?svg=true
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/eb1vp9hysp463c66/branch/master?svg=true
    :alt: AppVeyor build status
-   :target: https://ci.appveyor.com/project/vtitor/pytest-twisted
+   :target: https://ci.appveyor.com/project/pytestbot/pytest-twisted
 
 .. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :alt: Black code style

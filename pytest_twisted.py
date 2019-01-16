@@ -36,10 +36,6 @@ class _instances:
     reactor = None
 
 
-def pytest_namespace():
-    return {"inlineCallbacks": inlineCallbacks, "blockon": blockon}
-
-
 def blockon(d):
     if _config.external_reactor:
         return block_from_thread(d)
@@ -260,4 +256,6 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    pytest.inlineCallbacks = inlineCallbacks
+    pytest.blockon = blockon
     reactor_installers[config.getoption("reactor")]()
