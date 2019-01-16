@@ -51,7 +51,7 @@ is to ``import pytest_twisted as pt``.
 
 
 inlineCallbacks
-=================
+===============
 Using ``twisted.internet.defer.inlineCallbacks`` as a decorator for test
 functions, which take funcargs, does not work. Please use
 ``pytest_twisted.inlineCallbacks`` instead::
@@ -60,6 +60,19 @@ functions, which take funcargs, does not work. Please use
   def test_some_stuff(tmpdir):
       res = yield threads.deferToThread(os.listdir, tmpdir.strpath)
       assert res == []
+
+
+ensureDeferred
+==============
+Using ``twisted.internet.defer.ensureDeferred`` as a decorator for test
+functions, which take funcargs, does not work. Please use
+``pytest_twisted.ensureDeferred`` instead::
+
+  @pytest_twisted.ensureDeferred
+  async def test_some_stuff(tmpdir):
+      res = await threads.deferToThread(os.listdir, tmpdir.strpath)
+      assert res == []
+
 
 Waiting for deferreds in fixtures
 =================================
