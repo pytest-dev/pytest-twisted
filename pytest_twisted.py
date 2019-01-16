@@ -22,6 +22,14 @@ class UnrecognizedCoroutineMarkError(Exception):
         )
 
 
+class AsyncGeneratorFixtureDidNotStopError(Exception):
+    @classmethod
+    def from_generator(cls, generator):
+        return cls(
+            'async fixture did not stop: {}'.format(generator),
+        )
+
+
 class _config:
     external_reactor = False
 
@@ -172,8 +180,8 @@ def _pytest_pyfunc_call(pyfuncitem):
             except StopAsyncIteration:
                 continue
             else:
-                raise RuntimeError(
-                    'async fixture did not stop: {}'.format(arg),
+                raise AsyncGeneratorFixtureDidNotStopError.from_generator(
+                    generator=arg,
                 )
 
         defer.returnValue(result)
