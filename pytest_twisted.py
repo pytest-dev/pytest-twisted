@@ -100,6 +100,7 @@ class _CoroutineWrapper:
 
 
 def _marked_async_fixture(mark):
+    @functools.wraps(pytest.fixture)
     def fixture(*args, **kwargs):
         def marker(f):
             @functools.wraps(f)
