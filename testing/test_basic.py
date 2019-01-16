@@ -6,6 +6,9 @@ import pytest
 import pytest_twisted
 
 
+ASYNC_AWAIT = sys.version_info >= (3, 5)
+
+
 def assert_outcomes(run_result, outcomes):
     formatted_output = format_run_result_output_for_assert(run_result)
 
@@ -39,7 +42,7 @@ def skip_if_reactor_not(request, expected_reactor):
 
 def skip_if_no_async_await():
     return pytest.mark.skipif(
-        not pytest_twisted.ASYNC_AWAIT,
+        not ASYNC_AWAIT,
         reason="async/await syntax not supported on Python <3.5",
     )
 

@@ -1,5 +1,4 @@
 import inspect
-import sys
 
 import decorator
 import greenlet
@@ -8,9 +7,6 @@ import pytest
 from twisted.internet import error, defer
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
-
-
-ASYNC_AWAIT = sys.version_info >= (3, 5)
 
 
 class WrongReactorAlreadyInstalledError(Exception):
