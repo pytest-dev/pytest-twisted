@@ -61,6 +61,11 @@ def inlineCallbacks(fun, *args, **kw):
     return defer.inlineCallbacks(fun)(*args, **kw)
 
 
+@decorator.decorator
+def ensureDeferred(fun, *args, **kw):
+    return defer.ensureDeferred(fun(*args, **kw))
+
+
 def init_twisted_greenlet():
     if _instances.reactor is None or _instances.gr_twisted:
         return

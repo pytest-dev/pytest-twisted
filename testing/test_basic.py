@@ -3,6 +3,11 @@ import textwrap
 
 import pytest
 
+import pytest_twisted
+
+
+ASYNC_AWAIT = sys.version_info >= (3, 5)
+
 
 def assert_outcomes(run_result, outcomes):
     formatted_output = format_run_result_output_for_assert(run_result)
@@ -33,6 +38,13 @@ def skip_if_reactor_not(request, expected_reactor):
     actual_reactor = request.config.getoption("reactor", "default")
     if actual_reactor != expected_reactor:
         pytest.skip("reactor is {} not {}".format(actual_reactor, expected_reactor))
+
+
+def skip_if_no_async_await():
+    return pytest.mark.skipif(
+        not ASYNC_AWAIT,
+        reason="async/await syntax not supported on Python <3.5",
+    )
 
 
 @pytest.fixture
@@ -126,6 +138,28 @@ def test_inlineCallbacks(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
+@skip_if_no_async_await()
+def test_async_await(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest.fixture(scope="module", params=["fs", "imap", "web"])
+    def foo(request):
+        return request.param
+
+    @pytest_twisted.ensureDeferred
+    async def test_succeed(foo):
+        await defer.succeed(foo)
+        if foo == "web":
+            raise RuntimeError("baz")
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2, "failed": 1})
+
+
 def test_twisted_greenlet(testdir, cmd_opts):
     test_file = """
     import pytest, greenlet
@@ -163,6 +197,32 @@ def test_blockon_in_fixture(testdir, cmd_opts):
     @pytest_twisted.inlineCallbacks
     def test_succeed(foo):
         x = yield foo
+        if x == "web":
+            raise RuntimeError("baz")
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2, "failed": 1})
+
+
+@skip_if_no_async_await()
+def test_blockon_in_fixture_async(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest.fixture(scope="module", params=["fs", "imap", "web"])
+    def foo(request):
+        d1, d2 = defer.Deferred(), defer.Deferred()
+        reactor.callLater(0.01, d1.callback, 1)
+        reactor.callLater(0.02, d2.callback, request.param)
+        pytest_twisted.blockon(d1)
+        return d2
+
+    @pytest_twisted.ensureDeferred
+    async def test_succeed(foo):
+        x = await foo
         if x == "web":
             raise RuntimeError("baz")
     """
