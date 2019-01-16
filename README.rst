@@ -90,7 +90,7 @@ async/await fixtures
 ``async``/``await`` fixtures can be used along with ``yield`` for normal
 pytest fixture semantics of setup, value, and teardown.
 
-  @pytest.fixture
+  @pytest_twisted.async_fixture
   async def foo():
       d1, d2 = defer.Deferred(), defer.Deferred()
       reactor.callLater(0.01, d1.callback, 42)
