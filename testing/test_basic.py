@@ -345,6 +345,54 @@ def test_async_fixture_yield(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2, "failed": 3})
 
 
+@skip_if_no_async_generators()
+def test_async_fixture_function_scope(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    check_me = 0
+
+    @pytest_twisted.async_yield_fixture(scope="function")
+    async def foo():
+        global check_me
+
+        if check_me != 0:
+            raise Exception('check_me already modified before fixture run')
+
+        check_me = 1
+
+        yield 42
+
+        if check_me != 2:
+            raise Exception(
+                'check_me not updated properly: {}'.format(check_me),
+            )
+
+        check_me = 0
+
+    def test_first(foo):
+        global check_me
+
+        assert check_me == 1
+        assert foo == 42
+
+        check_me = 2
+
+    def test_second(foo):
+        global check_me
+
+        assert check_me == 1
+        assert foo == 42
+
+        check_me = 2
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
+
+
 def test_blockon_in_hook(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "default")
     conftest_file = """

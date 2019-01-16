@@ -30,6 +30,14 @@ class AsyncGeneratorFixtureDidNotStopError(Exception):
         )
 
 
+class AsyncFixtureUnsupportedScopeError(Exception):
+    @classmethod
+    def from_scope(cls, scope):
+        return cls(
+            'Unsupported scope used for async fixture: {}'.format(scope)
+        )
+
+
 class _config:
     external_reactor = False
 
@@ -110,6 +118,14 @@ class _CoroutineWrapper:
 def _marked_async_fixture(mark):
     @functools.wraps(pytest.fixture)
     def fixture(*args, **kwargs):
+        try:
+            scope = args[0]
+        except IndexError:
+            scope = kwargs.get('scope', 'function')
+
+        if scope != 'function':
+            raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
+
         def marker(f):
             @functools.wraps(f)
             def w(*args, **kwargs):
@@ -159,7 +175,7 @@ def _pytest_pyfunc_call(pyfuncitem):
                         )
                     else:
                         raise UnrecognizedCoroutineMarkError.from_mark(
-                            wrapper.mark,
+                            mark=wrapper.mark,
                         )
                 else:
                     arg_value = funcargs[arg]
