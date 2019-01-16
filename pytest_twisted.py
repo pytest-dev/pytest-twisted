@@ -14,6 +14,14 @@ class WrongReactorAlreadyInstalledError(Exception):
     pass
 
 
+class UnrecognizedCoroutineMarkError(Exception):
+    @classmethod
+    def from_mark(cls, mark):
+        return cls(
+            'Coroutine wrapper mark not recognized: {}'.format(repr(mark)),
+        )
+
+
 class _config:
     external_reactor = False
 
@@ -128,18 +136,26 @@ def _pytest_pyfunc_call(pyfuncitem):
         if hasattr(pyfuncitem, "_fixtureinfo"):
             testargs = {}
             for arg in pyfuncitem._fixtureinfo.argnames:
-                something = funcargs[arg]
-                if isinstance(something, _CoroutineWrapper):
-                    if something.mark == 'async_fixture':
-                        something = yield defer.ensureDeferred(
-                            something.coroutine
+                if isinstance(funcargs[arg], _CoroutineWrapper):
+                    wrapper = funcargs[arg]
+
+                    if wrapper.mark == 'async_fixture':
+                        arg_value = yield defer.ensureDeferred(
+                            wrapper.coroutine
                         )
-                    elif something.mark == 'async_yield_fixture':
-                        async_generators.append((arg, something))
-                        something = yield defer.ensureDeferred(
-                            something.coroutine.__anext__(),
+                    elif wrapper.mark == 'async_yield_fixture':
+                        async_generators.append((arg, wrapper))
+                        arg_value = yield defer.ensureDeferred(
+                            wrapper.coroutine.__anext__(),
                         )
-                testargs[arg] = something
+                    else:
+                        raise UnrecognizedCoroutineMarkError.from_mark(
+                            wrapper.mark,
+                        )
+                else:
+                    arg_value = funcargs[arg]
+
+                testargs[arg] = arg_value
         else:
             testargs = funcargs
         result = yield testfunction(**testargs)
