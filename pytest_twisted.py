@@ -1,4 +1,6 @@
+import functools
 import inspect
+import warnings
 
 import decorator
 import greenlet
@@ -20,6 +22,25 @@ class _config:
 class _instances:
     gr_twisted = None
     reactor = None
+
+
+def _deprecate(deprecated, recommended):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            warnings.warn(
+                '{deprecated} has been deprecated, use {recommended}'.format(
+                    deprecated=deprecated,
+                    recommended=recommended,
+                ),
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return f(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def blockon(d):
@@ -185,6 +206,13 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    pytest.inlineCallbacks = inlineCallbacks
-    pytest.blockon = blockon
+    pytest.inlineCallbacks = _deprecate(
+        deprecated='pytest.inlineCallbacks',
+        recommended='pytest_twisted.inlineCallbacks',
+    )(inlineCallbacks)
+    pytest.blockon = _deprecate(
+        deprecated='pytest.blockon',
+        recommended='pytest_twisted.blockon',
+    )(blockon)
+
     reactor_installers[config.getoption("reactor")]()

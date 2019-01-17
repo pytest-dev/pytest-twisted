@@ -57,8 +57,71 @@ def test_inline_callbacks_in_pytest():
     assert hasattr(pytest, 'inlineCallbacks')
 
 
+def test_inline_callbacks_in_pytest_deprecation(testdir, cmd_opts):
+    test_file = """
+    import warnings
+
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    warnings.simplefilter("always")
+
+    @pytest.mark.parametrize(
+        argnames='decorator, warning_count',
+        argvalues=[
+            [pytest.inlineCallbacks, 1],
+            [pytest_twisted.inlineCallbacks, 0],
+        ],
+    )
+    def test_inline_callbacks_in_pytest_deprecated(decorator, warning_count):
+        with warnings.catch_warnings(record=True) as w:
+            @decorator
+            def f():
+                yield 42
+
+        assert len(w) == warning_count
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
+
+
 def test_blockon_in_pytest():
     assert hasattr(pytest, 'blockon')
+
+
+def test_blockon_in_pytest_deprecation(testdir, cmd_opts):
+    test_file = """
+    import warnings
+
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    warnings.simplefilter("always")
+
+    @pytest.fixture(
+        scope="module",
+        params=[
+            [pytest.blockon, 1],
+            [pytest_twisted.blockon, 0],
+        ],
+    )
+    def foo(request):
+        d = defer.Deferred()
+        d.callback(None)
+        with warnings.catch_warnings(record=True) as w:
+            request.param[0](d)
+
+        return (w, request.param[1])
+
+    def test_succeed(foo):
+        assert len(foo[0]) == foo[1]
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
 
 
 def test_fail_later(testdir, cmd_opts):
