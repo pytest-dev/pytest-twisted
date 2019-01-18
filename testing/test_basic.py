@@ -93,37 +93,44 @@ def test_blockon_in_pytest():
     assert hasattr(pytest, 'blockon')
 
 
-def test_blockon_in_pytest_deprecation(testdir, cmd_opts):
+@pytest.mark.parametrize(
+    'function, should_warn',
+    (
+        ('pytest.blockon', True),
+        ('pytest_twisted.blockon', False),
+    ),
+)
+def test_blockon_in_pytest_deprecation(
+        testdir,
+        cmd_opts,
+        function,
+        should_warn,
+):
+    import_path, _, _ = function.rpartition('.')
     test_file = """
     import warnings
 
     from twisted.internet import reactor, defer
     import pytest
-    import pytest_twisted
+    import {import_path}
 
-    warnings.simplefilter("always")
-
-    @pytest.fixture(
-        scope="module",
-        params=[
-            [pytest.blockon, 1],
-            [pytest_twisted.blockon, 0],
-        ],
-    )
+    @pytest.fixture
     def foo(request):
         d = defer.Deferred()
         d.callback(None)
-        with warnings.catch_warnings(record=True) as w:
-            request.param[0](d)
-
-        return (w, request.param[1])
+        {function}(d)
 
     def test_succeed(foo):
-        assert len(foo[0]) == foo[1]
-    """
+        pass
+    """.format(import_path=import_path, function=function)
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert_outcomes(rr, {"passed": 2})
+
+    expected_outcomes = {"passed": 1}
+    if should_warn:
+        expected_outcomes["warnings"] = 1
+
+    assert_outcomes(rr, expected_outcomes)
 
 
 def test_fail_later(testdir, cmd_opts):
