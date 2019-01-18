@@ -57,34 +57,36 @@ def test_inline_callbacks_in_pytest():
     assert hasattr(pytest, 'inlineCallbacks')
 
 
-def test_inline_callbacks_in_pytest_deprecation(testdir, cmd_opts):
+@pytest.mark.parametrize(
+    'decorator, should_warn',
+    (
+        ('pytest.inlineCallbacks', True),
+        ('pytest_twisted.inlineCallbacks', False),
+    ),
+)
+def test_inline_callbacks_in_pytest_deprecation(
+        testdir,
+        cmd_opts,
+        decorator,
+        should_warn,
+):
+    import_path, _, _ = decorator.rpartition('.')
     test_file = """
-    import warnings
+    import {import_path}
 
-    from twisted.internet import reactor, defer
-    import pytest
-    import pytest_twisted
-
-    warnings.simplefilter("always")
-
-    @pytest.mark.parametrize(
-        argnames='decorator, warning_count',
-        argvalues=[
-            [pytest.inlineCallbacks, 1],
-            [pytest_twisted.inlineCallbacks, 0],
-        ],
-    )
-    def test_inline_callbacks_in_pytest_deprecated(decorator, warning_count):
-        with warnings.catch_warnings(record=True) as w:
-            @decorator
-            def f():
-                yield 42
-
-        assert len(w) == warning_count
-    """
+    def test_deprecation():
+        @{decorator}
+        def f():
+            yield 42
+    """.format(import_path=import_path, decorator=decorator)
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert_outcomes(rr, {"passed": 2})
+
+    expected_outcomes = {"passed": 1}
+    if should_warn:
+        expected_outcomes["warnings"] = 1
+
+    assert_outcomes(rr, expected_outcomes)
 
 
 def test_blockon_in_pytest():
