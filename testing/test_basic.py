@@ -57,8 +57,80 @@ def test_inline_callbacks_in_pytest():
     assert hasattr(pytest, 'inlineCallbacks')
 
 
+@pytest.mark.parametrize(
+    'decorator, should_warn',
+    (
+        ('pytest.inlineCallbacks', True),
+        ('pytest_twisted.inlineCallbacks', False),
+    ),
+)
+def test_inline_callbacks_in_pytest_deprecation(
+        testdir,
+        cmd_opts,
+        decorator,
+        should_warn,
+):
+    import_path, _, _ = decorator.rpartition('.')
+    test_file = """
+    import {import_path}
+
+    def test_deprecation():
+        @{decorator}
+        def f():
+            yield 42
+    """.format(import_path=import_path, decorator=decorator)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+
+    expected_outcomes = {"passed": 1}
+    if should_warn:
+        expected_outcomes["warnings"] = 1
+
+    assert_outcomes(rr, expected_outcomes)
+
+
 def test_blockon_in_pytest():
     assert hasattr(pytest, 'blockon')
+
+
+@pytest.mark.parametrize(
+    'function, should_warn',
+    (
+        ('pytest.blockon', True),
+        ('pytest_twisted.blockon', False),
+    ),
+)
+def test_blockon_in_pytest_deprecation(
+        testdir,
+        cmd_opts,
+        function,
+        should_warn,
+):
+    import_path, _, _ = function.rpartition('.')
+    test_file = """
+    import warnings
+
+    from twisted.internet import reactor, defer
+    import pytest
+    import {import_path}
+
+    @pytest.fixture
+    def foo(request):
+        d = defer.Deferred()
+        d.callback(None)
+        {function}(d)
+
+    def test_succeed(foo):
+        pass
+    """.format(import_path=import_path, function=function)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+
+    expected_outcomes = {"passed": 1}
+    if should_warn:
+        expected_outcomes["warnings"] = 1
+
+    assert_outcomes(rr, expected_outcomes)
 
 
 def test_fail_later(testdir, cmd_opts):

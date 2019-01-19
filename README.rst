@@ -98,7 +98,16 @@ corotwine work with pytest-twisted::
       protocol.MAIN = twisted_greenlet
 
 
-That's all.
+That's (almost) all.
+
+============
+Deprecations
+============
+
+``pytest.blockon``
+    Use ``pytest_twisted.blockon``
+``pytest.inlineCallbacks``
+    Use ``pytest_twisted.inlineCallbacks``
 
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pytest-twisted.svg
