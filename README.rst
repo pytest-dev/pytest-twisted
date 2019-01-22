@@ -7,8 +7,8 @@ pytest-twisted - test twisted code with pytest
 |PyPI| |Pythons| |Travis| |AppVeyor| |Black|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
-:Version: 1.8
-:Date:    2018-05-01
+:Version: 1.9
+:Date:    2019-01-21
 :Download: https://pypi.python.org/pypi/pytest-twisted#downloads
 :Code: https://github.com/pytest-dev/pytest-twisted
 
@@ -100,9 +100,13 @@ corotwine work with pytest-twisted::
 
 That's (almost) all.
 
-============
+
 Deprecations
 ============
+
+----
+v1.9
+----
 
 ``pytest.blockon``
     Use ``pytest_twisted.blockon``

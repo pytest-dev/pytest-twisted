@@ -5,9 +5,10 @@ with open("README.rst") as f:
 
 setup(
     name="pytest-twisted",
-    version="1.8",
+    version="1.9",
     description="A twisted plugin for py.test.",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="Ralf Schmitt, Kyle Altendorf, Victor Titor",
     author_email="ralf@brainbot.com",
     url="https://github.com/pytest-dev/pytest-twisted",
