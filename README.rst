@@ -7,8 +7,8 @@ pytest-twisted - test twisted code with pytest
 |PyPI| |Pythons| |Travis| |AppVeyor| |Black|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
-:Version: 1.8
-:Date:    2018-05-01
+:Version: 1.9
+:Date:    2019-01-21
 :Download: https://pypi.python.org/pypi/pytest-twisted#downloads
 :Code: https://github.com/pytest-dev/pytest-twisted
 
@@ -51,7 +51,7 @@ is to ``import pytest_twisted as pt``.
 
 
 inlineCallbacks
-=================
+===============
 Using ``twisted.internet.defer.inlineCallbacks`` as a decorator for test
 functions, which take funcargs, does not work. Please use
 ``pytest_twisted.inlineCallbacks`` instead::
@@ -60,6 +60,19 @@ functions, which take funcargs, does not work. Please use
   def test_some_stuff(tmpdir):
       res = yield threads.deferToThread(os.listdir, tmpdir.strpath)
       assert res == []
+
+
+ensureDeferred
+==============
+Using ``twisted.internet.defer.ensureDeferred`` as a decorator for test
+functions, which take funcargs, does not work. Please use
+``pytest_twisted.ensureDeferred`` instead::
+
+  @pytest_twisted.ensureDeferred
+  async def test_some_stuff(tmpdir):
+      res = await threads.deferToThread(os.listdir, tmpdir.strpath)
+      assert res == []
+
 
 Waiting for deferreds in fixtures
 =================================
@@ -85,7 +98,20 @@ corotwine work with pytest-twisted::
       protocol.MAIN = twisted_greenlet
 
 
-That's all.
+That's (almost) all.
+
+
+Deprecations
+============
+
+----
+v1.9
+----
+
+``pytest.blockon``
+    Use ``pytest_twisted.blockon``
+``pytest.inlineCallbacks``
+    Use ``pytest_twisted.inlineCallbacks``
 
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pytest-twisted.svg
@@ -100,9 +126,9 @@ That's all.
    :alt: Travis build status
    :target: https://travis-ci.org/pytest-dev/pytest-twisted
 
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/us5l0l9p7hyp2k6x/branch/master?svg=true
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/eb1vp9hysp463c66/branch/master?svg=true
    :alt: AppVeyor build status
-   :target: https://ci.appveyor.com/project/vtitor/pytest-twisted
+   :target: https://ci.appveyor.com/project/pytestbot/pytest-twisted
 
 .. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :alt: Black code style
