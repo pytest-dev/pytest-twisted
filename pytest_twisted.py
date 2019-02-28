@@ -1,4 +1,5 @@
 import functools
+import gc
 import inspect
 import warnings
 
@@ -8,6 +9,7 @@ import pytest
 
 from twisted.internet import error, defer
 from twisted.internet.threads import blockingCallFromThread
+from twisted.logger import globalLogPublisher
 from twisted.python import failure
 
 
@@ -75,6 +77,60 @@ def blockon_default(d):
 
 def block_from_thread(d):
     return blockingCallFromThread(_instances.reactor, lambda x: x, d)
+
+
+class _Observer:
+    def __init__(self):
+        self.failures = []
+        self.asserted = False
+
+    def register(self):
+        globalLogPublisher.addObserver(self)
+
+    def __call__(self, event_dict):
+        is_error = event_dict.get('isError')
+        s = 'Unhandled error in Deferred'.lower()
+        log_format = event_dict.get('log_format')
+        if log_format is None:
+            log_format = ''
+        is_unhandled = s in log_format.lower()
+
+        if is_error and is_unhandled:
+            self.failures.append(event_dict)
+
+    def assert_empty(self):
+        self.asserted = True
+
+        gc.collect()
+        globalLogPublisher.removeObserver(self)
+
+        assert self.failures == []
+
+
+@pytest.fixture(scope='function')
+def unhandled_errback_observer():
+    observer = _Observer()
+    observer.register()
+
+    yield observer
+
+    if not observer.asserted:
+        observer.assert_empty()
+
+
+def assert_on_unhandled_errbacks(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        observer = _Observer()
+        observer.register()
+
+        result = f(*args, **kwargs)
+
+        observer.assert_empty()
+
+        return result
+
+    return wrapped
 
 
 @decorator.decorator

@@ -447,3 +447,71 @@ def test_pytest_from_reactor_thread(testdir, request):
     assert_outcomes(rr, {"passed": 1, "failed": 1})
     # test embedded mode:
     assert testdir.run(sys.executable, "runner.py").ret == 0
+
+
+def test_no_unhandled_errbacks_to_assert(testdir, cmd_opts):
+    test_file = """
+    def test_fail(unhandled_errback_observer):
+        unhandled_errback_observer.assert_empty()
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    assert_outcomes(rr, {"passed": 1, "error": None})
+
+
+def test_an_unhandled_errback_to_auto_assert(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet.defer import Deferred
+
+    def test_fail(unhandled_errback_observer):
+        d = Deferred()
+        d.errback(42)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    assert_outcomes(rr, {"passed": 1, "error": 1})
+
+
+def test_an_unhandled_errback_to_manually_assert(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet.defer import Deferred
+
+    def test_fail(unhandled_errback_observer):
+        d = Deferred()
+        d.errback(42)
+        
+        del d
+        unhandled_errback_observer.assert_empty()
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    assert_outcomes(rr, {"failed": 1})
+
+
+def test_no_unhandled_errbacks_to_assert_decorator(testdir, cmd_opts):
+    test_file = """
+    import pytest_twisted
+
+    @pytest_twisted.assert_on_unhandled_errbacks
+    def test_fail():
+        pass
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    assert_outcomes(rr, {"passed": 1})
+
+
+def test_an_unhandled_errback_to_assert_decorator(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet.defer import Deferred
+
+    import pytest_twisted
+
+    @pytest_twisted.assert_on_unhandled_errbacks
+    def test_fail():
+        d = Deferred()
+        d.errback(42)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    assert_outcomes(rr, {"failed": 1})
