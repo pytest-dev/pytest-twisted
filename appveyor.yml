@@ -20,16 +20,16 @@ environment:
     - TOXENV: py35-defaultreactor, win-py35-qt5reactor, py35-asyncioreactor
       PYTHON: "C:\\Python35-x64"
 
-    - TOXENV: py36-defaultreactor, win-py36-qt5reactor, py35-asyncioreactor
+    - TOXENV: py36-defaultreactor, win-py36-qt5reactor, py36-asyncioreactor
       PYTHON: "C:\\Python36"
 
-    - TOXENV: py36-defaultreactor, win-py36-qt5reactor, py35-asyncioreactor
+    - TOXENV: py36-defaultreactor, win-py36-qt5reactor, py36-asyncioreactor
       PYTHON: "C:\\Python36-x64"
 
-    - TOXENV: py37-defaultreactor, win-py37-qt5reactor, py35-asyncioreactor
+    - TOXENV: py37-defaultreactor, win-py37-qt5reactor, py37-asyncioreactor
       PYTHON: "C:\\Python37"
 
-    - TOXENV: py37-defaultreactor, win-py37-qt5reactor, py35-asyncioreactor
+    - TOXENV: py37-defaultreactor, win-py37-qt5reactor, py37-asyncioreactor
       PYTHON: "C:\\Python37-x64"
 
 install:
