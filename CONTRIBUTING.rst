@@ -8,15 +8,26 @@ What it takes to add a new reactor:
 
 * In ``testing/test_basic.py``
 
-  * Add ``test_blockon_in_hook_with_foo()`` decorated by ``@skip_if_reactor_not('foo')``
-  * Add ``test_wrong_reactor_with_foo()`` decorated by ``@skip_if_reactor_not('foo')``
+  * Add ``test_blockon_in_hook_with_foo()`` with ``skip_if_reactor_not('foo')`` as the first line
+  * Add ``test_wrong_reactor_with_foo()`` with ``skip_if_reactor_not('foo')`` as the first line
 
 * In ``tox.ini``
 
   * Adjust ``envlist`` to include the ``fooreactor`` factor for the appropriate versions of Python
   * Add conditional ``deps`` for the new reactor such as ``foo: foobar`` to the appropriate test environments
-  * Add the conditional assignment ``foo: reactor_option=foo`` to ``setenv`` in the appropriate test environments
+  * Add ``fooreactor: pytest --reactor=foo`` to the commands list
 
 * In ``.travis.yml``
 
   * Consider any extra system packages which may be required
+
+* In ``appveyor.yml``
+
+  * Add the new reactor environment to the ``TOXENV`` for each relevant Python
+  
+Reference reactor additions:
+  * `asyncio`_
+  * `qt5reactor`_
+
+.. _`asyncio`: https://github.com/pytest-dev/pytest-twisted/pull/63
+.. _`qt5reactor`: https://github.com/pytest-dev/pytest-twisted/pull/16
