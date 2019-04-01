@@ -3,8 +3,6 @@ import textwrap
 
 import pytest
 
-import pytest_twisted
-
 
 ASYNC_AWAIT = sys.version_info >= (3, 5)
 
@@ -37,7 +35,9 @@ def format_run_result_output_for_assert(run_result):
 def skip_if_reactor_not(request, expected_reactor):
     actual_reactor = request.config.getoption("reactor", "default")
     if actual_reactor != expected_reactor:
-        pytest.skip("reactor is {} not {}".format(actual_reactor, expected_reactor))
+        pytest.skip(
+            "reactor is {} not {}".format(actual_reactor, expected_reactor),
+        )
 
 
 def skip_if_no_async_await():

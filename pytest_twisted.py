@@ -107,17 +107,14 @@ def stop_twisted_greenlet():
 
 def _pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
-    if pyfuncitem._isyieldedfunction():
-        return testfunction(*pyfuncitem._args)
+    funcargs = pyfuncitem.funcargs
+    if hasattr(pyfuncitem, "_fixtureinfo"):
+        testargs = {}
+        for arg in pyfuncitem._fixtureinfo.argnames:
+            testargs[arg] = funcargs[arg]
     else:
-        funcargs = pyfuncitem.funcargs
-        if hasattr(pyfuncitem, "_fixtureinfo"):
-            testargs = {}
-            for arg in pyfuncitem._fixtureinfo.argnames:
-                testargs[arg] = funcargs[arg]
-        else:
-            testargs = funcargs
-        return testfunction(**testargs)
+        testargs = funcargs
+    return testfunction(**testargs)
 
 
 def pytest_pyfunc_call(pyfuncitem):
