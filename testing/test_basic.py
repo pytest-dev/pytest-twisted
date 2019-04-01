@@ -3,8 +3,6 @@ import textwrap
 
 import pytest
 
-import pytest_twisted
-
 
 ASYNC_AWAIT = sys.version_info >= (3, 5)
 
