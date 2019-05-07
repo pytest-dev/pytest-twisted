@@ -163,17 +163,14 @@ def stop_twisted_greenlet():
 
 def _pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
-    if pyfuncitem._isyieldedfunction():
-        return testfunction(*pyfuncitem._args)
+    funcargs = pyfuncitem.funcargs
+    if hasattr(pyfuncitem, "_fixtureinfo"):
+        testargs = {}
+        for arg in pyfuncitem._fixtureinfo.argnames:
+            testargs[arg] = funcargs[arg]
     else:
-        funcargs = pyfuncitem.funcargs
-        if hasattr(pyfuncitem, "_fixtureinfo"):
-            testargs = {}
-            for arg in pyfuncitem._fixtureinfo.argnames:
-                testargs[arg] = funcargs[arg]
-        else:
-            testargs = funcargs
-        return testfunction(**testargs)
+        testargs = funcargs
+    return testfunction(**testargs)
 
 
 def pytest_pyfunc_call(pyfuncitem):
@@ -227,9 +224,19 @@ def init_qt5_reactor():
     )
 
 
+def init_asyncio_reactor():
+    from twisted.internet import asyncioreactor
+
+    _install_reactor(
+        reactor_installer=asyncioreactor.install,
+        reactor_type=asyncioreactor.AsyncioSelectorReactor,
+    )
+
+
 reactor_installers = {
     "default": init_default_reactor,
     "qt5reactor": init_qt5_reactor,
+    "asyncio": init_asyncio_reactor,
 }
 
 

@@ -3,8 +3,6 @@ import textwrap
 
 import pytest
 
-import pytest_twisted
-
 
 ASYNC_AWAIT = sys.version_info >= (3, 5)
 
@@ -37,7 +35,9 @@ def format_run_result_output_for_assert(run_result):
 def skip_if_reactor_not(request, expected_reactor):
     actual_reactor = request.config.getoption("reactor", "default")
     if actual_reactor != expected_reactor:
-        pytest.skip("reactor is {} not {}".format(actual_reactor, expected_reactor))
+        pytest.skip(
+            "reactor is {} not {}".format(actual_reactor, expected_reactor),
+        )
 
 
 def skip_if_no_async_await():
@@ -449,6 +449,52 @@ def test_pytest_from_reactor_thread(testdir, request):
     assert testdir.run(sys.executable, "runner.py").ret == 0
 
 
+def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
+    skip_if_reactor_not(request, "asyncio")
+    conftest_file = """
+    import pytest_twisted as pt
+    from twisted.internet import defer
+
+    def pytest_configure(config):
+        pt.init_asyncio_reactor()
+        d = defer.Deferred()
+
+        from twisted.internet import reactor
+
+        reactor.callLater(0.01, d.callback, 1)
+        pt.blockon(d)
+    """
+    testdir.makeconftest(conftest_file)
+    test_file = """
+    from twisted.internet import reactor, defer
+
+    def test_succeed():
+        d = defer.Deferred()
+        reactor.callLater(0.01, d.callback, 1)
+        return d
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 1})
+
+
+def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
+    skip_if_reactor_not(request, "asyncio")
+    conftest_file = """
+    def pytest_addhooks():
+        import twisted.internet.default
+        twisted.internet.default.install()
+    """
+    testdir.makeconftest(conftest_file)
+    test_file = """
+    def test_succeed():
+        pass
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
+
+    
 def test_no_unhandled_errbacks_to_assert(testdir, cmd_opts):
     test_file = """
     def test_fail(unhandled_errback_observer):
