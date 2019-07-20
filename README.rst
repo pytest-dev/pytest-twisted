@@ -53,7 +53,7 @@ is to ``import pytest_twisted as pt``.
 inlineCallbacks
 ===============
 Using ``twisted.internet.defer.inlineCallbacks`` as a decorator for test
-functions, which take funcargs, does not work. Please use
+functions, which use fixtures, does not work. Please use
 ``pytest_twisted.inlineCallbacks`` instead::
 
   @pytest_twisted.inlineCallbacks
@@ -65,7 +65,7 @@ functions, which take funcargs, does not work. Please use
 ensureDeferred
 ==============
 Using ``twisted.internet.defer.ensureDeferred`` as a decorator for test
-functions, which take funcargs, does not work. Please use
+functions, which use fixtures, does not work. Please use
 ``pytest_twisted.ensureDeferred`` instead::
 
   @pytest_twisted.ensureDeferred
@@ -89,7 +89,7 @@ The twisted greenlet
 ====================
 Some libraries (e.g. corotwine) need to know the greenlet, which is
 running the twisted reactor. It's available from the
-``twisted_greenlet`` funcarg. The following code can be used to make
+``twisted_greenlet`` fixture. The following code can be used to make
 corotwine work with pytest-twisted::
 
   @pytest.fixture(scope="session", autouse=True)
