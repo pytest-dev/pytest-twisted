@@ -33,11 +33,9 @@ The plugin is available after installation and can be disabled using
 By default ``twisted.internet.default`` is used to install the reactor.
 This creates the same reactor that ``import twisted.internet.reactor``
 would.  Alternative reactors can be specified using the ``--reactor``
-option.
-
-Presently only ``qt5reactor`` is supported for use with ``pyqt5``
-and ``pytest-qt``. This `guide`_ describes how to add support for
-a new reactor.
+option.  This presently supports ``qt5reactor`` for use with ``pyqt5``
+and ``pytest-qt`` as well as ``asyncio``. This `guide`_ describes how to add
+support for a new reactor.
 
 The reactor is automatically created prior to the first test but can
 be explicitly installed earlier by calling
