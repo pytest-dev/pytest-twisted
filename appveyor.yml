@@ -8,12 +8,6 @@ environment:
     - TOXENV: py27-defaultreactor
       PYTHON: "C:\\Python27-x64"
 
-    - TOXENV: py34-defaultreactor
-      PYTHON: "C:\\Python34"
-
-    - TOXENV: py34-defaultreactor
-      PYTHON: "C:\\Python34-x64"
-
     - TOXENV: py35-defaultreactor, win-py35-qt5reactor, py35-asyncioreactor
       PYTHON: "C:\\Python35"
 
