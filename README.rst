@@ -19,7 +19,7 @@ objects and pytest will wait for their completion with this plugin.
 
 
 Python 2 support plans
-==================
+======================
 
 At some point it may become impractical to retain Python 2 support.
 Given the small size and very low amount of development it seems
