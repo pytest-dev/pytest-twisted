@@ -87,7 +87,7 @@ async/await fixtures
 ====================
 ``async``/``await`` fixtures can be used along with ``yield`` for normal
 pytest fixture semantics of setup, value, and teardown.  At present only
-function scope is supported.
+function scope is supported::
 
   @pytest_twisted.async_fixture
   async def foo():
