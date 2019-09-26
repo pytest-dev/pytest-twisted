@@ -4,7 +4,11 @@ import textwrap
 import pytest
 
 
+# https://docs.python.org/3/whatsnew/3.5.html#pep-492-coroutines-with-async-and-await-syntax
 ASYNC_AWAIT = sys.version_info >= (3, 5)
+
+# https://docs.python.org/3/whatsnew/3.6.html#pep-525-asynchronous-generators
+ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
 
 def assert_outcomes(run_result, outcomes):
@@ -44,6 +48,13 @@ def skip_if_no_async_await():
     return pytest.mark.skipif(
         not ASYNC_AWAIT,
         reason="async/await syntax not supported on Python <3.5",
+    )
+
+
+def skip_if_no_async_generators():
+    return pytest.mark.skipif(
+        not ASYNC_GENERATORS,
+        reason="async generators not support on Python <3.6",
     )
 
 
@@ -301,6 +312,157 @@ def test_blockon_in_fixture_async(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
+
+
+@skip_if_no_async_await()
+def test_async_fixture(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_fixture(scope="function", params=["fs", "imap", "web"])
+    @pytest.mark.redgreenblue
+    async def foo(request):
+        d1, d2 = defer.Deferred(), defer.Deferred()
+        reactor.callLater(0.01, d1.callback, 1)
+        reactor.callLater(0.02, d2.callback, request.param)
+        await d1
+        return d2,
+
+    @pytest_twisted.inlineCallbacks
+    def test_succeed_blue(foo):
+        x = yield foo[0]
+        if x == "web":
+            raise RuntimeError("baz")
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2, "failed": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_concurrent_teardown(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+
+    here = defer.Deferred()
+    there = defer.Deferred()
+
+    @pytest_twisted.async_yield_fixture()
+    async def this():
+        yield 42
+
+        there.callback(None)
+        reactor.callLater(5, here.cancel)
+        await here
+
+    @pytest_twisted.async_yield_fixture()
+    async def that():
+        yield 37
+
+        here.callback(None)
+        reactor.callLater(5, there.cancel)
+        await there
+
+    def test_succeed(this, that):
+        pass
+    """
+    testdir.makepyfile(test_file)
+    # TODO: add a timeout, failure just hangs indefinitely for now
+    # https://github.com/pytest-dev/pytest/issues/4073
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_yield_fixture(
+        scope="function",
+        params=["fs", "imap", "web", "gopher", "archie"],
+    )
+    async def foo(request):
+        d1, d2 = defer.Deferred(), defer.Deferred()
+        reactor.callLater(0.01, d1.callback, 1)
+        reactor.callLater(0.02, d2.callback, request.param)
+        await d1
+
+        # Twisted doesn't allow calling back with a Deferred as a value.
+        # This deferred is being wrapped up in a tuple to sneak through.
+        # https://github.com/twisted/twisted/blob/c0f1394c7bfb04d97c725a353a1f678fa6a1c602/src/twisted/internet/defer.py#L459
+        yield d2,
+
+        if request.param == "gopher":
+            raise RuntimeError("gaz")
+
+        if request.param == "archie":
+            yield 42
+
+    @pytest_twisted.inlineCallbacks
+    def test_succeed(foo):
+        x = yield foo[0]
+        if x == "web":
+            raise RuntimeError("baz")
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2, "failed": 3})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_function_scope(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    check_me = 0
+
+    @pytest_twisted.async_yield_fixture(scope="function")
+    async def foo():
+        global check_me
+
+        if check_me != 0:
+            raise Exception('check_me already modified before fixture run')
+
+        check_me = 1
+
+        yield 42
+
+        if check_me != 2:
+            raise Exception(
+                'check_me not updated properly: {}'.format(check_me),
+            )
+
+        check_me = 0
+
+    def test_first(foo):
+        global check_me
+
+        assert check_me == 1
+        assert foo == 42
+
+        check_me = 2
+
+    def test_second(foo):
+        global check_me
+
+        assert check_me == 1
+        assert foo == 42
+
+        check_me = 2
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
 
 
 def test_blockon_in_hook(testdir, cmd_opts, request):

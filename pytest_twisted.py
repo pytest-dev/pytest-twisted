@@ -17,6 +17,30 @@ class WrongReactorAlreadyInstalledError(Exception):
     pass
 
 
+class UnrecognizedCoroutineMarkError(Exception):
+    @classmethod
+    def from_mark(cls, mark):
+        return cls(
+            'Coroutine wrapper mark not recognized: {}'.format(repr(mark)),
+        )
+
+
+class AsyncGeneratorFixtureDidNotStopError(Exception):
+    @classmethod
+    def from_generator(cls, generator):
+        return cls(
+            'async fixture did not stop: {}'.format(generator),
+        )
+
+
+class AsyncFixtureUnsupportedScopeError(Exception):
+    @classmethod
+    def from_scope(cls, scope):
+        return cls(
+            'Unsupported scope used for async fixture: {}'.format(scope)
+        )
+
+
 class _config:
     external_reactor = False
 
@@ -161,16 +185,95 @@ def stop_twisted_greenlet():
         _instances.gr_twisted.switch()
 
 
+class _CoroutineWrapper:
+    def __init__(self, coroutine, mark):
+        self.coroutine = coroutine
+        self.mark = mark
+
+
+def _marked_async_fixture(mark):
+    @functools.wraps(pytest.fixture)
+    def fixture(*args, **kwargs):
+        try:
+            scope = args[0]
+        except IndexError:
+            scope = kwargs.get('scope', 'function')
+
+        if scope != 'function':
+            raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
+
+        def marker(f):
+            @functools.wraps(f)
+            def w(*args, **kwargs):
+                return _CoroutineWrapper(
+                    coroutine=f(*args, **kwargs),
+                    mark=mark,
+                )
+
+            return w
+
+        def decorator(f):
+            result = pytest.fixture(*args, **kwargs)(marker(f))
+
+            return result
+
+        return decorator
+
+    return fixture
+
+
+async_fixture = _marked_async_fixture('async_fixture')
+async_yield_fixture = _marked_async_fixture('async_yield_fixture')
+
+
+@defer.inlineCallbacks
 def _pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
+    async_generators = []
     funcargs = pyfuncitem.funcargs
     if hasattr(pyfuncitem, "_fixtureinfo"):
         testargs = {}
         for arg in pyfuncitem._fixtureinfo.argnames:
-            testargs[arg] = funcargs[arg]
+            if isinstance(funcargs[arg], _CoroutineWrapper):
+                wrapper = funcargs[arg]
+
+                if wrapper.mark == 'async_fixture':
+                    arg_value = yield defer.ensureDeferred(
+                        wrapper.coroutine
+                    )
+                elif wrapper.mark == 'async_yield_fixture':
+                    async_generators.append((arg, wrapper))
+                    arg_value = yield defer.ensureDeferred(
+                        wrapper.coroutine.__anext__(),
+                    )
+                else:
+                    raise UnrecognizedCoroutineMarkError.from_mark(
+                        mark=wrapper.mark,
+                    )
+            else:
+                arg_value = funcargs[arg]
+
+            testargs[arg] = arg_value
     else:
         testargs = funcargs
-    return testfunction(**testargs)
+    result = yield testfunction(**testargs)
+
+    async_generator_deferreds = [
+        (arg, defer.ensureDeferred(g.coroutine.__anext__()))
+        for arg, g in reversed(async_generators)
+    ]
+
+    for arg, d in async_generator_deferreds:
+        try:
+            yield d
+        except StopAsyncIteration:
+            continue
+        else:
+            raise AsyncGeneratorFixtureDidNotStopError.from_generator(
+                generator=arg,
+            )
+
+    defer.returnValue(result)
 
 
 def pytest_pyfunc_call(pyfuncitem):
