@@ -18,7 +18,7 @@ which uses the twisted framework. test functions can return Deferred
 objects and pytest will wait for their completion with this plugin.
 
 
-Python 2 Plans
+Python 2 support plans
 ==================
 
 At some point it may become impractical to retain Python 2 support.
