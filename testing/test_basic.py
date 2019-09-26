@@ -342,7 +342,7 @@ def test_async_fixture(testdir, cmd_opts):
 
 
 @skip_if_no_async_generators()
-def test_async_fixture_concurrent_teardown(testdir, cmd_opts):
+def test_async_yield_fixture_concurrent_teardown(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
@@ -379,7 +379,7 @@ def test_async_fixture_concurrent_teardown(testdir, cmd_opts):
 
 
 @skip_if_no_async_generators()
-def test_async_fixture_yield(testdir, cmd_opts):
+def test_async_yield_fixture(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
@@ -418,7 +418,7 @@ def test_async_fixture_yield(testdir, cmd_opts):
 
 
 @skip_if_no_async_generators()
-def test_async_fixture_function_scope(testdir, cmd_opts):
+def test_async_yield_fixture_function_scope(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
