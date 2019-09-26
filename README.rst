@@ -25,9 +25,10 @@ At some point it may become impractical to retain Python 2 support.
 Given the small size and very low amount of development it seems
 likely that this will not be a near term issue.  While I personally
 have no need for Python 2 support I try to err on the side of being
-helpful so support will not be explicitly removed.  If issues are
-reported and neither myself nor the community have time to resolve
-them then options will have to be considered.
+helpful so support will not be explicitly removed just to not have to
+think about it.  If major issues are reported and neither myself nor
+the community have time to resolve them then options will be
+considered.
 
 
 Installation
