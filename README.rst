@@ -7,8 +7,8 @@ pytest-twisted - test twisted code with pytest
 |PyPI| |Pythons| |Travis| |AppVeyor| |Black|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
-:Version: 1.8
-:Date:    2018-05-01
+:Version: 1.11
+:Date:    2019-08-20
 :Download: https://pypi.python.org/pypi/pytest-twisted#downloads
 :Code: https://github.com/pytest-dev/pytest-twisted
 
@@ -33,11 +33,9 @@ The plugin is available after installation and can be disabled using
 By default ``twisted.internet.default`` is used to install the reactor.
 This creates the same reactor that ``import twisted.internet.reactor``
 would.  Alternative reactors can be specified using the ``--reactor``
-option.
-
-Presently only ``qt5reactor`` is supported for use with ``pyqt5``
-and ``pytest-qt``. This `guide`_ describes how to add support for
-a new reactor.
+option.  This presently supports ``qt5reactor`` for use with ``pyqt5``
+and ``pytest-qt`` as well as ``asyncio``. This `guide`_ describes how to add
+support for a new reactor.
 
 The reactor is automatically created prior to the first test but can
 be explicitly installed earlier by calling
@@ -53,7 +51,7 @@ is to ``import pytest_twisted as pt``.
 inlineCallbacks
 ===============
 Using ``twisted.internet.defer.inlineCallbacks`` as a decorator for test
-functions, which take funcargs, does not work. Please use
+functions, which use fixtures, does not work. Please use
 ``pytest_twisted.inlineCallbacks`` instead::
 
   @pytest_twisted.inlineCallbacks
@@ -65,7 +63,7 @@ functions, which take funcargs, does not work. Please use
 ensureDeferred
 ==============
 Using ``twisted.internet.defer.ensureDeferred`` as a decorator for test
-functions, which take funcargs, does not work. Please use
+functions, which use fixtures, does not work. Please use
 ``pytest_twisted.ensureDeferred`` instead::
 
   @pytest_twisted.ensureDeferred
@@ -105,7 +103,7 @@ The twisted greenlet
 ====================
 Some libraries (e.g. corotwine) need to know the greenlet, which is
 running the twisted reactor. It's available from the
-``twisted_greenlet`` funcarg. The following code can be used to make
+``twisted_greenlet`` fixture. The following code can be used to make
 corotwine work with pytest-twisted::
 
   @pytest.fixture(scope="session", autouse=True)
@@ -116,9 +114,13 @@ corotwine work with pytest-twisted::
 
 That's (almost) all.
 
-============
+
 Deprecations
 ============
+
+----
+v1.9
+----
 
 ``pytest.blockon``
     Use ``pytest_twisted.blockon``

@@ -174,53 +174,50 @@ async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 def _pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     async_generators = []
-    if pyfuncitem._isyieldedfunction():
-        defer.returnValue(testfunction(*pyfuncitem._args))
-    else:
-        funcargs = pyfuncitem.funcargs
-        if hasattr(pyfuncitem, "_fixtureinfo"):
-            testargs = {}
-            for arg in pyfuncitem._fixtureinfo.argnames:
-                if isinstance(funcargs[arg], _CoroutineWrapper):
-                    wrapper = funcargs[arg]
+    funcargs = pyfuncitem.funcargs
+    if hasattr(pyfuncitem, "_fixtureinfo"):
+        testargs = {}
+        for arg in pyfuncitem._fixtureinfo.argnames:
+            if isinstance(funcargs[arg], _CoroutineWrapper):
+                wrapper = funcargs[arg]
 
-                    if wrapper.mark == 'async_fixture':
-                        arg_value = yield defer.ensureDeferred(
-                            wrapper.coroutine
-                        )
-                    elif wrapper.mark == 'async_yield_fixture':
-                        async_generators.append((arg, wrapper))
-                        arg_value = yield defer.ensureDeferred(
-                            wrapper.coroutine.__anext__(),
-                        )
-                    else:
-                        raise UnrecognizedCoroutineMarkError.from_mark(
-                            mark=wrapper.mark,
-                        )
+                if wrapper.mark == 'async_fixture':
+                    arg_value = yield defer.ensureDeferred(
+                        wrapper.coroutine
+                    )
+                elif wrapper.mark == 'async_yield_fixture':
+                    async_generators.append((arg, wrapper))
+                    arg_value = yield defer.ensureDeferred(
+                        wrapper.coroutine.__anext__(),
+                    )
                 else:
-                    arg_value = funcargs[arg]
-
-                testargs[arg] = arg_value
-        else:
-            testargs = funcargs
-        result = yield testfunction(**testargs)
-
-        async_generator_deferreds = [
-            (arg, defer.ensureDeferred(g.coroutine.__anext__()))
-            for arg, g in reversed(async_generators)
-        ]
-
-        for arg, d in async_generator_deferreds:
-            try:
-                yield d
-            except StopAsyncIteration:
-                continue
+                    raise UnrecognizedCoroutineMarkError.from_mark(
+                        mark=wrapper.mark,
+                    )
             else:
-                raise AsyncGeneratorFixtureDidNotStopError.from_generator(
-                    generator=arg,
-                )
+                arg_value = funcargs[arg]
 
-        defer.returnValue(result)
+            testargs[arg] = arg_value
+    else:
+        testargs = funcargs
+    result = yield testfunction(**testargs)
+
+    async_generator_deferreds = [
+        (arg, defer.ensureDeferred(g.coroutine.__anext__()))
+        for arg, g in reversed(async_generators)
+    ]
+
+    for arg, d in async_generator_deferreds:
+        try:
+            yield d
+        except StopAsyncIteration:
+            continue
+        else:
+            raise AsyncGeneratorFixtureDidNotStopError.from_generator(
+                generator=arg,
+            )
+
+    defer.returnValue(result)
 
 
 def pytest_pyfunc_call(pyfuncitem):
@@ -274,9 +271,19 @@ def init_qt5_reactor():
     )
 
 
+def init_asyncio_reactor():
+    from twisted.internet import asyncioreactor
+
+    _install_reactor(
+        reactor_installer=asyncioreactor.install,
+        reactor_type=asyncioreactor.AsyncioSelectorReactor,
+    )
+
+
 reactor_installers = {
     "default": init_default_reactor,
     "qt5reactor": init_qt5_reactor,
+    "asyncio": init_asyncio_reactor,
 }
 
 

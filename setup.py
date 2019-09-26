@@ -5,9 +5,10 @@ with open("README.rst") as f:
 
 setup(
     name="pytest-twisted",
-    version="1.8",
+    version="1.11",
     description="A twisted plugin for py.test.",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="Ralf Schmitt, Kyle Altendorf, Victor Titor",
     author_email="ralf@brainbot.com",
     url="https://github.com/pytest-dev/pytest-twisted",
@@ -24,7 +25,6 @@ setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
