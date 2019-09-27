@@ -7,8 +7,8 @@ pytest-twisted - test twisted code with pytest
 |PyPI| |Pythons| |Travis| |AppVeyor| |Black|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
-:Version: 1.9
-:Date:    2019-01-21
+:Version: 1.11
+:Date:    2019-08-20
 :Download: https://pypi.python.org/pypi/pytest-twisted#downloads
 :Code: https://github.com/pytest-dev/pytest-twisted
 
@@ -16,6 +16,20 @@ pytest-twisted - test twisted code with pytest
 pytest-twisted is a plugin for pytest, which allows to test code,
 which uses the twisted framework. test functions can return Deferred
 objects and pytest will wait for their completion with this plugin.
+
+
+Python 2 support plans
+======================
+
+At some point it may become impractical to retain Python 2 support.
+Given the small size and very low amount of development it seems
+likely that this will not be a near term issue.  While I personally
+have no need for Python 2 support I try to err on the side of being
+helpful so support will not be explicitly removed just to not have to
+think about it.  If major issues are reported and neither myself nor
+the community have time to resolve them then options will be
+considered.
+
 
 Installation
 ==================
@@ -33,11 +47,9 @@ The plugin is available after installation and can be disabled using
 By default ``twisted.internet.default`` is used to install the reactor.
 This creates the same reactor that ``import twisted.internet.reactor``
 would.  Alternative reactors can be specified using the ``--reactor``
-option.
-
-Presently only ``qt5reactor`` is supported for use with ``pyqt5``
-and ``pytest-qt``. This `guide`_ describes how to add support for
-a new reactor.
+option.  This presently supports ``qt5reactor`` for use with ``pyqt5``
+and ``pytest-qt`` as well as ``asyncio``. This `guide`_ describes how to add
+support for a new reactor.
 
 The reactor is automatically created prior to the first test but can
 be explicitly installed earlier by calling
@@ -53,7 +65,7 @@ is to ``import pytest_twisted as pt``.
 inlineCallbacks
 ===============
 Using ``twisted.internet.defer.inlineCallbacks`` as a decorator for test
-functions, which take funcargs, does not work. Please use
+functions, which use fixtures, does not work. Please use
 ``pytest_twisted.inlineCallbacks`` instead::
 
   @pytest_twisted.inlineCallbacks
@@ -65,7 +77,7 @@ functions, which take funcargs, does not work. Please use
 ensureDeferred
 ==============
 Using ``twisted.internet.defer.ensureDeferred`` as a decorator for test
-functions, which take funcargs, does not work. Please use
+functions, which use fixtures, does not work. Please use
 ``pytest_twisted.ensureDeferred`` instead::
 
   @pytest_twisted.ensureDeferred
@@ -85,11 +97,27 @@ Waiting for deferreds in fixtures
       return pytest_twisted.blockon(d)
 
 
+async/await fixtures
+====================
+``async``/``await`` fixtures can be used along with ``yield`` for normal
+pytest fixture semantics of setup, value, and teardown.  At present only
+function scope is supported::
+
+  @pytest_twisted.async_fixture
+  async def foo():
+      d1, d2 = defer.Deferred(), defer.Deferred()
+      reactor.callLater(0.01, d1.callback, 42)
+      reactor.callLater(0.02, d2.callback, 37)
+      value = await d1
+      yield value
+      await d2
+
+
 The twisted greenlet
 ====================
 Some libraries (e.g. corotwine) need to know the greenlet, which is
 running the twisted reactor. It's available from the
-``twisted_greenlet`` funcarg. The following code can be used to make
+``twisted_greenlet`` fixture. The following code can be used to make
 corotwine work with pytest-twisted::
 
   @pytest.fixture(scope="session", autouse=True)
