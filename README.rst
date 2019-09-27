@@ -32,14 +32,16 @@ considered.
 
 
 Installation
-==================
-Install the plugin with::
+============
+Install the plugin as below.
+
+.. code-block:: sh
 
     pip install pytest-twisted
 
 
 Using the plugin
-==================
+================
 
 The plugin is available after installation and can be disabled using
 ``-p no:twisted``.
@@ -66,7 +68,9 @@ inlineCallbacks
 ===============
 Using ``twisted.internet.defer.inlineCallbacks`` as a decorator for test
 functions, which use fixtures, does not work. Please use
-``pytest_twisted.inlineCallbacks`` instead::
+``pytest_twisted.inlineCallbacks`` instead.
+
+.. code-block:: python
 
   @pytest_twisted.inlineCallbacks
   def test_some_stuff(tmpdir):
@@ -78,7 +82,9 @@ ensureDeferred
 ==============
 Using ``twisted.internet.defer.ensureDeferred`` as a decorator for test
 functions, which use fixtures, does not work. Please use
-``pytest_twisted.ensureDeferred`` instead::
+``pytest_twisted.ensureDeferred`` instead.
+
+.. code-block:: python
 
   @pytest_twisted.ensureDeferred
   async def test_some_stuff(tmpdir):
@@ -88,7 +94,9 @@ functions, which use fixtures, does not work. Please use
 
 Waiting for deferreds in fixtures
 =================================
-``pytest_twisted.blockon`` allows fixtures to wait for deferreds::
+``pytest_twisted.blockon`` allows fixtures to wait for deferreds.
+
+.. code-block:: python
 
   @pytest.fixture
   def val():
@@ -101,7 +109,9 @@ async/await fixtures
 ====================
 ``async``/``await`` fixtures can be used along with ``yield`` for normal
 pytest fixture semantics of setup, value, and teardown.  At present only
-function scope is supported::
+function scope is supported.
+
+.. code-block:: python
 
   @pytest_twisted.async_fixture
   async def foo():
@@ -118,7 +128,9 @@ The twisted greenlet
 Some libraries (e.g. corotwine) need to know the greenlet, which is
 running the twisted reactor. It's available from the
 ``twisted_greenlet`` fixture. The following code can be used to make
-corotwine work with pytest-twisted::
+corotwine work with pytest-twisted.
+
+.. code-block:: python
 
   @pytest.fixture(scope="session", autouse=True)
   def set_MAIN(request, twisted_greenlet):
