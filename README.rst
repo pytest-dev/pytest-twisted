@@ -17,15 +17,31 @@ pytest-twisted is a plugin for pytest, which allows to test code,
 which uses the twisted framework. test functions can return Deferred
 objects and pytest will wait for their completion with this plugin.
 
+
+Python 2 support plans
+======================
+
+At some point it may become impractical to retain Python 2 support.
+Given the small size and very low amount of development it seems
+likely that this will not be a near term issue.  While I personally
+have no need for Python 2 support I try to err on the side of being
+helpful so support will not be explicitly removed just to not have to
+think about it.  If major issues are reported and neither myself nor
+the community have time to resolve them then options will be
+considered.
+
+
 Installation
-==================
-Install the plugin with::
+============
+Install the plugin as below.
+
+.. code-block:: sh
 
     pip install pytest-twisted
 
 
 Using the plugin
-==================
+================
 
 The plugin is available after installation and can be disabled using
 ``-p no:twisted``.
@@ -52,7 +68,9 @@ inlineCallbacks
 ===============
 Using ``twisted.internet.defer.inlineCallbacks`` as a decorator for test
 functions, which use fixtures, does not work. Please use
-``pytest_twisted.inlineCallbacks`` instead::
+``pytest_twisted.inlineCallbacks`` instead.
+
+.. code-block:: python
 
   @pytest_twisted.inlineCallbacks
   def test_some_stuff(tmpdir):
@@ -64,7 +82,9 @@ ensureDeferred
 ==============
 Using ``twisted.internet.defer.ensureDeferred`` as a decorator for test
 functions, which use fixtures, does not work. Please use
-``pytest_twisted.ensureDeferred`` instead::
+``pytest_twisted.ensureDeferred`` instead.
+
+.. code-block:: python
 
   @pytest_twisted.ensureDeferred
   async def test_some_stuff(tmpdir):
@@ -74,7 +94,9 @@ functions, which use fixtures, does not work. Please use
 
 Waiting for deferreds in fixtures
 =================================
-``pytest_twisted.blockon`` allows fixtures to wait for deferreds::
+``pytest_twisted.blockon`` allows fixtures to wait for deferreds.
+
+.. code-block:: python
 
   @pytest.fixture
   def val():
@@ -87,7 +109,9 @@ async/await fixtures
 ====================
 ``async``/``await`` fixtures can be used along with ``yield`` for normal
 pytest fixture semantics of setup, value, and teardown.  At present only
-function scope is supported::
+function scope is supported.
+
+.. code-block:: python
 
   @pytest_twisted.async_fixture
   async def foo():
@@ -104,7 +128,9 @@ The twisted greenlet
 Some libraries (e.g. corotwine) need to know the greenlet, which is
 running the twisted reactor. It's available from the
 ``twisted_greenlet`` fixture. The following code can be used to make
-corotwine work with pytest-twisted::
+corotwine work with pytest-twisted.
+
+.. code-block:: python
 
   @pytest.fixture(scope="session", autouse=True)
   def set_MAIN(request, twisted_greenlet):
