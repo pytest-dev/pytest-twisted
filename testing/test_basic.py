@@ -670,9 +670,9 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
 qt_fixtures = ('qapp', 'qtbot', 'nothing')
 
 
-@skip_if_reactor_not("qt5reactor")
 @pytest.mark.parametrize("fixture", qt_fixtures, ids=qt_fixtures)
-def test_qwidget(testdir, cmd_opts, fixture):
+def test_qwidget(testdir, cmd_opts, fixture, request):
+    skip_if_reactor_not(request, "qt5reactor")
     test_file = """
     import pytest
     from PyQt5 import QtWidgets
