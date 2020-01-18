@@ -18,7 +18,6 @@ addons:
       - xvfb
 
 install:
-  - pip install --upgrade pip
   - pip install tox
   - export TOX_ENV=`tox --listenvs | grep -v win | grep "py${TRAVIS_PYTHON_VERSION/./}" | tr '\n' ','`
 
