@@ -111,10 +111,25 @@ async/await fixtures
 pytest fixture semantics of setup, value, and teardown.  At present only
 function scope is supported.
 
+Note: in pytest-twisted version 0.12, you must *call*
+``pytest_twisted.async_fixture`` and ``pytest_twisted.async_yield_fixture``.
+This restriction may be removed in a future release.
+
 .. code-block:: python
 
-  @pytest_twisted.async_fixture
+  # No yield (coroutine function)
+  #   -> use pytest_twisted.async_fixture()
+  @pytest_twisted.async_fixture()
   async def foo():
+      d = defer.Deferred()
+      reactor.callLater(0.01, d.callback, 42)
+      value = await d
+      return value
+
+  # With yield (asynchronous generator)
+  #   -> use pytest_twisted.async_yield_fixture()
+  @pytest_twisted.async_yield_fixture()
+  async def foo_with_teardown():
       d1, d2 = defer.Deferred(), defer.Deferred()
       reactor.callLater(0.01, d1.callback, 42)
       reactor.callLater(0.02, d2.callback, 37)
