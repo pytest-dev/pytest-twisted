@@ -111,8 +111,8 @@ async/await fixtures
 pytest fixture semantics of setup, value, and teardown.  At present only
 function scope is supported.
 
-Note: in pytest-twisted version 0.12, you must *call*
-``pytest_twisted.async_fixture`` and ``pytest_twisted.async_yield_fixture``.
+Note: You must *call* ``pytest_twisted.async_fixture()`` and
+``pytest_twisted.async_yield_fixture()``.
 This restriction may be removed in a future release.
 
 .. code-block:: python
