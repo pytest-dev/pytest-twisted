@@ -1,5 +1,6 @@
 import functools
 import inspect
+import sys
 import warnings
 
 import decorator
