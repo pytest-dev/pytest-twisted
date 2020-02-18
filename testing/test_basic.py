@@ -11,6 +11,14 @@ ASYNC_AWAIT = sys.version_info >= (3, 5)
 ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
 
+# https://github.com/pytest-dev/pytest/issues/6505
+def force_plural(name):
+    if name in {"error", "warning"}:
+        return name + "s"
+
+    return name
+
+
 def assert_outcomes(run_result, outcomes):
     formatted_output = format_run_result_output_for_assert(run_result)
 
@@ -19,8 +27,13 @@ def assert_outcomes(run_result, outcomes):
     except ValueError:
         assert False, formatted_output
 
+    normalized_outcomes = {
+        force_plural(name): outcome
+        for name, outcome in result_outcomes.items()
+    }
+
     for name, value in outcomes.items():
-        assert result_outcomes.get(name) == value, formatted_output
+        assert normalized_outcomes.get(name) == value, formatted_output
 
 
 def format_run_result_output_for_assert(run_result):
