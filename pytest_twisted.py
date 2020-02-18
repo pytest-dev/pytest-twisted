@@ -1,6 +1,5 @@
 import functools
 import inspect
-import sys
 import warnings
 
 import decorator
@@ -273,15 +272,6 @@ def init_qt5_reactor():
 
 
 def init_asyncio_reactor():
-    if sys.platform == 'win32':
-        if sys.version_info >= (3, 8):
-            # If twisted releases a fix/workaround we can check that version too
-            # https://twistedmatrix.com/trac/ticket/9766
-            import asyncio
-
-            selector_policy = asyncio.WindowsSelectorEventLoopPolicy()
-            asyncio.set_event_loop_policy(selector_policy)
-    
     from twisted.internet import asyncioreactor
 
     _install_reactor(
