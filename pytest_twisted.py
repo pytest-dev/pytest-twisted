@@ -35,7 +35,7 @@ class AsyncFixtureUnsupportedScopeError(Exception):
     @classmethod
     def from_scope(cls, scope):
         return cls(
-            'Unsupported scope used for async fixture: {}'.format(scope)
+            'Unsupported scope {0!r} used for async fixture'.format(scope)
         )
 
 
