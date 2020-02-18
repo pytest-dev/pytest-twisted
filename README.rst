@@ -113,7 +113,7 @@ function scope is supported.
 
 Note: You must *call* ``pytest_twisted.async_fixture()`` and
 ``pytest_twisted.async_yield_fixture()``.
-This restriction may be removed in a future release.
+This requirement may be removed in a future release.
 
 .. code-block:: python
 
