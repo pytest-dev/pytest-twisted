@@ -26,15 +26,15 @@ jobs:
           - default
           - qt5
           - asyncio
-      exclude:
-        - python: 27
-          reactor: qt5
-        - python: 27
-          reactor: asyncio
-      include:
-        - os: ubuntu-latest
-          python: 37
-          toxenv: linting
+        exclude:
+          - python: 27
+            reactor: qt5
+          - python: 27
+            reactor: asyncio
+        include:
+          - os: ubuntu-latest
+            python: 37
+            toxenv: linting
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python }}
