@@ -678,8 +678,8 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     conftest_file = """
     import pytest
     import pytest_twisted
-    
-    
+
+
     @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
         pytest_twisted._use_asyncio_selector_if_required(config=config)
