@@ -18,10 +18,14 @@ jobs:
           - windows-latest
           - macos-latest
         python:
-          - 27
-          - 35
-          - 36
-          - 37
+          - short: 27
+            dotted: 2.7
+          - short: 35
+            dotted: 3.5
+          - short: 36
+            dotted: 3.6
+          - short: 37
+            dotted: 3.7
         reactor:
           - default
           - qt5
@@ -37,10 +41,10 @@ jobs:
             toxenv: linting
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python }}
+      - name: Set up Python ${{ matrix.python.dotted }}
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python.dotted }}
           architecture: x64
       - name: Install Linux dependencies
         if: matrix.system.platform == 'linux'
@@ -58,7 +62,7 @@ jobs:
           toxenv = '${{ matrix.toxenv }}'
 
           if toxenv == '':
-              toxenv = 'py${{ matrix.python }}-${{ matrix.reactor }}reactor'
+              toxenv = 'py${{ matrix.python.short }}-${{ matrix.reactor }}reactor'
 
               if sys.platform == 'win32':
                   toxenv = 'win-' + toxenv
