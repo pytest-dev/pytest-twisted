@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ default }}
+    name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
     runs-on: ${{ matrix.os.runs-on }}
     strategy:
       fail-fast: false
@@ -36,9 +36,12 @@ jobs:
             tox: py37
             action: 3.7
         reactor:
-          - default
-          - qt5
-          - asyncio
+          - name: default
+            tox: default
+          - name: Qt5
+            tox: qt5
+          - name: asyncio
+            tox: asyncio
         exclude:
           - python:
               tox: py27
@@ -66,7 +69,7 @@ jobs:
         run: |
           import sys
 
-          toxenv = '${{ matrix.python.tox }}-${{ matrix.reactor }}reactor'
+          toxenv = '${{ matrix.python.tox }}-${{ matrix.reactor.tox }}reactor'
 
           if sys.platform == 'win32':
               toxenv = 'win-' + toxenv
