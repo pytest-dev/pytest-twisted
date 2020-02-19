@@ -1,5 +1,6 @@
 import functools
 import inspect
+import sys
 import warnings
 
 import decorator
@@ -326,3 +327,17 @@ def pytest_configure(config):
     )(blockon)
 
     reactor_installers[config.getoption("reactor")]()
+
+
+def use_asyncio_selector_if_required(config):
+    # https://twistedmatrix.com/trac/ticket/9766
+
+    if (
+        config.getoption("reactor", "default") == "asyncio"
+        and sys.platform == 'win32'
+        and sys.version_info >= (3, 8)
+    ):
+        import asyncio
+
+        selector_policy = asyncio.WindowsSelectorEventLoopPolicy()
+        asyncio.set_event_loop_policy(selector_policy)

@@ -1,6 +1,5 @@
-import sys
-
 import pytest
+import pytest_twisted
 
 
 pytest_plugins = "_pytest.pytester"
@@ -8,13 +7,4 @@ pytest_plugins = "_pytest.pytester"
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
-    if (
-            config.getoption("reactor") == 'asyncio'
-            and sys.platform == 'win32'
-            and sys.version_info >= (3, 8)
-    ):
-        # https://twistedmatrix.com/trac/ticket/9766
-        import asyncio
-
-        selector_policy = asyncio.WindowsSelectorEventLoopPolicy()
-        asyncio.set_event_loop_policy(selector_policy)
+    pytest_twisted.use_asyncio_selector_if_required(config=config)
