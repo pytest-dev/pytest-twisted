@@ -10,14 +10,18 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ default }}
+    runs-on: ${{ matrix.os.runs-on }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
+          - name: Linux
+            runs-on: ubuntu-latest
+          - name: Windows
+            runs-on: windows-latest
+          - name: macOS
+            runs-on: macos-latest
         python:
           - name: CPython 2.7
             tox: py27
