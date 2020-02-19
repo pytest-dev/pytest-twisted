@@ -45,10 +45,12 @@ jobs:
         exclude:
           - python:
               tox: py27
-            reactor: qt5
+            reactor:
+              tox: qt5
           - python:
               tox: py27
-            reactor: asyncio
+            reactor:
+              tox: asyncio
     steps:
       - uses: actions/checkout@v2
       - name: Set up ${{ matrix.python.name }}
