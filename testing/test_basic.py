@@ -347,7 +347,10 @@ def test_async_fixture(testdir, cmd_opts):
     import pytest
     import pytest_twisted
 
-    @pytest_twisted.async_fixture(scope="function", params=["fs", "imap", "web"])
+    @pytest_twisted.async_fixture(
+        scope="function",
+        params=["fs", "imap", "web"],
+    )
     @pytest.mark.redgreenblue
     async def foo(request):
         d1, d2 = defer.Deferred(), defer.Deferred()
