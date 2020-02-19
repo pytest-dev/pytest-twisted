@@ -31,9 +31,11 @@ jobs:
           - qt5
           - asyncio
         exclude:
-          - python.dotted: 2.7
+          - python:
+              dotted: 2.7
             reactor: qt5
-          - python.dotted: 2.7
+          - python:
+              dotted: 2.7
             reactor: asyncio
         include:
           - os: ubuntu-latest
