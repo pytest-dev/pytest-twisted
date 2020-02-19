@@ -61,8 +61,8 @@ jobs:
       - name: Install Linux dependencies
         if: matrix.system.platform == 'linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install xvfb
+          sudo apt-get update --yes
+          sudo apt-get install --yes xvfb
       - name: Install
         run: |
           pip install tox
