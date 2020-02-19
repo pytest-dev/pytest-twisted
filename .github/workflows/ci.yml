@@ -39,7 +39,10 @@ jobs:
             reactor: asyncio
         include:
           - os: ubuntu-latest
-            python: 37
+            python:
+              short: 37
+              dotted: 3.7
+            reactor: default
             toxenv: linting
     steps:
       - uses: actions/checkout@v2
