@@ -44,11 +44,12 @@ exception such as below.
     NotImplementedError
 
 The previous default, the selector loop, still works but you have to
-explicitly set it.  ``pytest_twisted.use_asyncio_selector_if_required()``
-is provided to help in choosing the selector loop.  It must be called
-early so the following `conftest.py` is suggested.
+explicitly set it and do so early. The following ``conftest.py`` is provided
+for reference.
 
 .. code-block:: python3
+
+    import sys
 
     import pytest
     import pytest_twisted
@@ -56,7 +57,18 @@ early so the following `conftest.py` is suggested.
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
-        pytest_twisted.use_asyncio_selector_if_required(config=config)
+        # https://twistedmatrix.com/trac/ticket/9766
+        # https://github.com/pytest-dev/pytest-twisted/issues/80
+
+        if (
+            config.getoption("reactor", "default") == "asyncio"
+            and sys.platform == 'win32'
+            and sys.version_info >= (3, 8)
+        ):
+            import asyncio
+
+            selector_policy = asyncio.WindowsSelectorEventLoopPolicy()
+            asyncio.set_event_loop_policy(selector_policy)
 
 
 Python 2 support plans
