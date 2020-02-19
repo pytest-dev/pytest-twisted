@@ -78,7 +78,8 @@ jobs:
       - name: Test
         run: |
           tox -v -e "${{ env['TOXENV'] }}"
-  lint:
+  linting:
+    name: Linting
     runs-on: ubuntu-latest
     strategy:
       matrix:
