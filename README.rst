@@ -18,6 +18,59 @@ which uses the twisted framework. test functions can return Deferred
 objects and pytest will wait for their completion with this plugin.
 
 
+NOTICE: Python 3.8 with asyncio support
+=======================================
+
+In Python 3.8, asyncio changed the default loop implementation to use
+their proactor.  The proactor does not implement some methods used by
+Twisted's asyncio support.  The result is a ``NotImplementedError``
+exception such as below.
+
+.. code-block:: pytb
+
+    <snip>
+      File "c:\projects\pytest-twisted\.tox\py38-asyncioreactor\lib\site-packages\twisted\internet\asyncioreactor.py", line 320, in install
+        reactor = AsyncioSelectorReactor(eventloop)
+      File "c:\projects\pytest-twisted\.tox\py38-asyncioreactor\lib\site-packages\twisted\internet\asyncioreactor.py", line 69, in __init__
+        super().__init__()
+      File "c:\projects\pytest-twisted\.tox\py38-asyncioreactor\lib\site-packages\twisted\internet\base.py", line 571, in __init__
+        self.installWaker()
+      File "c:\projects\pytest-twisted\.tox\py38-asyncioreactor\lib\site-packages\twisted\internet\posixbase.py", line 286, in installWaker
+        self.addReader(self.waker)
+      File "c:\projects\pytest-twisted\.tox\py38-asyncioreactor\lib\site-packages\twisted\internet\asyncioreactor.py", line 151, in addReader
+        self._asyncioEventloop.add_reader(fd, callWithLogger, reader,
+      File "C:\Python38-x64\Lib\asyncio\events.py", line 501, in add_reader
+        raise NotImplementedError
+    NotImplementedError
+
+The previous default, the selector loop, still works but you have to
+explicitly set it and do so early. The following ``conftest.py`` is provided
+for reference.
+
+.. code-block:: python3
+
+    import sys
+
+    import pytest
+    import pytest_twisted
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_configure(config):
+        # https://twistedmatrix.com/trac/ticket/9766
+        # https://github.com/pytest-dev/pytest-twisted/issues/80
+
+        if (
+            config.getoption("reactor", "default") == "asyncio"
+            and sys.platform == 'win32'
+            and sys.version_info >= (3, 8)
+        ):
+            import asyncio
+
+            selector_policy = asyncio.WindowsSelectorEventLoopPolicy()
+            asyncio.set_event_loop_policy(selector_policy)
+
+
 Python 2 support plans
 ======================
 

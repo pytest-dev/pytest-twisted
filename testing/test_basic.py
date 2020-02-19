@@ -49,6 +49,19 @@ def format_run_result_output_for_assert(run_result):
     )
 
 
+@pytest.fixture(name="default_conftest", autouse=True)
+def _default_conftest(testdir):
+    testdir.makeconftest(textwrap.dedent("""
+    import pytest
+    import pytest_twisted
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_configure(config):
+        pytest_twisted._use_asyncio_selector_if_required(config=config)
+    """))
+
+
 def skip_if_reactor_not(request, expected_reactor):
     actual_reactor = request.config.getoption("reactor", "default")
     if actual_reactor != expected_reactor:
@@ -630,10 +643,14 @@ def test_pytest_from_reactor_thread(testdir, request):
 def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
     conftest_file = """
+    import pytest
     import pytest_twisted as pt
     from twisted.internet import defer
 
+    @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
+        pt._use_asyncio_selector_if_required(config=config)
+
         pt.init_asyncio_reactor()
         d = defer.Deferred()
 
@@ -659,6 +676,14 @@ def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
 def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
     conftest_file = """
+    import pytest
+    import pytest_twisted
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_configure(config):
+        pytest_twisted._use_asyncio_selector_if_required(config=config)
+
     def pytest_addhooks():
         import twisted.internet.default
         twisted.internet.default.install()
