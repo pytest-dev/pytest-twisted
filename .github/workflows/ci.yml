@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        python:
+          - 27
+          - 35
+          - 36
+          - 37
+        reactor:
+          - default
+          - qt5
+          - asyncio
+      exclude:
+        - python: 27
+          reactor: qt5
+        - python: 27
+          reactor: asyncio
+      include:
+        - os: ubuntu-latest
+          python: 37
+          toxenv: linting
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: x64
+      - name: Install Linux dependencies
+        if: matrix.system.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install xvfb
+      - name: Install
+        run: |
+          pip install tox
+      - name: Set TOXENV
+        shell: python
+        run: |
+          import sys
+
+          toxenv = '${{ matrix.toxenv }}'
+
+          if toxenv == '':
+              toxenv = 'py${{ matrix.python }}-${{ matrix.reactor }}reactor'
+
+              if sys.platform == 'win32':
+                  toxenv = 'win-' + toxenv
+
+          print('::set-env name=TOXENV::{}'.format(toxenv))
+      - name: Test
+        run: |
+          tox -v -e "${{ env['TOXENV'] }}"
