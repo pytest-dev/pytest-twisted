@@ -37,10 +37,10 @@ jobs:
           - asyncio
         exclude:
           - python:
-              dotted: 2.7
+              tox: py27
             reactor: qt5
           - python:
-              dotted: 2.7
+              tox: py27
             reactor: asyncio
     steps:
       - uses: actions/checkout@v2
