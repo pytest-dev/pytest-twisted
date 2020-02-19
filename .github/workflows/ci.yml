@@ -19,14 +19,18 @@ jobs:
           - windows-latest
           - macos-latest
         python:
-          - short: 27
-            dotted: 2.7
-          - short: 35
-            dotted: 3.5
-          - short: 36
-            dotted: 3.6
-          - short: 37
-            dotted: 3.7
+          - name: CPython 2.7
+            tox: py27
+            action: 2.7
+          - name: CPython 3.5
+            tox: py35
+            action: 3.5
+          - name: CPython 3.6
+            tox: py36
+            action: 3.6
+          - name: CPython 3.7
+            tox: py37
+            action: 3.7
         reactor:
           - default
           - qt5
@@ -40,10 +44,10 @@ jobs:
             reactor: asyncio
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python.dotted }}
+      - name: Set up ${{ matrix.python.name }}
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python.dotted }}
+          python-version: ${{ matrix.python.action }}
           architecture: x64
       - name: Install Linux dependencies
         if: matrix.system.platform == 'linux'
@@ -58,13 +62,10 @@ jobs:
         run: |
           import sys
 
-          toxenv = '${{ matrix.toxenv }}'
+          toxenv = '${{ matrix.python.tox }}-${{ matrix.reactor }}reactor'
 
-          if toxenv == '':
-              toxenv = 'py${{ matrix.python.short }}-${{ matrix.reactor }}reactor'
-
-              if sys.platform == 'win32':
-                  toxenv = 'win-' + toxenv
+          if sys.platform == 'win32':
+              toxenv = 'win-' + toxenv
 
           print('::set-env name=TOXENV::{}'.format(toxenv))
       - name: Test
