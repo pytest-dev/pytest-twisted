@@ -40,6 +40,12 @@ jobs:
           - name: CPython 3.8
             tox: py38
             action: 3.8
+          - name: PyPy 2
+            tox: pypy2
+            action: pypy2
+          - name: PyPy 3
+            tox: pypy3
+            action: pypy3
         reactor:
           - name: default
             tox: default
