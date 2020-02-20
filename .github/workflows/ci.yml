@@ -62,9 +62,11 @@ jobs:
             reactor:
               tox: asyncio
           - os:
-              name:
-                - Linux
-                - macOS
+              name: Linux
+            bitness:
+              name: x32
+          - os:
+              name: macOS
             bitness:
               name: x32
     steps:
