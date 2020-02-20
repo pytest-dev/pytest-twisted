@@ -96,3 +96,8 @@ jobs:
     needs:
       - test
       - linting
+    steps:
+      - name: This
+        shell: python
+        run: |
+          import this
