@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
+    name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.bitness.name }} ${{ matrix.reactor.name }}
     runs-on: ${{ matrix.os.runs-on }}
     strategy:
       fail-fast: false
@@ -40,6 +40,11 @@ jobs:
           - name: CPython 3.8
             tox: py38
             action: 3.8
+        bitness:
+          - name: x32
+            action: x86
+          - name: x64
+            action: x64
         reactor:
           - name: default
             tox: default
@@ -56,6 +61,12 @@ jobs:
               tox: py27
             reactor:
               tox: asyncio
+          - os:
+              name:
+                - Linux
+                - macOS
+            bitness:
+              name: x32
     steps:
       - uses: actions/checkout@v2
       - name: Set up ${{ matrix.python.name }}
@@ -83,7 +94,7 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python.dotted }}
-          architecture: x64
+          architecture: ${{ matrix.bitness.action }}
       - name: Install
         run: |
           pip install tox
