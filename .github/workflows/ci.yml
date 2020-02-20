@@ -75,7 +75,7 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python.action }}
-          architecture: x64
+          architecture: ${{ matrix.bitness.action }}
       - name: Install
         run: |
           pip install tox
@@ -90,6 +90,9 @@ jobs:
         python:
           - short: 37
             dotted: 3.7
+        bitness:
+          - name: x64
+            action: x64
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python.dotted }}
