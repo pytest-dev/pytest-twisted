@@ -66,20 +66,9 @@ jobs:
       - name: Install
         run: |
           pip install tox
-      - name: Set TOXENV
-        shell: python
-        run: |
-          import sys
-
-          toxenv = '${{ matrix.python.tox }}-${{ matrix.reactor.tox }}reactor'
-
-          if sys.platform == 'win32':
-              toxenv = 'win-' + toxenv
-
-          print('::set-env name=TOXENV::{}'.format(toxenv))
       - name: Test
         run: |
-          tox -v -e "${{ env['TOXENV'] }}"
+          tox -v -e "${{ matrix.python.tox }}-${{ matrix.reactor.tox }}reactor"
   linting:
     name: Linting
     runs-on: ubuntu-latest

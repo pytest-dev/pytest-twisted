@@ -8,28 +8,28 @@ environment:
     - TOXENV: py27-defaultreactor
       PYTHON: "C:\\Python27-x64"
 
-    - TOXENV: py35-defaultreactor, win-py35-qt5reactor, py35-asyncioreactor
+    - TOXENV: py35-defaultreactor, py35-qt5reactor, py35-asyncioreactor
       PYTHON: "C:\\Python35"
 
-    - TOXENV: py35-defaultreactor, win-py35-qt5reactor, py35-asyncioreactor
+    - TOXENV: py35-defaultreactor, py35-qt5reactor, py35-asyncioreactor
       PYTHON: "C:\\Python35-x64"
 
-    - TOXENV: py36-defaultreactor, win-py36-qt5reactor, py36-asyncioreactor
+    - TOXENV: py36-defaultreactor, py36-qt5reactor, py36-asyncioreactor
       PYTHON: "C:\\Python36"
 
-    - TOXENV: py36-defaultreactor, win-py36-qt5reactor, py36-asyncioreactor
+    - TOXENV: py36-defaultreactor, py36-qt5reactor, py36-asyncioreactor
       PYTHON: "C:\\Python36-x64"
 
-    - TOXENV: py37-defaultreactor, win-py37-qt5reactor, py37-asyncioreactor
+    - TOXENV: py37-defaultreactor, py37-qt5reactor, py37-asyncioreactor
       PYTHON: "C:\\Python37"
 
-    - TOXENV: py37-defaultreactor, win-py37-qt5reactor, py37-asyncioreactor
+    - TOXENV: py37-defaultreactor, py37-qt5reactor, py37-asyncioreactor
       PYTHON: "C:\\Python37-x64"
 
-    - TOXENV: py38-defaultreactor, win-py38-qt5reactor, py38-asyncioreactor
+    - TOXENV: py38-defaultreactor, py38-qt5reactor, py38-asyncioreactor
       PYTHON: "C:\\Python38"
 
-    - TOXENV: py38-defaultreactor, win-py38-qt5reactor, py38-asyncioreactor
+    - TOXENV: py38-defaultreactor, py38-qt5reactor, py38-asyncioreactor
       PYTHON: "C:\\Python38-x64"
 
 install:
