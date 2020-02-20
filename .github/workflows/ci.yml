@@ -62,6 +62,18 @@ jobs:
               tox: py27
             reactor:
               tox: asyncio
+          - python:
+              tox: pypy2
+            reactor:
+              tox: asyncio
+          - python:
+              tox: pypy2
+            reactor:
+              tox: qt5
+          - python:
+              tox: pypy3
+            reactor:
+              tox: qt5
     steps:
       - uses: actions/checkout@v2
       - name: Set up ${{ matrix.python.name }}
