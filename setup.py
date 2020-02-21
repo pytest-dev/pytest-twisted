@@ -13,7 +13,7 @@ setup(
     author_email="ralf@brainbot.com",
     url="https://github.com/pytest-dev/pytest-twisted",
     py_modules=["pytest_twisted"],
-    install_requires=["greenlet", "pytest>=2.3", "decorator"],
+    install_requires=["greenlet", "pytest>=2.3", "decorator", "six"],
     extras_require={"dev": ["pre-commit", "black"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",

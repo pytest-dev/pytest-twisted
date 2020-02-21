@@ -49,6 +49,24 @@ def format_run_result_output_for_assert(run_result):
     )
 
 
+def proactor_add_reader_is_implemented():
+    import asyncio
+
+    add_reader = getattr(asyncio.ProactorEventLoop, "add_reader", None)
+
+    if add_reader is None:
+        return False
+
+    try:
+        add_reader(None, None, None)
+    except NotImplementedError:
+        return False
+    except:
+        pass
+
+    return True
+
+
 @pytest.fixture(name="default_conftest", autouse=True)
 def _default_conftest(testdir):
     testdir.makeconftest(textwrap.dedent("""
@@ -696,3 +714,36 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
+
+
+def test_add_reader_exception_expounded_upon(testdir, cmd_opts, request):
+    skip_if_reactor_not(request, "asyncio")
+
+    pytest.mark.skipif(
+        condition=sys.platform != 'win32',
+        reason="Relevant only on Windows",
+    )
+
+    pytest.mark.skipif(
+        condition=proactor_add_reader_is_implemented(),
+        reason=(
+            "Relevant only if asyncio.ProactorEventLoop.add_reader()"
+            " is not implemented"
+        ),
+    )
+
+    # block the default conftest.py
+    testdir.makeconftest("")
+    test_file = """
+    def test_succeed():
+        pass
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert all(
+        s in rr.stderr.str()
+        for s in [
+            "AddReaderNotImplementedError",
+            "https://twistedmatrix.com/trac/ticket/9766",
+        ]
+    )
