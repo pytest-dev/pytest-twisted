@@ -717,21 +717,19 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
 
 
+@pytest.mark.skipif(
+    condition=sys.platform != 'win32',
+    reason="Relevant only on Windows",
+)
+@pytest.mark.skipif(
+    condition=proactor_add_reader_is_implemented(),
+    reason=(
+        "Relevant only if asyncio.ProactorEventLoop.add_reader()"
+        " is not implemented"
+    ),
+)
 def test_add_reader_exception_expounded_upon(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
-
-    pytest.mark.skipif(
-        condition=sys.platform != 'win32',
-        reason="Relevant only on Windows",
-    )
-
-    pytest.mark.skipif(
-        condition=proactor_add_reader_is_implemented(),
-        reason=(
-            "Relevant only if asyncio.ProactorEventLoop.add_reader()"
-            " is not implemented"
-        ),
-    )
 
     # block the default conftest.py
     testdir.makeconftest("")
