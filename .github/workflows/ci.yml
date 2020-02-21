@@ -75,8 +75,8 @@ jobs:
     strategy:
       matrix:
         python:
-          - short: 37
-            dotted: 3.7
+          - short: 38
+            dotted: 3.8
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python.dotted }}
