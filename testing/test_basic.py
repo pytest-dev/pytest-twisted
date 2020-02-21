@@ -738,7 +738,7 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     ),
 )
 @pytest.mark.skipif(
-    condition=proactor_is_default(),
+    condition=not proactor_is_default(),
     reason="Proactor is not the default event loop policy."
 )
 def test_add_reader_exception_expounded_upon(testdir, cmd_opts, request):
