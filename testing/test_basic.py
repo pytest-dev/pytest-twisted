@@ -50,22 +50,19 @@ def format_run_result_output_for_assert(run_result):
 
 
 def proactor_add_reader_is_implemented():
-    import asyncio
-
-    proactor_event_loop = getattr(asyncio, "ProactorEventLoop", None)
-    add_reader = getattr(proactor_event_loop, "add_reader", None)
-
-    if add_reader is None:
-        return False
-
     try:
-        add_reader(None, None, None)
-    except NotImplementedError:
-        return False
-    except: # noqa: E722
-        pass
+        import asyncio
 
-    return True
+        add_reader = asyncio.proactor_event_loop.add_reader
+
+        try:
+            add_reader(None, None, None)
+        except NotImplementedError:
+            return False
+        except: # noqa: E722
+            return True
+    except: # noqa: E722
+        return False
 
 
 @pytest.fixture(name="default_conftest", autouse=True)
