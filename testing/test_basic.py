@@ -62,7 +62,7 @@ def proactor_add_reader_is_implemented():
         add_reader(None, None, None)
     except NotImplementedError:
         return False
-    except:
+    except: # noqa: E722
         pass
 
     return True
