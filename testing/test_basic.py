@@ -52,7 +52,8 @@ def format_run_result_output_for_assert(run_result):
 def proactor_add_reader_is_implemented():
     import asyncio
 
-    add_reader = getattr(asyncio.ProactorEventLoop, "add_reader", None)
+    proactor_event_loop = getattr(asyncio, "ProactorEventLoop", None)
+    add_reader = getattr(proactor_event_loop, "add_reader", None)
 
     if add_reader is None:
         return False
