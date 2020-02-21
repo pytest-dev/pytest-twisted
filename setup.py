@@ -5,7 +5,7 @@ with open("README.rst") as f:
 
 setup(
     name="pytest-twisted",
-    version="1.11",
+    version="1.12",
     description="A twisted plugin for py.test.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
@@ -28,6 +28,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     entry_points={"pytest11": ["twisted = pytest_twisted"]},
 )
