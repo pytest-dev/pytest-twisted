@@ -65,6 +65,18 @@ def proactor_add_reader_is_implemented():
         return False
 
 
+def proactor_is_default():
+    try:
+        import asyncio
+
+        return (
+            asyncio.DefaultEventLoopPolicy
+            is asyncio.WindowsProactorEventLoopPolicy
+        )
+    except:     # noqa: E722
+        return False
+
+
 @pytest.fixture(name="default_conftest", autouse=True)
 def _default_conftest(testdir):
     testdir.makeconftest(textwrap.dedent("""
@@ -724,6 +736,10 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
         "Relevant only if asyncio.ProactorEventLoop.add_reader()"
         " is not implemented"
     ),
+)
+@pytest.mark.skipif(
+    condition=proactor_is_default(),
+    reason="Proactor is not the default event loop policy."
 )
 def test_add_reader_exception_expounded_upon(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
