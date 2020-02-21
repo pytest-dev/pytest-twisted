@@ -1,6 +1,7 @@
 import functools
 import gc
 import inspect
+import sys
 import warnings
 
 import decorator
@@ -37,7 +38,7 @@ class AsyncFixtureUnsupportedScopeError(Exception):
     @classmethod
     def from_scope(cls, scope):
         return cls(
-            'Unsupported scope used for async fixture: {}'.format(scope)
+            'Unsupported scope {0!r} used for async fixture'.format(scope)
         )
 
 
@@ -382,3 +383,18 @@ def pytest_configure(config):
     )(blockon)
 
     reactor_installers[config.getoption("reactor")]()
+
+
+def _use_asyncio_selector_if_required(config):
+    # https://twistedmatrix.com/trac/ticket/9766
+    # https://github.com/pytest-dev/pytest-twisted/issues/80
+
+    if (
+        config.getoption("reactor", "default") == "asyncio"
+        and sys.platform == 'win32'
+        and sys.version_info >= (3, 8)
+    ):
+        import asyncio
+
+        selector_policy = asyncio.WindowsSelectorEventLoopPolicy()
+        asyncio.set_event_loop_policy(selector_policy)

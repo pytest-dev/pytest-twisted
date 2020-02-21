@@ -11,6 +11,14 @@ ASYNC_AWAIT = sys.version_info >= (3, 5)
 ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
 
+# https://github.com/pytest-dev/pytest/issues/6505
+def force_plural(name):
+    if name in {"error", "warning"}:
+        return name + "s"
+
+    return name
+
+
 def assert_outcomes(run_result, outcomes):
     formatted_output = format_run_result_output_for_assert(run_result)
 
@@ -19,8 +27,13 @@ def assert_outcomes(run_result, outcomes):
     except ValueError:
         assert False, formatted_output
 
+    normalized_outcomes = {
+        force_plural(name): outcome
+        for name, outcome in result_outcomes.items()
+    }
+
     for name, value in outcomes.items():
-        assert result_outcomes.get(name) == value, formatted_output
+        assert normalized_outcomes.get(name) == value, formatted_output
 
 
 def format_run_result_output_for_assert(run_result):
@@ -34,6 +47,19 @@ def format_run_result_output_for_assert(run_result):
     return textwrap.dedent(tpl).format(
         run_result.stdout.str(), run_result.stderr.str()
     )
+
+
+@pytest.fixture(name="default_conftest", autouse=True)
+def _default_conftest(testdir):
+    testdir.makeconftest(textwrap.dedent("""
+    import pytest
+    import pytest_twisted
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_configure(config):
+        pytest_twisted._use_asyncio_selector_if_required(config=config)
+    """))
 
 
 def skip_if_reactor_not(request, expected_reactor):
@@ -321,7 +347,10 @@ def test_async_fixture(testdir, cmd_opts):
     import pytest
     import pytest_twisted
 
-    @pytest_twisted.async_fixture(scope="function", params=["fs", "imap", "web"])
+    @pytest_twisted.async_fixture(
+        scope="function",
+        params=["fs", "imap", "web"],
+    )
     @pytest.mark.redgreenblue
     async def foo(request):
         d1, d2 = defer.Deferred(), defer.Deferred()
@@ -614,10 +643,14 @@ def test_pytest_from_reactor_thread(testdir, request):
 def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
     conftest_file = """
+    import pytest
     import pytest_twisted as pt
     from twisted.internet import defer
 
+    @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
+        pt._use_asyncio_selector_if_required(config=config)
+
         pt.init_asyncio_reactor()
         d = defer.Deferred()
 
@@ -643,6 +676,14 @@ def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
 def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
     conftest_file = """
+    import pytest
+    import pytest_twisted
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_configure(config):
+        pytest_twisted._use_asyncio_selector_if_required(config=config)
+
     def pytest_addhooks():
         import twisted.internet.default
         twisted.internet.default.install()
