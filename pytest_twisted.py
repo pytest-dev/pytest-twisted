@@ -310,6 +310,8 @@ def init_asyncio_reactor():
                 from_value=e,
             )
 
+        raise
+
 
 reactor_installers = {
     "default": init_default_reactor,
