@@ -495,7 +495,13 @@ def test_async_yield_fixture_function_scope(testdir, cmd_opts):
 
 
 @skip_if_no_async_await()
-def test_async_fixture_in_fixture(testdir, cmd_opts):
+@pytest.mark.parametrize('innerasync', [
+    pytest.param(truth, id='innerasync={}'.format(truth))
+    for truth in [True, False]
+])
+def test_async_fixture_in_fixture(testdir, cmd_opts, innerasync):
+    maybe_async = 'async ' if innerasync else ''
+    maybe_await = 'await ' if innerasync else ''
     test_file = """
     import itertools
     from twisted.internet import reactor, defer
@@ -505,38 +511,44 @@ def test_async_fixture_in_fixture(testdir, cmd_opts):
     @pytest_twisted.async_fixture(name='increment')
     async def fixture_increment():
         counts = itertools.count()
-        async def increment():
+        {maybe_async}def increment():
             return next(counts)
 
         return increment
 
     @pytest_twisted.async_fixture(name='doubleincrement')
     async def fixture_doubleincrement(increment):
-        async def doubleincrement():
-            n = await increment()
+        {maybe_async}def doubleincrement():
+            n = {maybe_await}increment()
             return n * 2
 
         return doubleincrement
 
     @pytest_twisted.ensureDeferred
     async def test_increment(increment):
-        first = await increment()
-        second = await increment()
+        first = {maybe_await}increment()
+        second = {maybe_await}increment()
         assert (first, second) == (0, 1)
 
     @pytest_twisted.ensureDeferred
     async def test_doubleincrement(doubleincrement):
-        first = await doubleincrement()
-        second = await doubleincrement()
+        first = {maybe_await}doubleincrement()
+        second = {maybe_await}doubleincrement()
         assert (first, second) == (0, 2)
-    """
+    """.format(maybe_async=maybe_async, maybe_await=maybe_await)
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {"passed": 2})
 
 
 @skip_if_no_async_generators()
-def test_async_yield_fixture_in_fixture(testdir, cmd_opts):
+@pytest.mark.parametrize('innerasync', [
+    pytest.param(truth, id='innerasync={}'.format(truth))
+    for truth in [True, False]
+])
+def test_async_yield_fixture_in_fixture(testdir, cmd_opts, innerasync):
+    maybe_async = 'async ' if innerasync else ''
+    maybe_await = 'await ' if innerasync else ''
     test_file = """
     import itertools
     from twisted.internet import reactor, defer
@@ -546,31 +558,31 @@ def test_async_yield_fixture_in_fixture(testdir, cmd_opts):
     @pytest_twisted.async_yield_fixture(name='increment')
     async def fixture_increment():
         counts = itertools.count()
-        async def increment():
+        {maybe_async}def increment():
             return next(counts)
 
         yield increment
 
     @pytest_twisted.async_yield_fixture(name='doubleincrement')
     async def fixture_doubleincrement(increment):
-        async def doubleincrement():
-            n = await increment()
+        {maybe_async}def doubleincrement():
+            n = {maybe_await}increment()
             return n * 2
 
         yield doubleincrement
 
     @pytest_twisted.ensureDeferred
     async def test_increment(increment):
-        first = await increment()
-        second = await increment()
+        first = {maybe_await}increment()
+        second = {maybe_await}increment()
         assert (first, second) == (0, 1)
 
     @pytest_twisted.ensureDeferred
     async def test_doubleincrement(doubleincrement):
-        first = await doubleincrement()
-        second = await doubleincrement()
+        first = {maybe_await}doubleincrement()
+        second = {maybe_await}doubleincrement()
         assert (first, second) == (0, 2)
-    """
+    """.format(maybe_async=maybe_async, maybe_await=maybe_await)
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {"passed": 2})
