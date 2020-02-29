@@ -494,6 +494,88 @@ def test_async_yield_fixture_function_scope(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2})
 
 
+@skip_if_no_async_await()
+def test_async_fixture_in_fixture(testdir, cmd_opts):
+    test_file = """
+    import itertools
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_fixture(name='increment')
+    async def fixture_increment():
+        counts = itertools.count()
+        async def increment():
+            return next(counts)
+
+        return increment
+
+    @pytest_twisted.async_fixture(name='doubleincrement')
+    async def fixture_doubleincrement(increment):
+        async def doubleincrement():
+            n = await increment()
+            return n * 2
+
+        return doubleincrement
+
+    @pytest_twisted.ensureDeferred
+    async def test_increment(increment):
+        first = await increment()
+        second = await increment()
+        assert (first, second) == (0, 1)
+
+    @pytest_twisted.ensureDeferred
+    async def test_doubleincrement(doubleincrement):
+        first = await doubleincrement()
+        second = await doubleincrement()
+        assert (first, second) == (0, 2)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_in_fixture(testdir, cmd_opts):
+    test_file = """
+    import itertools
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_yield_fixture(name='increment')
+    async def fixture_increment():
+        counts = itertools.count()
+        async def increment():
+            return next(counts)
+
+        yield increment
+
+    @pytest_twisted.async_yield_fixture(name='doubleincrement')
+    async def fixture_doubleincrement(increment):
+        async def doubleincrement():
+            n = await increment()
+            return n * 2
+
+        yield doubleincrement
+
+    @pytest_twisted.ensureDeferred
+    async def test_increment(increment):
+        first = await increment()
+        second = await increment()
+        assert (first, second) == (0, 1)
+
+    @pytest_twisted.ensureDeferred
+    async def test_doubleincrement(doubleincrement):
+        first = await doubleincrement()
+        second = await doubleincrement()
+        assert (first, second) == (0, 2)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
+
+
 def test_blockon_in_hook(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "default")
     conftest_file = """
