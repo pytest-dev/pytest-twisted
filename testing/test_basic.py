@@ -30,10 +30,13 @@ def assert_outcomes(run_result, outcomes):
     normalized_outcomes = {
         force_plural(name): outcome
         for name, outcome in result_outcomes.items()
+        if force_plural(name) in outcomes # TODO: do we really only want to check the specified outcomes?
     }
 
-    for name, value in outcomes.items():
-        assert normalized_outcomes.get(name) == value, formatted_output
+    assert normalized_outcomes == outcomes
+
+    # for name, value in outcomes.items():
+    #     assert normalized_outcomes.get(name) == value, formatted_output
 
 
 def format_run_result_output_for_assert(run_result):
@@ -430,11 +433,11 @@ def test_async_yield_fixture(testdir, cmd_opts):
         yield d2,
 
         if request.param == "gopher":
-            raise RuntimeError("gaz")
+            raise RuntimeError("gaz", request.param)
 
         if request.param == "archie":
             yield 42
-
+    
     @pytest_twisted.inlineCallbacks
     def test_succeed(foo):
         x = yield foo[0]
@@ -443,7 +446,8 @@ def test_async_yield_fixture(testdir, cmd_opts):
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert_outcomes(rr, {"passed": 2, "failed": 3})
+    # TODO: this is getting super imprecise...
+    assert_outcomes(rr, {"passed": 4, "failed": 1, "errors": 2})
 
 
 @skip_if_no_async_generators()
@@ -597,6 +601,7 @@ def test_async_fixture_in_fixture(testdir, cmd_opts, innerasync):
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {"passed": 2})
+    # assert_outcomes(rr, {"passed": 1})
 
 
 @skip_if_no_async_generators()
