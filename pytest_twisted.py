@@ -256,7 +256,7 @@ def _pytest_fixture_setup(fixturedef, request, wrapper):
 
     fixturedef.cached_result = (arg_value, request.param_index, None)
 
-    return arg_value
+    defer.returnValue(arg_value)
 
     # async_generator_deferreds = [
     #     (arg, defer.ensureDeferred(g.coroutine.__anext__()))
@@ -387,8 +387,6 @@ def pytest_runtest_teardown(item):
             # blockingCallFromThread(
             #     _instances.reactor, tear_it_down, deferred
             # )
-
-    return None
 
 
 @defer.inlineCallbacks
