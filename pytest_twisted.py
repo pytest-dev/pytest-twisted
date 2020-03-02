@@ -281,7 +281,6 @@ def pytest_pyfunc_call(pyfuncitem):
     return True
 
 
-# TODO: switch to some plugin callback to guarantee order before other fixtures?
 @pytest.fixture(scope="session", autouse=True)
 def twisted_greenlet(request):
     return _instances.gr_twisted
