@@ -130,17 +130,6 @@ def stop_twisted_greenlet():
         _instances.gr_twisted.switch()
 
 
-class _CoroutineWrapper:
-    def __init__(self, coroutine, mark):
-        # TODO: really an async def now, maybe, if that worked out
-        self.coroutine = coroutine
-        self.__name__ = self.coroutine.__name__ + 'ptcr'
-        self.mark = mark
-
-    # def __call__(self):
-    #     print()
-
-
 def _marked_async_fixture(mark):
     @functools.wraps(pytest.fixture)
     def fixture(*args, **kwargs):
@@ -152,29 +141,13 @@ def _marked_async_fixture(mark):
         if scope != 'function':
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
-        # def marker(f):
-        #     @functools.wraps(f)
-        #     def w(*args, **kwargs):
-        #         return _CoroutineWrapper(
-        #             coroutine=f(*args, **kwargs),
-        #             mark=mark,
-        #         )
-        #
-        #     return w
-
-        def marker(f):
-            f._pytest_twisted_coroutine_wrapper = _CoroutineWrapper(
-                coroutine=f,
-                mark=mark,
-            )
+        def _mark(f):
+            setattr(f, _mark_attribute_name, mark)
 
             return f
 
         def decorator(f):
-            # result = pytest.fixture(*args, **kwargs)(
-            #     _CoroutineWrapper(coroutine=f, mark=mark),
-            # )
-            result = pytest.fixture(*args, **kwargs)(marker(f))
+            result = pytest.fixture(*args, **kwargs)(_mark(f))
 
             return result
 
@@ -183,18 +156,17 @@ def _marked_async_fixture(mark):
     return fixture
 
 
+_mark_attribute_name = '_pytest_twisted_coroutine_wrapper'
 async_fixture = _marked_async_fixture('async_fixture')
 async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 
 
 def pytest_fixture_setup(fixturedef, request):
-    maybe_wrapper = getattr(
-        fixturedef.func,
-        '_pytest_twisted_coroutine_wrapper',
-        None,
-    )
-    if not isinstance(maybe_wrapper, _CoroutineWrapper):
+    maybe_mark = getattr(fixturedef.func, _mark_attribute_name, None)
+    if maybe_mark is None:
         return None
+
+    mark = maybe_mark
 
     if _instances.gr_twisted is not None:
         if _instances.gr_twisted.dead:
@@ -205,44 +177,36 @@ def pytest_fixture_setup(fixturedef, request):
 
         d = defer.Deferred()
         _instances.reactor.callLater(
-            0.0, in_reactor, d, _pytest_fixture_setup, fixturedef, request, maybe_wrapper
+            0.0, in_reactor, d, _pytest_fixture_setup, fixturedef, request, mark
         )
-        result = blockon_default(d)
+        blockon_default(d)
     else:
         if not _instances.reactor.running:
             raise RuntimeError("twisted reactor is not running")
-        result = blockingCallFromThread(
-            _instances.reactor, _pytest_fixture_setup, fixturedef, request, maybe_wrapper
+        blockingCallFromThread(
+            _instances.reactor, _pytest_fixture_setup, fixturedef, request, mark
         )
-    # return None
-    return result
+
+    return True
 
 
 async_yield_fixture_cache = {}
 
 
 @defer.inlineCallbacks
-def _pytest_fixture_setup(fixturedef, request, wrapper):
-    # return None
-    #
-    # if not isinstance(fixturedef.func, _CoroutineWrapper):
-    #     return None
-
+def _pytest_fixture_setup(fixturedef, request, mark):
     fixture_function = fixturedef.func
-
-    async_generators = []
 
     kwargs = {
         name: request.getfixturevalue(name)
         for name in fixturedef.argnames
     }
 
-    if wrapper.mark == 'async_fixture':
+    if mark == 'async_fixture':
         arg_value = yield defer.ensureDeferred(
             fixture_function(**kwargs)
         )
-    elif wrapper.mark == 'async_yield_fixture':
-        # async_generators.append((arg, wrapper))
+    elif mark == 'async_yield_fixture':
         coroutine = fixture_function(**kwargs)
         # TODO: use request.addfinalizer() instead?
         async_yield_fixture_cache[request.param_index] = coroutine
@@ -250,43 +214,11 @@ def _pytest_fixture_setup(fixturedef, request, wrapper):
             coroutine.__anext__(),
         )
     else:
-        raise UnrecognizedCoroutineMarkError.from_mark(
-            mark=wrapper.mark,
-        )
+        raise UnrecognizedCoroutineMarkError.from_mark(mark=mark)
 
     fixturedef.cached_result = (arg_value, request.param_index, None)
 
     defer.returnValue(arg_value)
-
-    # async_generator_deferreds = [
-    #     (arg, defer.ensureDeferred(g.coroutine.__anext__()))
-    #     for arg, g in reversed(async_generators)
-    # ]
-    #
-    # for arg, d in async_generator_deferreds:
-    #     try:
-    #         yield d
-    #     except StopAsyncIteration:
-    #         continue
-    #     else:
-    #         raise AsyncGeneratorFixtureDidNotStopError.from_generator(
-    #             generator=arg,
-    #         )
-
-
-# @defer.inlineCallbacks
-# def _pytest_fixture_post_finalizer(fixturedef, request, coroutine):
-#     try:
-#         yield defer.ensureDeferred(
-#             coroutine.__anext__(),
-#         )
-#     except StopAsyncIteration:
-#         # TODO: i don't remember why this makes sense...
-#         pass
-#     else:
-#         raise AsyncGeneratorFixtureDidNotStopError.from_generator(
-#             generator=coroutine,
-#         )
 
 
 # TODO: but don't we want to do the finalizer?  not wait until post it?
@@ -300,33 +232,6 @@ def pytest_fixture_post_finalizer(fixturedef, request):
 
     to_be_torn_down.append(defer.ensureDeferred(coroutine.__anext__()))
     return None
-
-    # try:
-    #     if _instances.gr_twisted is not None:
-    #         if _instances.gr_twisted.dead:
-    #             raise RuntimeError("twisted reactor has stopped")
-    #
-    #         def in_reactor(d, f, *args):
-    #             return defer.maybeDeferred(f, *args).chainDeferred(d)
-    #
-    #         d = defer.Deferred()
-    #         _instances.reactor.callLater(
-    #             0.0, in_reactor, d, _pytest_fixture_post_finalizer, fixturedef, request, coroutine
-    #         )
-    #         result = blockon_default(d)
-    #     else:
-    #         if not _instances.reactor.running:
-    #             raise RuntimeError("twisted reactor is not running")
-    #         result = blockingCallFromThread(
-    #             _instances.reactor, _pytest_fixture_post_finalizer, fixturedef, request, coroutine
-    #         )
-    # except StopAsyncIteration as e:
-    #     print(e)
-    #
-    # # async_yield_fixture_cache.pop(request.param_index)
-    #
-    # # return None
-    return result
 
 
 @defer.inlineCallbacks
@@ -355,13 +260,6 @@ to_be_torn_down = []
 def pytest_runtest_teardown(item):
     yield
 
-    # deferreds = []
-    #
-    # while len(to_be_torn_down) > 0:
-    #     coroutine = to_be_torn_down.pop(0)
-    #     deferreds.append(defer.ensureDeferred(coroutine.__anext__()))
-    #
-    # for deferred in deferreds:
     while len(to_be_torn_down) > 0:
         deferred = to_be_torn_down.pop(0)
         if _instances.gr_twisted is not None:
@@ -377,16 +275,12 @@ def pytest_runtest_teardown(item):
                 0.0, in_reactor, d, tear_it_down, deferred
             )
             blockon_default(d)
-            # blockon_default(tear_it_down(deferred))
         else:
             if not _instances.reactor.running:
                 raise RuntimeError("twisted reactor is not running")
             blockingCallFromThread(
                 _instances.reactor, tear_it_down, deferred,
             )
-            # blockingCallFromThread(
-            #     _instances.reactor, tear_it_down, deferred
-            # )
 
 
 @defer.inlineCallbacks
@@ -394,56 +288,6 @@ def _pytest_pyfunc_call(pyfuncitem):
     kwargs = {name: value for name, value in pyfuncitem.funcargs.items() if name in pyfuncitem._fixtureinfo.argnames}
     result = yield pyfuncitem.obj(**kwargs)
     defer.returnValue(result)
-
-    return
-    # print()
-    #
-    # testfunction = pyfuncitem.obj
-    # async_generators = []
-    # funcargs = pyfuncitem.funcargs
-    # if hasattr(pyfuncitem, "_fixtureinfo"):
-    #     testargs = {}
-    #     for arg in pyfuncitem._fixtureinfo.argnames:
-    #         if isinstance(funcargs[arg], _CoroutineWrapper):
-    #             wrapper = funcargs[arg]
-    #
-    #             if wrapper.mark == 'async_fixture':
-    #                 arg_value = yield defer.ensureDeferred(
-    #                     wrapper.coroutine
-    #                 )
-    #             elif wrapper.mark == 'async_yield_fixture':
-    #                 async_generators.append((arg, wrapper))
-    #                 arg_value = yield defer.ensureDeferred(
-    #                     wrapper.coroutine.__anext__(),
-    #                 )
-    #             else:
-    #                 raise UnrecognizedCoroutineMarkError.from_mark(
-    #                     mark=wrapper.mark,
-    #                 )
-    #         else:
-    #             arg_value = funcargs[arg]
-    #
-    #         testargs[arg] = arg_value
-    # else:
-    #     testargs = funcargs
-    # result = yield testfunction(**testargs)
-    #
-    # async_generator_deferreds = [
-    #     (arg, defer.ensureDeferred(g.coroutine.__anext__()))
-    #     for arg, g in reversed(async_generators)
-    # ]
-    #
-    # for arg, d in async_generator_deferreds:
-    #     try:
-    #         yield d
-    #     except StopAsyncIteration:
-    #         continue
-    #     else:
-    #         raise AsyncGeneratorFixtureDidNotStopError.from_generator(
-    #             generator=arg,
-    #         )
-    #
-    # defer.returnValue(result)
 
 
 def pytest_pyfunc_call(pyfuncitem):
@@ -471,7 +315,6 @@ def pytest_pyfunc_call(pyfuncitem):
 # TODO: switch to some plugin callback to guarantee order before other fixtures?
 @pytest.fixture(scope="session", autouse=True)
 def twisted_greenlet(request):
-    # request.addfinalizer(stop_twisted_greenlet)
     return _instances.gr_twisted
 
 
