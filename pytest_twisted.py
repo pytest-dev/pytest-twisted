@@ -555,6 +555,10 @@ def pytest_configure(config):
     reactor_installers[config.getoption("reactor")]()
 
 
+def pytest_unconfigure(config):
+    stop_twisted_greenlet()
+
+
 def _use_asyncio_selector_if_required(config):
     # https://twistedmatrix.com/trac/ticket/9766
     # https://github.com/pytest-dev/pytest-twisted/issues/80
