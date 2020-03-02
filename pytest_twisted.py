@@ -141,13 +141,9 @@ def _marked_async_fixture(mark):
         if scope != 'function':
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
-        def _mark(f):
-            setattr(f, _mark_attribute_name, mark)
-
-            return f
-
         def decorator(f):
-            result = pytest.fixture(*args, **kwargs)(_mark(f))
+            setattr(f, _mark_attribute_name, mark)
+            result = pytest.fixture(*args, **kwargs)(f)
 
             return result
 
