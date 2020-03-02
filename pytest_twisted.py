@@ -124,10 +124,10 @@ def init_twisted_greenlet():
         _config.external_reactor = True
 
 
-# def stop_twisted_greenlet():
-#     if _instances.gr_twisted:
-#         _instances.reactor.stop()
-#         _instances.gr_twisted.switch()
+def stop_twisted_greenlet():
+    if _instances.gr_twisted:
+        _instances.reactor.stop()
+        _instances.gr_twisted.switch()
 
 
 class _CoroutineWrapper:
