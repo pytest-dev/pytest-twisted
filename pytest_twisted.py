@@ -152,7 +152,7 @@ def _marked_async_fixture(mark):
     return fixture
 
 
-_mark_attribute_name = '_pytest_twisted_coroutine_wrapper'
+_mark_attribute_name = '_pytest_twisted_mark'
 async_fixture = _marked_async_fixture('async_fixture')
 async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 
@@ -164,24 +164,7 @@ def pytest_fixture_setup(fixturedef, request):
 
     mark = maybe_mark
 
-    if _instances.gr_twisted is not None:
-        if _instances.gr_twisted.dead:
-            raise RuntimeError("twisted reactor has stopped")
-
-        def in_reactor(d, f, *args):
-            return defer.maybeDeferred(f, *args).chainDeferred(d)
-
-        d = defer.Deferred()
-        _instances.reactor.callLater(
-            0.0, in_reactor, d, _pytest_fixture_setup, fixturedef, request, mark
-        )
-        blockon_default(d)
-    else:
-        if not _instances.reactor.running:
-            raise RuntimeError("twisted reactor is not running")
-        blockingCallFromThread(
-            _instances.reactor, _pytest_fixture_setup, fixturedef, request, mark
-        )
+    run_inline_callbacks(_pytest_fixture_setup, fixturedef, request, mark)
 
     return True
 
@@ -252,31 +235,30 @@ to_be_torn_down = []
 #       claims it should also take a nextItem but that triggers a direct error
 
 
+def run_inline_callbacks(f, *args):
+    if _instances.gr_twisted is not None:
+        if _instances.gr_twisted.dead:
+            raise RuntimeError("twisted reactor has stopped")
+
+        def in_reactor(d, f, *args):
+            return defer.maybeDeferred(f, *args).chainDeferred(d)
+
+        d = defer.Deferred()
+        _instances.reactor.callLater(0.0, in_reactor, d, f, *args)
+        blockon_default(d)
+    else:
+        if not _instances.reactor.running:
+            raise RuntimeError("twisted reactor is not running")
+        blockingCallFromThread(_instances.reactor, f, *args)
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_teardown(item):
     yield
 
     while len(to_be_torn_down) > 0:
         deferred = to_be_torn_down.pop(0)
-        if _instances.gr_twisted is not None:
-            if _instances.gr_twisted.dead:
-                raise RuntimeError("twisted reactor has stopped")
-
-            def in_reactor(d, f, *args):
-                # return f.chainDeferred(d)
-                return defer.maybeDeferred(f, *args).chainDeferred(d)
-
-            d = defer.Deferred()
-            _instances.reactor.callLater(
-                0.0, in_reactor, d, tear_it_down, deferred
-            )
-            blockon_default(d)
-        else:
-            if not _instances.reactor.running:
-                raise RuntimeError("twisted reactor is not running")
-            blockingCallFromThread(
-                _instances.reactor, tear_it_down, deferred,
-            )
+        run_inline_callbacks(tear_it_down, deferred)
 
 
 @defer.inlineCallbacks
@@ -287,24 +269,7 @@ def _pytest_pyfunc_call(pyfuncitem):
 
 
 def pytest_pyfunc_call(pyfuncitem):
-    if _instances.gr_twisted is not None:
-        if _instances.gr_twisted.dead:
-            raise RuntimeError("twisted reactor has stopped")
-
-        def in_reactor(d, f, *args):
-            return defer.maybeDeferred(f, *args).chainDeferred(d)
-
-        d = defer.Deferred()
-        _instances.reactor.callLater(
-            0.0, in_reactor, d, _pytest_pyfunc_call, pyfuncitem
-        )
-        blockon_default(d)
-    else:
-        if not _instances.reactor.running:
-            raise RuntimeError("twisted reactor is not running")
-        blockingCallFromThread(
-            _instances.reactor, _pytest_pyfunc_call, pyfuncitem
-        )
+    run_inline_callbacks(_pytest_pyfunc_call, pyfuncitem)
     return True
 
 
