@@ -30,7 +30,8 @@ def assert_outcomes(run_result, outcomes):
     normalized_outcomes = {
         force_plural(name): outcome
         for name, outcome in result_outcomes.items()
-        if force_plural(name) in outcomes # TODO: do we really only want to check the specified outcomes?
+        # TODO: do we really only want to check the specified outcomes?
+        if force_plural(name) in outcomes
     }
 
     assert normalized_outcomes == outcomes
@@ -437,7 +438,7 @@ def test_async_yield_fixture(testdir, cmd_opts):
 
         if request.param == "archie":
             yield 42
-    
+
     @pytest_twisted.inlineCallbacks
     def test_succeed(foo):
         x = yield foo[0]
