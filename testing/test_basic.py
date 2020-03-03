@@ -434,7 +434,7 @@ def test_async_yield_fixture(testdir, cmd_opts):
         yield d2,
 
         if request.param == "gopher":
-            raise RuntimeError("gaz", request.param)
+            raise RuntimeError("gaz")
 
         if request.param == "archie":
             yield 42
