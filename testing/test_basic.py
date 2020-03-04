@@ -890,7 +890,6 @@ def test_async_fixture_module_scope(testdir, cmd_opts):
         assert foo == 42
 
         check_me = 2
-        # check_me += 1
 
     def test_second(foo):
         global check_me
@@ -899,7 +898,6 @@ def test_async_fixture_module_scope(testdir, cmd_opts):
         assert foo == 42
 
         check_me = 3
-        # check_me += 1
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
