@@ -166,7 +166,7 @@ async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 
 def pytest_fixture_setup(fixturedef, request):
     """Interface pytest to async setup for async and async yield fixtures."""
-    # TODO: what about inlineCallbacks fixtures?
+    # TODO: what about _adding_ inlineCallbacks fixture support?
     maybe_mark = getattr(fixturedef.func, _mark_attribute_name, None)
     if maybe_mark is None:
         return None
