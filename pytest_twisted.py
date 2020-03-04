@@ -109,6 +109,11 @@ def block_from_thread(d):
 
 @decorator.decorator
 def inlineCallbacks(fun, *args, **kw):
+    # TODO: it presumably doesn't matter but i really dislike how this
+    #       creates a new inlineCallbacks for each call.  but, that's
+    #       a pretty irrelevant concern given that 1) it is just a function
+    #       call overhead and 2) lots of tests are only called once anyways.
+    #       but, this gets the feeling out of my head...
     return defer.inlineCallbacks(fun)(*args, **kw)
 
 
