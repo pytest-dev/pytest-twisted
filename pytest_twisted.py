@@ -282,7 +282,7 @@ def pytest_pyfunc_call(pyfuncitem):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def twisted_greenlet(request):
+def twisted_greenlet():
     return _instances.gr_twisted
 
 
