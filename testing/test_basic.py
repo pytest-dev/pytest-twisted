@@ -854,3 +854,53 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
+
+
+@skip_if_no_async_generators()
+def test_async_fixture_module_scope(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    check_me = 0
+
+    @pytest_twisted.async_yield_fixture(scope="module")
+    async def foo():
+        global check_me
+
+        if check_me != 0:
+            raise Exception('check_me already modified before fixture run')
+
+        check_me = 1
+
+        yield 42
+
+        if check_me != 3:
+            raise Exception(
+                'check_me not updated properly: {}'.format(check_me),
+            )
+
+        check_me = 0
+
+    def test_first(foo):
+        global check_me
+
+        assert check_me == 1
+        assert foo == 42
+
+        check_me = 2
+        # check_me += 1
+
+    def test_second(foo):
+        global check_me
+
+        assert check_me == 2
+        assert foo == 42
+
+        check_me = 3
+        # check_me += 1
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})

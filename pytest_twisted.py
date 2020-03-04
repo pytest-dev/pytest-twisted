@@ -143,7 +143,9 @@ def _marked_async_fixture(mark):
         except IndexError:
             scope = kwargs.get('scope', 'function')
 
-        if scope != 'function':
+        if scope not in ['function', 'module']:
+            # TODO: add test for session scope (and that's it, right?)
+            #       then remove this and update docs
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
         def decorator(f):
