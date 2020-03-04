@@ -163,19 +163,22 @@ async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 
 
 def pytest_fixture_setup(fixturedef, request):
+    """Interface pytest to async setup for async and async yield fixtures."""
+    # TODO: what about inlineCallbacks fixtures?
     maybe_mark = getattr(fixturedef.func, _mark_attribute_name, None)
     if maybe_mark is None:
         return None
 
     mark = maybe_mark
 
-    run_inline_callbacks(_pytest_fixture_setup, fixturedef, request, mark)
+    run_inline_callbacks(_async_pytest_fixture_setup, fixturedef, request, mark)
 
     return True
 
 
 @defer.inlineCallbacks
-def _pytest_fixture_setup(fixturedef, request, mark):
+def _async_pytest_fixture_setup(fixturedef, request, mark):
+    """Setup async and async yield fixtures."""
     fixture_function = fixturedef.func
 
     kwargs = {
@@ -204,6 +207,7 @@ def _pytest_fixture_setup(fixturedef, request, mark):
 
 # TODO: but don't we want to do the finalizer?  not wait until post it?
 def pytest_fixture_post_finalizer(fixturedef, request):
+    """Collect async yield fixture teardown requests for later handling."""
     maybe_coroutine = _tracking.async_yield_fixture_cache.pop(
         request.param_index,
         None,
@@ -221,6 +225,7 @@ def pytest_fixture_post_finalizer(fixturedef, request):
 
 @defer.inlineCallbacks
 def tear_it_down(deferred):
+    """Tear down a specific async yield fixture."""
     try:
         yield deferred
     except StopAsyncIteration:
@@ -230,6 +235,7 @@ def tear_it_down(deferred):
     else:
         e = None
 
+    # TODO: six.raise_from()
     raise AsyncGeneratorFixtureDidNotStopError.from_generator(
         generator=deferred,
     )
@@ -240,6 +246,7 @@ def tear_it_down(deferred):
 
 
 def run_inline_callbacks(f, *args):
+    """Interface into Twisted greenlet to run and wait for deferred."""
     if _instances.gr_twisted is not None:
         if _instances.gr_twisted.dead:
             raise RuntimeError("twisted reactor has stopped")
@@ -258,6 +265,7 @@ def run_inline_callbacks(f, *args):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_teardown(item):
+    """Tear down collected async yield fixtures."""
     yield
 
     while len(_tracking.to_be_torn_down) > 0:
@@ -265,8 +273,16 @@ def pytest_runtest_teardown(item):
         run_inline_callbacks(tear_it_down, deferred)
 
 
+def pytest_pyfunc_call(pyfuncitem):
+    """Interface to async test call handler."""
+    # TODO: only handle 'our' tests?  what is the point of handling others?
+    run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem)
+    return True
+
+
 @defer.inlineCallbacks
-def _pytest_pyfunc_call(pyfuncitem):
+def _async_pytest_pyfunc_call(pyfuncitem):
+    """Run test function."""
     kwargs = {
         name: value
         for name, value in pyfuncitem.funcargs.items()
@@ -276,17 +292,13 @@ def _pytest_pyfunc_call(pyfuncitem):
     defer.returnValue(result)
 
 
-def pytest_pyfunc_call(pyfuncitem):
-    run_inline_callbacks(_pytest_pyfunc_call, pyfuncitem)
-    return True
-
-
 @pytest.fixture(scope="session", autouse=True)
 def twisted_greenlet():
     return _instances.gr_twisted
 
 
 def init_default_reactor():
+    """Install the default Twisted reactor."""
     import twisted.internet.default
 
     module = inspect.getmodule(twisted.internet.default.install)
@@ -302,6 +314,7 @@ def init_default_reactor():
 
 
 def init_qt5_reactor():
+    """Install the qt5reactor...  reactor."""
     import qt5reactor
 
     _install_reactor(
@@ -310,6 +323,7 @@ def init_qt5_reactor():
 
 
 def init_asyncio_reactor():
+    """Install the Twisted reactor for asyncio."""
     from twisted.internet import asyncioreactor
 
     _install_reactor(
@@ -326,6 +340,7 @@ reactor_installers = {
 
 
 def _install_reactor(reactor_installer, reactor_type):
+    """Install the specified reactor and create the greenlet."""
     try:
         reactor_installer()
     except error.ReactorAlreadyInstalledError:
@@ -345,6 +360,7 @@ def _install_reactor(reactor_installer, reactor_type):
 
 
 def pytest_addoption(parser):
+    """Add options into the pytest CLI."""
     group = parser.getgroup("twisted")
     group.addoption(
         "--reactor",
@@ -354,6 +370,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    """Identify and install chosen reactor."""
     pytest.inlineCallbacks = _deprecate(
         deprecated='pytest.inlineCallbacks',
         recommended='pytest_twisted.inlineCallbacks',
@@ -367,10 +384,12 @@ def pytest_configure(config):
 
 
 def pytest_unconfigure(config):
+    """Stop the reactor greenlet."""
     stop_twisted_greenlet()
 
 
 def _use_asyncio_selector_if_required(config):
+    """Set asyncio selector event loop policy if needed."""
     # https://twistedmatrix.com/trac/ticket/9766
     # https://github.com/pytest-dev/pytest-twisted/issues/80
 
