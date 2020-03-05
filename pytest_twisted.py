@@ -107,19 +107,29 @@ def block_from_thread(d):
     return blockingCallFromThread(_instances.reactor, lambda x: x, d)
 
 
-@decorator.decorator
-def inlineCallbacks(fun, *args, **kw):
-    # TODO: it presumably doesn't matter but i really dislike how this
-    #       creates a new inlineCallbacks for each call.  but, that's
-    #       a pretty irrelevant concern given that 1) it is just a function
-    #       call overhead and 2) lots of tests are only called once anyways.
-    #       but, this gets the feeling out of my head...
-    return defer.inlineCallbacks(fun)(*args, **kw)
+def decorator_apply(dec, func):
+    """
+    Decorate a function by preserving the signature even if dec
+    is not a signature-preserving decorator.
+
+    https://github.com/micheles/decorator/blob/55a68b5ef1951614c5c37a6d201b1f3b804dbce6/docs/documentation.md#dealing-with-third-party-decorators
+    """
+    return decorator.FunctionMaker.create(
+        func, 'return decfunc(%(signature)s)',
+        dict(decfunc=dec(func)), __wrapped__=func)
 
 
-@decorator.decorator
-def ensureDeferred(fun, *args, **kw):
-    return defer.ensureDeferred(fun(*args, **kw))
+def inlineCallbacks(f):
+    decorated = decorator_apply(defer.inlineCallbacks, f)
+    _set_mark(o=decorated, mark='inline_callbacks_test')
+
+    return decorated
+
+
+def ensureDeferred(f):
+    _set_mark(o=f, mark='async_test')
+
+    return f
 
 
 def init_twisted_greenlet():
@@ -140,6 +150,14 @@ def stop_twisted_greenlet():
         _instances.gr_twisted.switch()
 
 
+def _get_mark(o, default=None):
+    return getattr(o, _mark_attribute_name, default)
+
+
+def _set_mark(o, mark):
+    setattr(o, _mark_attribute_name, mark)
+
+
 def _marked_async_fixture(mark):
     @functools.wraps(pytest.fixture)
     def fixture(*args, **kwargs):
@@ -154,7 +172,7 @@ def _marked_async_fixture(mark):
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
         def decorator(f):
-            setattr(f, _mark_attribute_name, mark)
+            _set_mark(f, mark)
             result = pytest.fixture(*args, **kwargs)(f)
 
             return result
@@ -172,7 +190,7 @@ async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 def pytest_fixture_setup(fixturedef, request):
     """Interface pytest to async setup for async and async yield fixtures."""
     # TODO: what about _adding_ inlineCallbacks fixture support?
-    maybe_mark = getattr(fixturedef.func, _mark_attribute_name, None)
+    maybe_mark = _get_mark(fixturedef.func)
     if maybe_mark is None:
         return None
 
@@ -180,7 +198,7 @@ def pytest_fixture_setup(fixturedef, request):
 
     run_inline_callbacks(_async_pytest_fixture_setup, fixturedef, request, mark)
 
-    return True
+    return not None
 
 
 @defer.inlineCallbacks
@@ -284,7 +302,7 @@ def pytest_pyfunc_call(pyfuncitem):
     """Interface to async test call handler."""
     # TODO: only handle 'our' tests?  what is the point of handling others?
     run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem)
-    return True
+    return not None
 
 
 @defer.inlineCallbacks
@@ -295,7 +313,16 @@ def _async_pytest_pyfunc_call(pyfuncitem):
         for name, value in pyfuncitem.funcargs.items()
         if name in pyfuncitem._fixtureinfo.argnames
     }
-    result = yield pyfuncitem.obj(**kwargs)
+
+    maybe_mark = _get_mark(pyfuncitem.obj)
+    if maybe_mark == 'async_test':
+        result = yield defer.ensureDeferred(pyfuncitem.obj(**kwargs))
+    elif maybe_mark == 'inline_callbacks_test':
+        result = yield pyfuncitem.obj(**kwargs)
+    else:
+        # TODO: maybe deprecate this
+        result = yield pyfuncitem.obj(**kwargs)
+
     defer.returnValue(result)
 
 
