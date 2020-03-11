@@ -183,6 +183,8 @@ def _marked_async_fixture(mark):
             #       https://docs.pytest.org/en/latest/reference.html#pytest-fixture-api
             #       then remove this and update docs, or maybe keep it around
             #       in case new options come in without support?
+            #
+            #       https://github.com/pytest-dev/pytest-twisted/issues/56
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
         def decorator(f):
