@@ -120,6 +120,10 @@ def decorator_apply(dec, func):
 
 
 def inlineCallbacks(f):
+    """
+    Mark as inline callbacks test for pytest-twisted processing and apply
+    @inlineCallbacks.
+    """
     decorated = decorator_apply(defer.inlineCallbacks, f)
     _set_mark(o=decorated, mark='inline_callbacks_test')
 
@@ -127,6 +131,7 @@ def inlineCallbacks(f):
 
 
 def ensureDeferred(f):
+    """Mark as async test for pytest-twisted processing."""
     _set_mark(o=f, mark='async_test')
 
     return f
@@ -151,10 +156,12 @@ def stop_twisted_greenlet():
 
 
 def _get_mark(o, default=None):
+    """Get the pytest-twisted test or fixture mark."""
     return getattr(o, _mark_attribute_name, default)
 
 
 def _set_mark(o, mark):
+    """Set the pytest-twisted test or fixture mark."""
     setattr(o, _mark_attribute_name, mark)
 
 
@@ -167,8 +174,15 @@ def _marked_async_fixture(mark):
             scope = kwargs.get('scope', 'function')
 
         if scope not in ['function', 'module']:
-            # TODO: add test for session scope (and that's it, right?)
-            #       then remove this and update docs
+            # TODO: handle...
+            #       - class
+            #       - package
+            #       - session
+            #       - dynamic
+            #
+            #       https://docs.pytest.org/en/latest/reference.html#pytest-fixture-api
+            #       then remove this and update docs, or maybe keep it around
+            #       in case new options come in without support?
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
         def decorator(f):
@@ -188,7 +202,7 @@ async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 
 
 def pytest_fixture_setup(fixturedef, request):
-    """Interface pytest to async setup for async and async yield fixtures."""
+    """Interface pytest to async for async and async yield fixtures."""
     # TODO: what about _adding_ inlineCallbacks fixture support?
     maybe_mark = _get_mark(fixturedef.func)
     if maybe_mark is None:
@@ -196,14 +210,14 @@ def pytest_fixture_setup(fixturedef, request):
 
     mark = maybe_mark
 
-    run_inline_callbacks(_async_pytest_fixture_setup, fixturedef, request, mark)
+    _run_inline_callbacks(_async_pytest_fixture_setup, fixturedef, request, mark)
 
     return not None
 
 
 @defer.inlineCallbacks
 def _async_pytest_fixture_setup(fixturedef, request, mark):
-    """Setup async and async yield fixtures."""
+    """Setup an async or async yield fixture."""
     fixture_function = fixturedef.func
 
     kwargs = {
@@ -266,12 +280,8 @@ def tear_it_down(deferred):
     )
 
 
-# TODO: https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_runtest_protocol
-#       claims it should also take a nextItem but that triggers a direct error
-
-
-def run_inline_callbacks(f, *args):
-    """Interface into Twisted greenlet to run and wait for deferred."""
+def _run_inline_callbacks(f, *args):
+    """Interface into Twisted greenlet to run and wait for a deferred."""
     if _instances.gr_twisted is not None:
         if _instances.gr_twisted.dead:
             raise RuntimeError("twisted reactor has stopped")
@@ -295,13 +305,15 @@ def pytest_runtest_teardown(item):
 
     while len(_tracking.to_be_torn_down) > 0:
         deferred = _tracking.to_be_torn_down.pop(0)
-        run_inline_callbacks(tear_it_down, deferred)
+        _run_inline_callbacks(tear_it_down, deferred)
 
 
 def pytest_pyfunc_call(pyfuncitem):
     """Interface to async test call handler."""
     # TODO: only handle 'our' tests?  what is the point of handling others?
-    run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem)
+    #       well, because our interface allowed people to return deferreds
+    #       from arbitrary tests so we kinda have to keep this up for now
+    _run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem)
     return not None
 
 
@@ -328,6 +340,7 @@ def _async_pytest_pyfunc_call(pyfuncitem):
 
 @pytest.fixture(scope="session", autouse=True)
 def twisted_greenlet():
+    """Provide the twisted greenlet in fixture form."""
     return _instances.gr_twisted
 
 
