@@ -696,3 +696,34 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
+
+
+def test_scrapy____something(testdir, cmd_opts):
+    test_file = """
+    import sys
+
+    import twisted.internet.reactor
+    import twisted.internet.defer
+    import twisted.internet.protocol
+    import twisted.trial.unittest
+
+
+    class Protocol(twisted.internet.protocol.ProcessProtocol):
+        def __init__(self):
+            self.deferred = twisted.internet.defer.Deferred()
+
+        def processEnded(self, status):
+            self.deferred.callback(self)
+
+
+    class Test(twisted.trial.unittest.TestCase):
+        @twisted.internet.defer.inlineCallbacks
+        def test(self):
+            protocol = Protocol()
+            command = [sys.executable, '--version']
+            twisted.internet.reactor.spawnProcess(protocol, command[0], command)
+            yield protocol.deferred
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 1})
