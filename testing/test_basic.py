@@ -721,7 +721,13 @@ def test_scrapy____something(testdir, cmd_opts):
         def test(self):
             protocol = Protocol()
             command = [sys.executable, '--version']
-            twisted.internet.reactor.spawnProcess(protocol, command[0], command)
+
+            twisted.internet.reactor.spawnProcess(
+                protocol,
+                command[0],
+                command,
+            )
+
             yield protocol.deferred
     """
     testdir.makepyfile(test_file)
