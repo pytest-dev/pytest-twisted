@@ -19,13 +19,9 @@
                     "message": 1
                 },
                 {
-                    "regexp": "^(\\s*(cmd|env): .*)$",
+                    "regexp": "^(\\s*(cmd:|env:|Maybe you forgot).*)$",
                     "message": 1,
                     "loop": true
-                },
-                {
-                    "regexp": "^(\\s*Maybe you forgot.*)$",
-                    "message": 1
                 }
             ]
         }
