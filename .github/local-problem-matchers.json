@@ -15,8 +15,7 @@
             "severity": "error",
             "pattern": [
                 {
-                    "regexp": "^(\\s*WARNING: test command found but not installed.*)$",
-                    "message": 1
+                    "regexp": "^(\\s*WARNING: test command found but not installed.*)$"
                 },
                 {
                     "regexp": "^(\\s*(cmd:|env:|Maybe you forgot).*)$",
