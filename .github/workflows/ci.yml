@@ -59,7 +59,7 @@ jobs:
             dependencies: default
           - name: Qt5
             tox: qt5
-            dependencies: asyncio
+            dependencies: qt5
           - name: asyncio
             tox: asyncio
             dependencies: asyncio
