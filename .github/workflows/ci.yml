@@ -103,7 +103,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Enable Problem Matchers
         run: |
-          echo "::add-matcher::.github/warnings-problem-matchers.json"
+          echo "::add-matcher::.github/local-problem-matchers.json"
       - name: Set up ${{ matrix.python.name }}
         if: ${{ job.container == '' }}
         uses: actions/setup-python@v1
