@@ -15,12 +15,17 @@
             "severity": "error",
             "pattern": [
                 {
-                    "regexp": "^.*WARNING: test command found but not installed.*$"
+                    "regexp": "^(\\s*WARNING: test command found but not installed.*)$",
+                    "message": 1
                 },
                 {
-                    "regexp": "^(\\s+((cmd|env): |Maybe you forgot).*)$",
+                    "regexp": "^(\\s*(cmd|env): .*)$",
                     "message": 1,
                     "loop": true
+                },
+                {
+                    "regexp": "^(\\s*Maybe you forgot.*)$",
+                    "message": 1
                 }
             ]
         }
