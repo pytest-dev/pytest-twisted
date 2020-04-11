@@ -17,12 +17,14 @@ jobs:
   test:
     name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
     runs-on: ${{ matrix.os.runs-on }}
+    container: ${{ format(matrix.os.container, matrix.python.docker) }}
     strategy:
       fail-fast: false
       matrix:
         os:
           - name: Linux
             runs-on: ubuntu-latest
+            container: docker://python:{0}-buster
           - name: Windows
             runs-on: windows-latest
           - name: macOS
@@ -31,18 +33,23 @@ jobs:
           - name: CPython 2.7
             tox: py27
             action: 2.7
+            docker: 2.7
           - name: CPython 3.5
             tox: py35
             action: 3.5
+            docker: 3.5
           - name: CPython 3.6
             tox: py36
             action: 3.6
+            docker: 3.6
           - name: CPython 3.7
             tox: py37
             action: 3.7
+            docker: 3.7
           - name: CPython 3.8
             tox: py38
             action: 3.8
+            docker: 3.8
         reactor:
           - name: default
             tox: default
