@@ -80,7 +80,7 @@ jobs:
           python-version: ${{ matrix.python.action }}
           architecture: x64
       - name: Install Linux Qt5 dependencies
-        if: matrix.os.python_platform == 'linux' and matrix.reactor.dependencies == 'qt5'
+        if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
         run: |
           apt-get update --yes
           apt-get install --yes libgl1
