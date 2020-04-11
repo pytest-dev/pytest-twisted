@@ -5,7 +5,7 @@
             "severity": "warning",
             "pattern": [
                 {
-                    "regexp": "^.*\b[Ww][Aa][Rr][Nn][Ii][Nn][Gg]:\b,*$",
+                    "regexp": "^.*\b[Ww][Aa][Rr][Nn][Ii][Nn][Gg]:\b.*$",
                     "message": 0
                 }
             ]
