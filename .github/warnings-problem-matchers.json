@@ -1,0 +1,14 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "local-generic-warning",
+            "severity": "warning",
+            "pattern": [
+                {
+                    "regexp": "^.*\b[Ww][Aa][Rr][Nn][Ii][Nn][Gg]:\b,*$",
+                    "message": 0
+                }
+            ]
+        }
+    ]
+}
