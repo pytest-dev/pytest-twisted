@@ -19,7 +19,7 @@
                 },
                 {
                     "regexp": "^(\\s+((cmd|env): |Maybe you forgot).*)$",
-                    "message": 1
+                    "message": 1,
                     "loop": true
                 }
             ]
