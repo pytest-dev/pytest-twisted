@@ -24,11 +24,14 @@ jobs:
         os:
           - name: Linux
             runs-on: ubuntu-latest
+            python_platform: linux
             container: docker://python:{0}-buster
           - name: Windows
             runs-on: windows-latest
+            python_platform: win32
           - name: macOS
             runs-on: macos-latest
+            python_platform: darwin
         python:
           - name: CPython 2.7
             tox: py27
@@ -53,10 +56,13 @@ jobs:
         reactor:
           - name: default
             tox: default
+            dependencies: default
           - name: Qt5
             tox: qt5
+            dependencies: asyncio
           - name: asyncio
             tox: asyncio
+            dependencies: asyncio
         exclude:
           - python:
               tox: py27
@@ -73,6 +79,11 @@ jobs:
         with:
           python-version: ${{ matrix.python.action }}
           architecture: x64
+      - name: Install Linux Qt5 dependencies
+        if: matrix.os.python_platform == 'linux' and matrix.reactor.dependencies == 'qt5'
+        run: |
+          apt-get update --yes
+          apt-get install --yes libgl1
       - name: Install
         run: |
           pip install tox
