@@ -5,8 +5,21 @@
             "severity": "warning",
             "pattern": [
                 {
-                    "regexp": "^.*\\b[Ww][Aa][Rr][Nn][Ii][Nn][Gg]:\\b.*$",
-                    "message": 0
+                    "regexp": "^(.*\\bWARNING:\\b.*)$",
+                    "message": 1
+                }
+            ]
+        },
+        {
+            "owner": "local-tox-not_in_env_warning",
+            "severity": "error",
+            "pattern": [
+                {
+                    "regexp": "^.*WARNING: test command found but not installed.*$"
+                },
+                {
+                    "regexp": "^(\\s+((cmd|env): |Maybe you forgot).*)$",
+                    "message": 1
                 }
             ]
         }
