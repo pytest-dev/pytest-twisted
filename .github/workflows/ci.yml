@@ -102,6 +102,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set up ${{ matrix.python.name }}
+        if: ${{ job.container == '' }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python.action }}
