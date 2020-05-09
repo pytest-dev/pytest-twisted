@@ -49,11 +49,6 @@ class _instances:
     reactor = None
 
 
-class _tracking:
-    async_yield_fixture_cache = {}
-    to_be_torn_down = []
-
-
 def _deprecate(deprecated, recommended):
     def decorator(f):
         @functools.wraps(f)
@@ -243,8 +238,13 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
         )
     elif mark == 'async_yield_fixture':
         coroutine = fixture_function(**kwargs)
-        # TODO: use request.addfinalizer() instead?
-        _tracking.async_yield_fixture_cache[request.param_index] = coroutine
+
+        finalizer = functools.partial(
+            _async_pytest_fixture_finalizer,
+            coroutine=coroutine,
+        )
+        request.addfinalizer(finalizer)
+
         arg_value = yield defer.ensureDeferred(
             coroutine.__anext__(),
         )
@@ -256,22 +256,9 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
     defer.returnValue(arg_value)
 
 
-# TODO: but don't we want to do the finalizer?  not wait until post it?
-def pytest_fixture_post_finalizer(fixturedef, request):
-    """Collect async yield fixture teardown requests for later handling."""
-    maybe_coroutine = _tracking.async_yield_fixture_cache.pop(
-        request.param_index,
-        None,
-    )
-
-    if maybe_coroutine is None:
-        return None
-
-    coroutine = maybe_coroutine
-
+def _async_pytest_fixture_finalizer(coroutine):
     deferred = defer.ensureDeferred(coroutine.__anext__())
-    _tracking.to_be_torn_down.append(deferred)
-    return None
+    _run_inline_callbacks(tear_it_down, deferred)
 
 
 @defer.inlineCallbacks
@@ -308,16 +295,6 @@ def _run_inline_callbacks(f, *args):
         if not _instances.reactor.running:
             raise RuntimeError("twisted reactor is not running")
         blockingCallFromThread(_instances.reactor, f, *args)
-
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_teardown(item):
-    """Tear down collected async yield fixtures."""
-    yield
-
-    while len(_tracking.to_be_torn_down) > 0:
-        deferred = _tracking.to_be_torn_down.pop(0)
-        _run_inline_callbacks(tear_it_down, deferred)
 
 
 def pytest_pyfunc_call(pyfuncitem):
