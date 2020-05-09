@@ -240,7 +240,7 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
         coroutine = fixture_function(**kwargs)
 
         finalizer = functools.partial(
-            _async_pytest_fixture_finalizer,
+            _async_yield_pytest_fixture_finalizer,
             coroutine=coroutine,
         )
         request.addfinalizer(finalizer)
@@ -256,7 +256,8 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
     defer.returnValue(arg_value)
 
 
-def _async_pytest_fixture_finalizer(coroutine):
+def _async_yield_pytest_fixture_finalizer(coroutine):
+    """Teardown async yield fixture coroutine."""
     deferred = defer.ensureDeferred(coroutine.__anext__())
     _run_inline_callbacks(tear_it_down, deferred)
 
