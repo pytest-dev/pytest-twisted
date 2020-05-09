@@ -123,6 +123,11 @@ def inlineCallbacks(f):
     """
     Mark as inline callbacks test for pytest-twisted processing and apply
     @inlineCallbacks.
+
+    Unlike @ensureDeferred, @inlineCallbacks can be applied here because it
+    does not call nor schedule the test function.  Further, @inlineCallbacks
+    must be applied here otherwise pytest identifies the test as a 'yield test'
+    for which they dropped support in 4.0 and now they skip.
     """
     decorated = decorator_apply(defer.inlineCallbacks, f)
     _set_mark(o=decorated, mark='inline_callbacks_test')
@@ -131,7 +136,12 @@ def inlineCallbacks(f):
 
 
 def ensureDeferred(f):
-    """Mark as async test for pytest-twisted processing."""
+    """
+    Mark as async test for pytest-twisted processing.
+
+    Unlike @inlineCallbacks, @ensureDeferred must not be applied here since it
+    would call and schedule the test function.
+    """
     _set_mark(o=f, mark='async_test')
 
     return f
