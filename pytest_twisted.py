@@ -49,6 +49,11 @@ class _instances:
     reactor = None
 
 
+class _tracking:
+    async_yield_fixture_cache = {}
+    to_be_torn_down = []
+
+
 def _deprecate(deprecated, recommended):
     def decorator(f):
         @functools.wraps(f)
@@ -217,7 +222,12 @@ def pytest_fixture_setup(fixturedef, request):
 
     mark = maybe_mark
 
-    _run_inline_callbacks(_async_pytest_fixture_setup, fixturedef, request, mark)
+    _run_inline_callbacks(
+        _async_pytest_fixture_setup,
+        fixturedef,
+        request,
+        mark,
+    )
 
     return not None
 
@@ -240,8 +250,7 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
         coroutine = fixture_function(**kwargs)
 
         finalizer = functools.partial(
-            _run_inline_callbacks,
-            _async_yield_pytest_fixture_finalizer,
+            _tracking.to_be_torn_down.append,
             coroutine,
         )
         request.addfinalizer(finalizer)
@@ -258,11 +267,8 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
 
 
 @defer.inlineCallbacks
-def _async_yield_pytest_fixture_finalizer(coroutine):
+def tear_it_down(deferred):
     """Tear down a specific async yield fixture."""
-
-    deferred = defer.ensureDeferred(coroutine.__anext__())
-
     try:
         yield deferred
     except StopAsyncIteration:
@@ -294,6 +300,22 @@ def _run_inline_callbacks(f, *args):
         if not _instances.reactor.running:
             raise RuntimeError("twisted reactor is not running")
         blockingCallFromThread(_instances.reactor, f, *args)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item):
+    """Tear down collected async yield fixtures."""
+    yield
+
+    deferreds = []
+    while len(_tracking.to_be_torn_down) > 0:
+        coroutine = _tracking.to_be_torn_down.pop(0)
+        deferred = defer.ensureDeferred(coroutine.__anext__())
+
+        deferreds.append(deferred)
+
+    for deferred in deferreds:
+        _run_inline_callbacks(tear_it_down, deferred)
 
 
 def pytest_pyfunc_call(pyfuncitem):
