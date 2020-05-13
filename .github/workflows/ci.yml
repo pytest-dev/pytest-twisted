@@ -110,6 +110,22 @@ jobs:
         with:
           python-version: ${{ matrix.python.action }}
           architecture: x64
+      - name: Report Python information
+        shell: bash
+        run: |
+          python -c 'import sys; print(sys.version)'
+          echo
+          echo "    <=======>"
+          echo
+          pip --version
+          echo
+          echo "    <=======>"
+          echo
+          pip list --no-python-version-warning
+          echo
+          echo "    <=======>"
+          echo
+          pip freeze --all --no-python-version-warning
       - name: Install Linux Qt5 dependencies
         if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
         run: |
