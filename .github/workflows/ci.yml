@@ -88,11 +88,17 @@ jobs:
       - name: Report Python information
         run: |
           python --version --version
-          echo -ne "\n    <=======>\n\n"
+          echo
+          echo "    <=======>"
+          echo
           pip --version
-          echo -ne "\n    <=======>\n\n"
+          echo
+          echo "    <=======>"
+          echo
           pip list
-          echo -ne "\n    <=======>\n\n"
+          echo
+          echo "    <=======>"
+          echo
           pip freeze --all
       - name: Install Linux Qt5 dependencies
         if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
