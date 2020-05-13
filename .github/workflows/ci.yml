@@ -96,11 +96,11 @@ jobs:
           echo
           echo "    <=======>"
           echo
-          pip list
+          pip list --no-python-version-warning
           echo
           echo "    <=======>"
           echo
-          pip freeze --all
+          pip freeze --all --no-python-version-warning
       - name: Install Linux Qt5 dependencies
         if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
         run: |
