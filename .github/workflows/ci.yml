@@ -89,7 +89,7 @@ jobs:
         run: |
           python --version --version
           pip --version
-          pip info
+          pip list
           pip freeze --all
       - name: Install Linux Qt5 dependencies
         if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
