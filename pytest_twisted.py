@@ -333,11 +333,9 @@ def _use_asyncio_selector_if_required(config):
     # https://twistedmatrix.com/trac/ticket/9766
     # https://github.com/pytest-dev/pytest-twisted/issues/80
 
-    if (
-        config.getoption("reactor", "default") == "asyncio"
-        and sys.platform == 'win32'
-        and sys.version_info >= (3, 8)
-    ):
+    is_asyncio = config.getoption("reactor", "default") == "asyncio"
+
+    if is_asyncio and sys.platform == 'win32' and sys.version_info >= (3, 8):
         import asyncio
 
         selector_policy = asyncio.WindowsSelectorEventLoopPolicy()
