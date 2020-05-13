@@ -27,13 +27,13 @@ def assert_outcomes(run_result, outcomes):
     except ValueError:
         assert False, formatted_output
 
-    normalized_outcomes = {
+    normalized_result_outcomes = {
         force_plural(name): outcome
         for name, outcome in result_outcomes.items()
+        if name != "seconds"
     }
 
-    for name, value in outcomes.items():
-        assert normalized_outcomes.get(name) == value, formatted_output
+    assert normalized_result_outcomes == outcomes, formatted_output
 
 
 def format_run_result_output_for_assert(run_result):
@@ -342,6 +342,12 @@ def test_blockon_in_fixture_async(testdir, cmd_opts):
 
 @skip_if_no_async_await()
 def test_async_fixture(testdir, cmd_opts):
+    pytest_ini_file = """
+    [pytest]
+    markers =
+        redgreenblue
+    """
+    testdir.makefile('.ini', pytest=pytest_ini_file)
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
