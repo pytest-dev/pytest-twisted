@@ -86,6 +86,7 @@ jobs:
           python-version: ${{ matrix.python.action }}
           architecture: x64
       - name: Report Python information
+        shell: bash
         run: |
           python --version --version
           echo
