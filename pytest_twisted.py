@@ -273,7 +273,7 @@ def tear_it_down(deferred):
         yield deferred
     except StopAsyncIteration:
         return
-    except Exception: # as e:
+    except Exception:   # as e:
         pass
         # e = e
     else:
