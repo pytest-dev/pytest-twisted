@@ -119,6 +119,29 @@ def decorator_apply(dec, func):
         dict(decfunc=dec(func)), __wrapped__=func)
 
 
+def _optional_arguments():
+    def decorator_decorator(d):
+        # TODO: this should get the signature of d minus the f or something
+        def decorator_wrapper(f=None, **decorator_arguments):
+            """this is decorator_wrapper"""
+            if f is not None:
+                if len(decorator_arguments) > 0 or not callable(f):
+                    raise Exception('positional options not allowed')
+
+                return d(f)
+
+            # TODO: this should get the signature of d minus the kwargs
+            def decorator_closure_on_arguments(f):
+                return d(f, **decorator_arguments)
+
+            return decorator_closure_on_arguments
+
+        return decorator_wrapper
+
+    return decorator_decorator
+
+
+@_optional_arguments()
 def inlineCallbacks(f):
     """
     Mark as inline callbacks test for pytest-twisted processing and apply
@@ -135,6 +158,7 @@ def inlineCallbacks(f):
     return decorated
 
 
+@_optional_arguments()
 def ensureDeferred(f):
     """
     Mark as async test for pytest-twisted processing.
@@ -177,7 +201,8 @@ def _set_mark(o, mark):
 
 def _marked_async_fixture(mark):
     @functools.wraps(pytest.fixture)
-    def fixture(*args, **kwargs):
+    @_optional_arguments()
+    def fixture(f, *args, **kwargs):
         try:
             scope = args[0]
         except IndexError:
@@ -197,13 +222,10 @@ def _marked_async_fixture(mark):
             #       https://github.com/pytest-dev/pytest-twisted/issues/56
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
-        def decorator(f):
-            _set_mark(f, mark)
-            result = pytest.fixture(*args, **kwargs)(f)
+        _set_mark(f, mark)
+        result = pytest.fixture(*args, **kwargs)(f)
 
-            return result
-
-        return decorator
+        return result
 
     return fixture
 
