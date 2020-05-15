@@ -542,16 +542,22 @@ def test_wrong_reactor(testdir, cmd_opts, request):
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
+    error_text = "WrongReactorAlreadyInstalledError"
+    assert (
+        error_text in rr.stderr.str() or
+        error_text in rr.stdout.str()
+    )
 
 
 def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "qt5reactor")
     conftest_file = """
+    import pytest
     import pytest_twisted as pt
     import pytestqt
     from twisted.internet import defer
 
+    @pytest.mark.trylast
     def pytest_configure(config):
         pt.init_qt5_reactor()
         d = defer.Deferred()
@@ -589,7 +595,11 @@ def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts, request):
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
+    error_text = "WrongReactorAlreadyInstalledError"
+    assert (
+        error_text in rr.stderr.str() or
+        error_text in rr.stdout.str()
+    )
 
 
 def test_pytest_from_reactor_thread(testdir, request):
@@ -702,3 +712,25 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
+
+
+qt_fixtures = ('qapp', 'qtbot', 'nothing')
+
+
+@pytest.mark.parametrize("fixture", qt_fixtures, ids=qt_fixtures)
+def test_qwidget(testdir, cmd_opts, fixture, request):
+    skip_if_reactor_not(request, "qt5reactor")
+    test_file = """
+    import pytest
+    from PyQt5 import QtWidgets
+
+    @pytest.fixture
+    def nothing():
+        return
+
+    def test_construct_qwidget({fixture}):
+        QtWidgets.QWidget()
+    """.format(fixture=fixture)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert rr.ret == 0

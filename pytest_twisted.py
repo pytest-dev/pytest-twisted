@@ -265,6 +265,9 @@ def init_default_reactor():
 
 
 def init_qt5_reactor():
+    import pytestqt.plugin
+    next(pytestqt.plugin.qapp(pytestqt.plugin.qapp_args()))
+
     import qt5reactor
 
     _install_reactor(
@@ -316,6 +319,7 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.mark.trylast
 def pytest_configure(config):
     pytest.inlineCallbacks = _deprecate(
         deprecated='pytest.inlineCallbacks',
