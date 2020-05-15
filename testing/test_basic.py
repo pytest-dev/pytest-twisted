@@ -391,7 +391,7 @@ def test_async_fixture_no_arguments(testdir, cmd_opts, empty_optional_call):
     from twisted.internet import reactor, defer
     import pytest
     import pytest_twisted
-    
+
     @pytest_twisted.async_fixture{optional_call}
     async def scope(request):
         return request.scope
@@ -491,7 +491,7 @@ def test_async_yield_fixture_no_arguments(
     from twisted.internet import reactor, defer
     import pytest
     import pytest_twisted
-    
+
     @pytest_twisted.async_yield_fixture{optional_call}
     async def scope(request):
         yield request.scope
