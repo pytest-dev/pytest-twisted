@@ -162,7 +162,7 @@ async/await fixtures
 ====================
 ``async``/``await`` fixtures can be used along with ``yield`` for normal
 pytest fixture semantics of setup, value, and teardown.  At present only
-function scope is supported.
+function and module scope are supported.
 
 Note: You must *call* ``pytest_twisted.async_fixture()`` and
 ``pytest_twisted.async_yield_fixture()``.
