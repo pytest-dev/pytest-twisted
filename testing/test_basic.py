@@ -449,7 +449,8 @@ def test_async_yield_fixture(testdir, cmd_opts):
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
-    assert_outcomes(rr, {"passed": 2, "failed": 3})
+    # TODO: this is getting super imprecise...
+    assert_outcomes(rr, {"passed": 4, "failed": 1, "errors": 2})
 
 
 @skip_if_no_async_generators()
@@ -495,6 +496,159 @@ def test_async_yield_fixture_function_scope(testdir, cmd_opts):
 
         check_me = 2
     """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
+
+
+@skip_if_no_async_await()
+def test_async_simple_fixture_in_fixture(testdir, cmd_opts):
+    test_file = """
+    import itertools
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_fixture(name='four')
+    async def fixture_four():
+        return 4
+
+    @pytest_twisted.async_fixture(name='doublefour')
+    async def fixture_doublefour(four):
+        return 2 * four
+
+    @pytest_twisted.ensureDeferred
+    async def test_four(four):
+        assert four == 4
+
+    @pytest_twisted.ensureDeferred
+    async def test_doublefour(doublefour):
+        assert doublefour == 8
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_simple_fixture_in_fixture(testdir, cmd_opts):
+    test_file = """
+    import itertools
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_yield_fixture(name='four')
+    async def fixture_four():
+        yield 4
+
+    @pytest_twisted.async_yield_fixture(name='doublefour')
+    async def fixture_doublefour(four):
+        yield 2 * four
+
+    @pytest_twisted.ensureDeferred
+    async def test_four(four):
+        assert four == 4
+
+    @pytest_twisted.ensureDeferred
+    async def test_doublefour(doublefour):
+        assert doublefour == 8
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
+
+
+@skip_if_no_async_await()
+@pytest.mark.parametrize('innerasync', [
+    pytest.param(truth, id='innerasync={}'.format(truth))
+    for truth in [True, False]
+])
+def test_async_fixture_in_fixture(testdir, cmd_opts, innerasync):
+    maybe_async = 'async ' if innerasync else ''
+    maybe_await = 'await ' if innerasync else ''
+    test_file = """
+    import itertools
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_fixture(name='increment')
+    async def fixture_increment():
+        counts = itertools.count()
+        {maybe_async}def increment():
+            return next(counts)
+
+        return increment
+
+    @pytest_twisted.async_fixture(name='doubleincrement')
+    async def fixture_doubleincrement(increment):
+        {maybe_async}def doubleincrement():
+            n = {maybe_await}increment()
+            return n * 2
+
+        return doubleincrement
+
+    @pytest_twisted.ensureDeferred
+    async def test_increment(increment):
+        first = {maybe_await}increment()
+        second = {maybe_await}increment()
+        assert (first, second) == (0, 1)
+
+    @pytest_twisted.ensureDeferred
+    async def test_doubleincrement(doubleincrement):
+        first = {maybe_await}doubleincrement()
+        second = {maybe_await}doubleincrement()
+        assert (first, second) == (0, 2)
+    """.format(maybe_async=maybe_async, maybe_await=maybe_await)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})
+    # assert_outcomes(rr, {"passed": 1})
+
+
+@skip_if_no_async_generators()
+@pytest.mark.parametrize('innerasync', [
+    pytest.param(truth, id='innerasync={}'.format(truth))
+    for truth in [True, False]
+])
+def test_async_yield_fixture_in_fixture(testdir, cmd_opts, innerasync):
+    maybe_async = 'async ' if innerasync else ''
+    maybe_await = 'await ' if innerasync else ''
+    test_file = """
+    import itertools
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_yield_fixture(name='increment')
+    async def fixture_increment():
+        counts = itertools.count()
+        {maybe_async}def increment():
+            return next(counts)
+
+        yield increment
+
+    @pytest_twisted.async_yield_fixture(name='doubleincrement')
+    async def fixture_doubleincrement(increment):
+        {maybe_async}def doubleincrement():
+            n = {maybe_await}increment()
+            return n * 2
+
+        yield doubleincrement
+
+    @pytest_twisted.ensureDeferred
+    async def test_increment(increment):
+        first = {maybe_await}increment()
+        second = {maybe_await}increment()
+        assert (first, second) == (0, 1)
+
+    @pytest_twisted.ensureDeferred
+    async def test_doubleincrement(doubleincrement):
+        first = {maybe_await}doubleincrement()
+        second = {maybe_await}doubleincrement()
+        assert (first, second) == (0, 2)
+    """.format(maybe_async=maybe_async, maybe_await=maybe_await)
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert_outcomes(rr, {"passed": 2})
@@ -702,3 +856,51 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     testdir.makepyfile(test_file)
     rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
+
+
+@skip_if_no_async_generators()
+def test_async_fixture_module_scope(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    check_me = 0
+
+    @pytest_twisted.async_yield_fixture(scope="module")
+    async def foo():
+        global check_me
+
+        if check_me != 0:
+            raise Exception('check_me already modified before fixture run')
+
+        check_me = 1
+
+        yield 42
+
+        if check_me != 3:
+            raise Exception(
+                'check_me not updated properly: {}'.format(check_me),
+            )
+
+        check_me = 0
+
+    def test_first(foo):
+        global check_me
+
+        assert check_me == 1
+        assert foo == 42
+
+        check_me = 2
+
+    def test_second(foo):
+        global check_me
+
+        assert check_me == 2
+        assert foo == 42
+
+        check_me = 3
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert_outcomes(rr, {"passed": 2})

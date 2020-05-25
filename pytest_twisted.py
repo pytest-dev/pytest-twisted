@@ -49,6 +49,11 @@ class _instances:
     reactor = None
 
 
+class _tracking:
+    async_yield_fixture_cache = {}
+    to_be_torn_down = []
+
+
 def _deprecate(deprecated, recommended):
     def decorator(f):
         @functools.wraps(f)
@@ -102,14 +107,44 @@ def block_from_thread(d):
     return blockingCallFromThread(_instances.reactor, lambda x: x, d)
 
 
-@decorator.decorator
-def inlineCallbacks(fun, *args, **kw):
-    return defer.inlineCallbacks(fun)(*args, **kw)
+def decorator_apply(dec, func):
+    """
+    Decorate a function by preserving the signature even if dec
+    is not a signature-preserving decorator.
+
+    https://github.com/micheles/decorator/blob/55a68b5ef1951614c5c37a6d201b1f3b804dbce6/docs/documentation.md#dealing-with-third-party-decorators
+    """
+    return decorator.FunctionMaker.create(
+        func, 'return decfunc(%(signature)s)',
+        dict(decfunc=dec(func)), __wrapped__=func)
 
 
-@decorator.decorator
-def ensureDeferred(fun, *args, **kw):
-    return defer.ensureDeferred(fun(*args, **kw))
+def inlineCallbacks(f):
+    """
+    Mark as inline callbacks test for pytest-twisted processing and apply
+    @inlineCallbacks.
+
+    Unlike @ensureDeferred, @inlineCallbacks can be applied here because it
+    does not call nor schedule the test function.  Further, @inlineCallbacks
+    must be applied here otherwise pytest identifies the test as a 'yield test'
+    for which they dropped support in 4.0 and now they skip.
+    """
+    decorated = decorator_apply(defer.inlineCallbacks, f)
+    _set_mark(o=decorated, mark='inline_callbacks_test')
+
+    return decorated
+
+
+def ensureDeferred(f):
+    """
+    Mark as async test for pytest-twisted processing.
+
+    Unlike @inlineCallbacks, @ensureDeferred must not be applied here since it
+    would call and schedule the test function.
+    """
+    _set_mark(o=f, mark='async_test')
+
+    return f
 
 
 def init_twisted_greenlet():
@@ -130,10 +165,14 @@ def stop_twisted_greenlet():
         _instances.gr_twisted.switch()
 
 
-class _CoroutineWrapper:
-    def __init__(self, coroutine, mark):
-        self.coroutine = coroutine
-        self.mark = mark
+def _get_mark(o, default=None):
+    """Get the pytest-twisted test or fixture mark."""
+    return getattr(o, _mark_attribute_name, default)
+
+
+def _set_mark(o, mark):
+    """Set the pytest-twisted test or fixture mark."""
+    setattr(o, _mark_attribute_name, mark)
 
 
 def _marked_async_fixture(mark):
@@ -144,21 +183,23 @@ def _marked_async_fixture(mark):
         except IndexError:
             scope = kwargs.get('scope', 'function')
 
-        if scope != 'function':
+        if scope not in ['function', 'module']:
+            # TODO: handle...
+            #       - class
+            #       - package
+            #       - session
+            #       - dynamic
+            #
+            #       https://docs.pytest.org/en/latest/reference.html#pytest-fixture-api
+            #       then remove this and update docs, or maybe keep it around
+            #       in case new options come in without support?
+            #
+            #       https://github.com/pytest-dev/pytest-twisted/issues/56
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
-        def marker(f):
-            @functools.wraps(f)
-            def w(*args, **kwargs):
-                return _CoroutineWrapper(
-                    coroutine=f(*args, **kwargs),
-                    mark=mark,
-                )
-
-            return w
-
         def decorator(f):
-            result = pytest.fixture(*args, **kwargs)(marker(f))
+            _set_mark(f, mark)
+            result = pytest.fixture(*args, **kwargs)(f)
 
             return result
 
@@ -167,61 +208,86 @@ def _marked_async_fixture(mark):
     return fixture
 
 
+_mark_attribute_name = '_pytest_twisted_mark'
 async_fixture = _marked_async_fixture('async_fixture')
 async_yield_fixture = _marked_async_fixture('async_yield_fixture')
 
 
+def pytest_fixture_setup(fixturedef, request):
+    """Interface pytest to async for async and async yield fixtures."""
+    # TODO: what about _adding_ inlineCallbacks fixture support?
+    maybe_mark = _get_mark(fixturedef.func)
+    if maybe_mark is None:
+        return None
+
+    mark = maybe_mark
+
+    _run_inline_callbacks(
+        _async_pytest_fixture_setup,
+        fixturedef,
+        request,
+        mark,
+    )
+
+    return not None
+
+
 @defer.inlineCallbacks
-def _pytest_pyfunc_call(pyfuncitem):
-    testfunction = pyfuncitem.obj
-    async_generators = []
-    funcargs = pyfuncitem.funcargs
-    if hasattr(pyfuncitem, "_fixtureinfo"):
-        testargs = {}
-        for arg in pyfuncitem._fixtureinfo.argnames:
-            if isinstance(funcargs[arg], _CoroutineWrapper):
-                wrapper = funcargs[arg]
+def _async_pytest_fixture_setup(fixturedef, request, mark):
+    """Setup an async or async yield fixture."""
+    fixture_function = fixturedef.func
 
-                if wrapper.mark == 'async_fixture':
-                    arg_value = yield defer.ensureDeferred(
-                        wrapper.coroutine
-                    )
-                elif wrapper.mark == 'async_yield_fixture':
-                    async_generators.append((arg, wrapper))
-                    arg_value = yield defer.ensureDeferred(
-                        wrapper.coroutine.__anext__(),
-                    )
-                else:
-                    raise UnrecognizedCoroutineMarkError.from_mark(
-                        mark=wrapper.mark,
-                    )
-            else:
-                arg_value = funcargs[arg]
+    kwargs = {
+        name: request.getfixturevalue(name)
+        for name in fixturedef.argnames
+    }
 
-            testargs[arg] = arg_value
+    if mark == 'async_fixture':
+        arg_value = yield defer.ensureDeferred(
+            fixture_function(**kwargs)
+        )
+    elif mark == 'async_yield_fixture':
+        coroutine = fixture_function(**kwargs)
+
+        finalizer = functools.partial(
+            _tracking.to_be_torn_down.append,
+            coroutine,
+        )
+        request.addfinalizer(finalizer)
+
+        arg_value = yield defer.ensureDeferred(
+            coroutine.__anext__(),
+        )
     else:
-        testargs = funcargs
-    result = yield testfunction(**testargs)
+        raise UnrecognizedCoroutineMarkError.from_mark(mark=mark)
 
-    async_generator_deferreds = [
-        (arg, defer.ensureDeferred(g.coroutine.__anext__()))
-        for arg, g in reversed(async_generators)
-    ]
+    fixturedef.cached_result = (arg_value, request.param_index, None)
 
-    for arg, d in async_generator_deferreds:
-        try:
-            yield d
-        except StopAsyncIteration:
-            continue
-        else:
-            raise AsyncGeneratorFixtureDidNotStopError.from_generator(
-                generator=arg,
-            )
-
-    defer.returnValue(result)
+    defer.returnValue(arg_value)
 
 
-def pytest_pyfunc_call(pyfuncitem):
+@defer.inlineCallbacks
+def tear_it_down(deferred):
+    """Tear down a specific async yield fixture."""
+    try:
+        yield deferred
+    except StopAsyncIteration:
+        return
+    except Exception:   # as e:
+        pass
+        # e = e
+    else:
+        pass
+        # e = None
+
+    # TODO: six.raise_from()
+    raise AsyncGeneratorFixtureDidNotStopError.from_generator(
+        generator=deferred,
+    )
+
+
+def _run_inline_callbacks(f, *args):
+    """Interface into Twisted greenlet to run and wait for a deferred."""
     if _instances.gr_twisted is not None:
         if _instances.gr_twisted.dead:
             raise RuntimeError("twisted reactor has stopped")
@@ -230,26 +296,68 @@ def pytest_pyfunc_call(pyfuncitem):
             return defer.maybeDeferred(f, *args).chainDeferred(d)
 
         d = defer.Deferred()
-        _instances.reactor.callLater(
-            0.0, in_reactor, d, _pytest_pyfunc_call, pyfuncitem
-        )
+        _instances.reactor.callLater(0.0, in_reactor, d, f, *args)
         blockon_default(d)
     else:
         if not _instances.reactor.running:
             raise RuntimeError("twisted reactor is not running")
-        blockingCallFromThread(
-            _instances.reactor, _pytest_pyfunc_call, pyfuncitem
-        )
-    return True
+        blockingCallFromThread(_instances.reactor, f, *args)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item):
+    """Tear down collected async yield fixtures."""
+    yield
+
+    deferreds = []
+    while len(_tracking.to_be_torn_down) > 0:
+        coroutine = _tracking.to_be_torn_down.pop(0)
+        deferred = defer.ensureDeferred(coroutine.__anext__())
+
+        deferreds.append(deferred)
+
+    for deferred in deferreds:
+        _run_inline_callbacks(tear_it_down, deferred)
+
+
+def pytest_pyfunc_call(pyfuncitem):
+    """Interface to async test call handler."""
+    # TODO: only handle 'our' tests?  what is the point of handling others?
+    #       well, because our interface allowed people to return deferreds
+    #       from arbitrary tests so we kinda have to keep this up for now
+    _run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem)
+    return not None
+
+
+@defer.inlineCallbacks
+def _async_pytest_pyfunc_call(pyfuncitem):
+    """Run test function."""
+    kwargs = {
+        name: value
+        for name, value in pyfuncitem.funcargs.items()
+        if name in pyfuncitem._fixtureinfo.argnames
+    }
+
+    maybe_mark = _get_mark(pyfuncitem.obj)
+    if maybe_mark == 'async_test':
+        result = yield defer.ensureDeferred(pyfuncitem.obj(**kwargs))
+    elif maybe_mark == 'inline_callbacks_test':
+        result = yield pyfuncitem.obj(**kwargs)
+    else:
+        # TODO: maybe deprecate this
+        result = yield pyfuncitem.obj(**kwargs)
+
+    defer.returnValue(result)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def twisted_greenlet(request):
-    request.addfinalizer(stop_twisted_greenlet)
+def twisted_greenlet():
+    """Provide the twisted greenlet in fixture form."""
     return _instances.gr_twisted
 
 
 def init_default_reactor():
+    """Install the default Twisted reactor."""
     import twisted.internet.default
 
     module = inspect.getmodule(twisted.internet.default.install)
@@ -265,6 +373,7 @@ def init_default_reactor():
 
 
 def init_qt5_reactor():
+    """Install the qt5reactor...  reactor."""
     import qt5reactor
 
     _install_reactor(
@@ -273,6 +382,7 @@ def init_qt5_reactor():
 
 
 def init_asyncio_reactor():
+    """Install the Twisted reactor for asyncio."""
     from twisted.internet import asyncioreactor
 
     _install_reactor(
@@ -289,6 +399,7 @@ reactor_installers = {
 
 
 def _install_reactor(reactor_installer, reactor_type):
+    """Install the specified reactor and create the greenlet."""
     try:
         reactor_installer()
     except error.ReactorAlreadyInstalledError:
@@ -308,6 +419,7 @@ def _install_reactor(reactor_installer, reactor_type):
 
 
 def pytest_addoption(parser):
+    """Add options into the pytest CLI."""
     group = parser.getgroup("twisted")
     group.addoption(
         "--reactor",
@@ -317,6 +429,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    """Identify and install chosen reactor."""
     pytest.inlineCallbacks = _deprecate(
         deprecated='pytest.inlineCallbacks',
         recommended='pytest_twisted.inlineCallbacks',
@@ -329,7 +442,13 @@ def pytest_configure(config):
     reactor_installers[config.getoption("reactor")]()
 
 
+def pytest_unconfigure(config):
+    """Stop the reactor greenlet."""
+    stop_twisted_greenlet()
+
+
 def _use_asyncio_selector_if_required(config):
+    """Set asyncio selector event loop policy if needed."""
     # https://twistedmatrix.com/trac/ticket/9766
     # https://github.com/pytest-dev/pytest-twisted/issues/80
 
