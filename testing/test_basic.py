@@ -705,7 +705,6 @@ def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "qt5reactor")
     conftest_file = """
     import pytest_twisted as pt
-    import pytestqt
     from twisted.internet import defer
 
     def pytest_configure(config):
