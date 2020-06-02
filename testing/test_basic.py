@@ -704,6 +704,7 @@ def test_wrong_reactor(testdir, cmd_opts, request):
 def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "qt5reactor")
     conftest_file = """
+    import pytest
     import pytest_twisted as pt
     import pytestqt
     from twisted.internet import defer
