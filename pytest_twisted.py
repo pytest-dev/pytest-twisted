@@ -428,6 +428,7 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     """Identify and install chosen reactor."""
     pytest.inlineCallbacks = _deprecate(
