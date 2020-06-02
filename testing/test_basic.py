@@ -708,6 +708,7 @@ def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts, request):
     import pytestqt
     from twisted.internet import defer
 
+    @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
         pt.init_qt5_reactor()
         d = defer.Deferred()
