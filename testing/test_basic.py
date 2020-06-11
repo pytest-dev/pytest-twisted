@@ -408,7 +408,7 @@ def test_async_fixture_no_arguments(testdir, cmd_opts, empty_optional_call):
         assert scope == "function"
     """.format(optional_call=empty_optional_call)
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -508,7 +508,7 @@ def test_async_yield_fixture_no_arguments(
         assert scope == "function"
     """.format(optional_call=empty_optional_call)
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
