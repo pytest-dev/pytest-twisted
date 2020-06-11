@@ -932,7 +932,7 @@ def test_inlinecallbacks_method_with_fixture_gets_self(testdir, cmd_opts):
             assert isinstance(self, TestClass)
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -954,7 +954,7 @@ def test_inlinecallbacks_method_with_fixture_gets_fixture(testdir, cmd_opts):
             assert foo == 37
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -974,7 +974,7 @@ def test_ensuredeferred_method_with_fixture_gets_self(testdir, cmd_opts):
             assert isinstance(self, TestClass)
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -994,5 +994,5 @@ def test_ensuredeferred_method_with_fixture_gets_fixture(testdir, cmd_opts):
             assert foo == 37
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
