@@ -31,6 +31,8 @@ jobs:
               3.6: docker://python:3.6-buster
               3.7: docker://python:3.7-buster
               3.8: docker://python:3.8-buster
+              pypy2: docker://pypy:2-jessie
+              pypy3: docker://pypy:3-stretch
           - name: Windows
             runs-on: windows-latest
             python_platform: win32
@@ -58,6 +60,14 @@ jobs:
             tox: py38
             action: 3.8
             docker: 3.8
+          - name: PyPy 2
+            tox: pypy2
+            action: pypy2
+            docker: pypy2
+          - name: PyPy 3
+            tox: pypy3
+            action: pypy3
+            docker: pypy3
         reactor:
           - name: default
             tox: default
@@ -77,8 +87,23 @@ jobs:
               tox: py27
             reactor:
               tox: asyncio
+          - python:
+              tox: pypy2
+            reactor:
+              tox: asyncio
+          - python:
+              tox: pypy2
+            reactor:
+              tox: qt5
+          - python:
+              tox: pypy3
+            reactor:
+              tox: qt5
     steps:
       - uses: actions/checkout@v2
+      - name: Enable Problem Matchers
+        run: |
+          echo "::add-matcher::.github/local-problem-matchers.json"
       - name: Set up ${{ matrix.python.name }}
         if: ${{ job.container == '' }}
         uses: actions/setup-python@v2
