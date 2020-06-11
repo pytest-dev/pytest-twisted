@@ -947,5 +947,5 @@ def test_scrapy____something(testdir, cmd_opts):
             yield protocol.deferred
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
