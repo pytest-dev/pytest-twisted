@@ -62,8 +62,11 @@ jobs:
           - name: default
             tox: default
             dependencies: default
-          - name: Qt5
-            tox: qt5
+          - name: PyQt5
+            tox: pyqt5
+            dependencies: qt5
+          - name: PySide2
+            tox: pyside2
             dependencies: qt5
           - name: asyncio
             tox: asyncio
