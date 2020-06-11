@@ -7,7 +7,8 @@ import decorator
 import greenlet
 import pytest
 
-from twisted.internet import error, defer
+from twisted.internet import defer
+# from twisted.internet import error
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
 
