@@ -1,16 +1,29 @@
 import functools
 import inspect
 import sys
+import traceback
 import warnings
 
 import decorator
 import greenlet
 import pytest
+import six
 
 from twisted.internet import defer
 # from twisted.internet import error
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
+
+
+class AddReaderNotImplementedError(Exception):
+    @classmethod
+    def build(cls):
+        return cls(
+            "Failed to install asyncio reactor.  The proactor was"
+            " used and is lacking the needed `.add_reader()` method"
+            " as of Python 3.8 on Windows."
+            "  https://twistedmatrix.com/trac/ticket/9766"
+        )
 
 
 class WrongReactorAlreadyInstalledError(Exception):
@@ -386,10 +399,29 @@ def init_asyncio_reactor():
     """Install the Twisted reactor for asyncio."""
     from twisted.internet import asyncioreactor
 
-    _install_reactor(
-        reactor_installer=asyncioreactor.install,
-        reactor_type=asyncioreactor.AsyncioSelectorReactor,
-    )
+    try:
+        _install_reactor(
+            reactor_installer=asyncioreactor.install,
+            reactor_type=asyncioreactor.AsyncioSelectorReactor,
+        )
+    except NotImplementedError as e:
+        import asyncio
+
+        _, _, traceback_object = sys.exc_info()
+        stack_summary = traceback.extract_tb(traceback_object)
+        source_function_name = stack_summary[-1].name
+        event_loop = asyncio.get_event_loop()
+
+        if (
+                source_function_name == "add_reader"
+                and isinstance(event_loop, asyncio.ProactorEventLoop)
+        ):
+            six.raise_from(
+                value=AddReaderNotImplementedError.build(),
+                from_value=e,
+            )
+
+        raise
 
 
 reactor_installers = {

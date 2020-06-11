@@ -51,6 +51,34 @@ def format_run_result_output_for_assert(run_result):
     )
 
 
+def proactor_add_reader_is_implemented():
+    try:
+        import asyncio
+
+        add_reader = asyncio.proactor_event_loop.add_reader
+
+        try:
+            add_reader(None, None, None)
+        except NotImplementedError:
+            return False
+        except:     # noqa: E722
+            return True
+    except:     # noqa: E722
+        return False
+
+
+def proactor_is_default():
+    try:
+        import asyncio
+
+        return (
+            asyncio.DefaultEventLoopPolicy
+            is asyncio.WindowsProactorEventLoopPolicy
+        )
+    except:     # noqa: E722
+        return False
+
+
 @pytest.fixture(name="default_conftest", autouse=True)
 def _default_conftest(testdir):
     testdir.makeconftest(textwrap.dedent("""
@@ -912,3 +940,38 @@ def test_async_fixture_module_scope(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
+
+
+@pytest.mark.skipif(
+    condition=sys.platform != 'win32',
+    reason="Relevant only on Windows",
+)
+@pytest.mark.skipif(
+    condition=proactor_add_reader_is_implemented(),
+    reason=(
+        "Relevant only if asyncio.ProactorEventLoop.add_reader()"
+        " is not implemented"
+    ),
+)
+@pytest.mark.skipif(
+    condition=not proactor_is_default(),
+    reason="Proactor is not the default event loop policy."
+)
+def test_add_reader_exception_expounded_upon(testdir, cmd_opts, request):
+    skip_if_reactor_not(request, "asyncio")
+
+    # block the default conftest.py
+    testdir.makeconftest("")
+    test_file = """
+    def test_succeed():
+        pass
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    assert all(
+        s in rr.stderr.str()
+        for s in [
+            "AddReaderNotImplementedError",
+            "https://twistedmatrix.com/trac/ticket/9766",
+        ]
+    )

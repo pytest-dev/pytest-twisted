@@ -14,7 +14,7 @@ setup(
     url="https://github.com/pytest-dev/pytest-twisted",
     py_modules=["pytest_twisted"],
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
-    install_requires=["greenlet", "pytest>=2.3", "decorator"],
+    install_requires=["greenlet", "pytest>=2.3", "decorator", "six"],
     extras_require={"dev": ["pre-commit", "black"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
