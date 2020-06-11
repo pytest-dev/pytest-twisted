@@ -10,7 +10,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Ralf Schmitt, Kyle Altendorf, Victor Titor",
-    author_email="ralf@brainbot.com",
+    author_email="sda@fstab.net",
     url="https://github.com/pytest-dev/pytest-twisted",
     py_modules=["pytest_twisted"],
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
