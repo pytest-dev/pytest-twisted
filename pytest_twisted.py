@@ -435,7 +435,6 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Identify and install chosen reactor."""
-    print('+++++++++++++++++++++++++++++', 'pt')
     pytest.inlineCallbacks = _deprecate(
         deprecated='pytest.inlineCallbacks',
         recommended='pytest_twisted.inlineCallbacks',
