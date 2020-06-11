@@ -996,3 +996,40 @@ def test_ensuredeferred_method_with_fixture_gets_fixture(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
+
+
+def test_scrapy____something(testdir, cmd_opts):
+    test_file = """
+    import sys
+
+    import twisted.internet.reactor
+    import twisted.internet.defer
+    import twisted.internet.protocol
+    import twisted.trial.unittest
+
+
+    class Protocol(twisted.internet.protocol.ProcessProtocol):
+        def __init__(self):
+            self.deferred = twisted.internet.defer.Deferred()
+
+        def processEnded(self, status):
+            self.deferred.callback(self)
+
+
+    class Test(twisted.trial.unittest.TestCase):
+        @twisted.internet.defer.inlineCallbacks
+        def test(self):
+            protocol = Protocol()
+            command = [sys.executable, '--version']
+
+            twisted.internet.reactor.spawnProcess(
+                protocol,
+                command[0],
+                command,
+            )
+
+            yield protocol.deferred
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
