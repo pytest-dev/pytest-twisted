@@ -75,7 +75,11 @@ jobs:
           - python:
               tox: py27
             reactor:
-              tox: qt5
+              tox: pyqt5
+          - python:
+              tox: py27
+            reactor:
+              tox: pyside2
           - python:
               tox: py27
             reactor:
