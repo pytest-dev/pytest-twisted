@@ -963,3 +963,87 @@ def test_async_fixture_module_scope(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
+
+
+def test_inlinecallbacks_method_with_fixture_gets_self(testdir, cmd_opts):
+    test_file = """
+    import pytest
+    import pytest_twisted
+    from twisted.internet import defer
+
+    @pytest.fixture
+    def foo():
+        return 37
+
+    class TestClass:
+        @pytest_twisted.inlineCallbacks
+        def test_self_isinstance(self, foo):
+            d = defer.succeed(None)
+            yield d
+            assert isinstance(self, TestClass)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts)
+    assert_outcomes(rr, {"passed": 1})
+
+
+def test_inlinecallbacks_method_with_fixture_gets_fixture(testdir, cmd_opts):
+    test_file = """
+    import pytest
+    import pytest_twisted
+    from twisted.internet import defer
+
+    @pytest.fixture
+    def foo():
+        return 37
+
+    class TestClass:
+        @pytest_twisted.inlineCallbacks
+        def test_self_isinstance(self, foo):
+            d = defer.succeed(None)
+            yield d
+            assert foo == 37
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+
+
+@skip_if_no_async_await()
+def test_ensuredeferred_method_with_fixture_gets_self(testdir, cmd_opts):
+    test_file = """
+    import pytest
+    import pytest_twisted
+
+    @pytest.fixture
+    def foo():
+        return 37
+
+    class TestClass:
+        @pytest_twisted.ensureDeferred
+        async def test_self_isinstance(self, foo):
+            assert isinstance(self, TestClass)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+
+
+@skip_if_no_async_await()
+def test_ensuredeferred_method_with_fixture_gets_fixture(testdir, cmd_opts):
+    test_file = """
+    import pytest
+    import pytest_twisted
+
+    @pytest.fixture
+    def foo():
+        return 37
+
+    class TestClass:
+        @pytest_twisted.ensureDeferred
+        async def test_self_isinstance(self, foo):
+            assert foo == 37
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
