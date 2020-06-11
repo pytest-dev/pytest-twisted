@@ -10,6 +10,8 @@ ASYNC_AWAIT = sys.version_info >= (3, 5)
 # https://docs.python.org/3/whatsnew/3.6.html#pep-525-asynchronous-generators
 ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
+timeout = 15
+
 
 # https://github.com/pytest-dev/pytest/issues/6505
 def force_plural(name):
@@ -115,7 +117,13 @@ def skip_if_no_async_generators():
 @pytest.fixture
 def cmd_opts(request):
     reactor = request.config.getoption("reactor", "default")
-    return ("--reactor={}".format(reactor),)
+    return (
+        sys.executable,
+        "-m",
+        "pytest",
+        "-v",
+        "--reactor={}".format(reactor),
+    )
 
 
 def test_inline_callbacks_in_pytest():
@@ -145,7 +153,7 @@ def test_inline_callbacks_in_pytest_deprecation(
             yield 42
     """.format(import_path=import_path, decorator=decorator)
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
 
     expected_outcomes = {"passed": 1}
     if should_warn:
@@ -189,7 +197,7 @@ def test_blockon_in_pytest_deprecation(
         pass
     """.format(import_path=import_path, function=function)
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
 
     expected_outcomes = {"passed": 1}
     if should_warn:
@@ -214,7 +222,7 @@ def test_fail_later(testdir, cmd_opts):
         return d
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"failed": 1})
 
 
@@ -228,7 +236,7 @@ def test_succeed_later(testdir, cmd_opts):
         return d
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -240,7 +248,7 @@ def test_non_deferred(testdir, cmd_opts):
         return 42
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -250,7 +258,7 @@ def test_exception(testdir, cmd_opts):
         raise RuntimeError("foo")
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"failed": 1})
 
 
@@ -271,7 +279,7 @@ def test_inlineCallbacks(testdir, cmd_opts):
             raise RuntimeError("baz")
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
@@ -293,7 +301,7 @@ def test_async_await(testdir, cmd_opts):
             raise RuntimeError("baz")
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
@@ -313,7 +321,7 @@ def test_twisted_greenlet(testdir, cmd_opts):
         assert MAIN is greenlet.getcurrent()
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -338,7 +346,7 @@ def test_blockon_in_fixture(testdir, cmd_opts):
             raise RuntimeError("baz")
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
@@ -364,7 +372,7 @@ def test_blockon_in_fixture_async(testdir, cmd_opts):
             raise RuntimeError("baz")
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
@@ -400,7 +408,7 @@ def test_async_fixture(testdir, cmd_opts):
             raise RuntimeError("baz")
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
@@ -437,7 +445,7 @@ def test_async_yield_fixture_concurrent_teardown(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     # TODO: add a timeout, failure just hangs indefinitely for now
     # https://github.com/pytest-dev/pytest/issues/4073
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -476,7 +484,7 @@ def test_async_yield_fixture(testdir, cmd_opts):
             raise RuntimeError("baz")
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     # TODO: this is getting super imprecise...
     assert_outcomes(rr, {"passed": 4, "failed": 1, "errors": 2})
 
@@ -525,7 +533,7 @@ def test_async_yield_fixture_function_scope(testdir, cmd_opts):
         check_me = 2
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
 
 
@@ -554,7 +562,7 @@ def test_async_simple_fixture_in_fixture(testdir, cmd_opts):
         assert doublefour == 8
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
 
 
@@ -583,7 +591,7 @@ def test_async_yield_simple_fixture_in_fixture(testdir, cmd_opts):
         assert doublefour == 8
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
 
 
@@ -630,7 +638,7 @@ def test_async_fixture_in_fixture(testdir, cmd_opts, innerasync):
         assert (first, second) == (0, 2)
     """.format(maybe_async=maybe_async, maybe_await=maybe_await)
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
     # assert_outcomes(rr, {"passed": 1})
 
@@ -678,7 +686,7 @@ def test_async_yield_fixture_in_fixture(testdir, cmd_opts, innerasync):
         assert (first, second) == (0, 2)
     """.format(maybe_async=maybe_async, maybe_await=maybe_await)
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
 
 
@@ -706,7 +714,7 @@ def test_blockon_in_hook(testdir, cmd_opts, request):
         return d
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -723,7 +731,7 @@ def test_wrong_reactor(testdir, cmd_opts, request):
         pass
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
 
 
@@ -753,7 +761,7 @@ def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts, request):
         return d
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -770,11 +778,11 @@ def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts, request):
         pass
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
 
 
-def test_pytest_from_reactor_thread(testdir, request):
+def test_pytest_from_reactor_thread(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "default")
     test_file = """
     import pytest
@@ -822,10 +830,10 @@ def test_pytest_from_reactor_thread(testdir, request):
     """
     testdir.makepyfile(runner=runner_file)
     # check test file is ok in standalone mode:
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v")
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1, "failed": 1})
     # test embedded mode:
-    assert testdir.run(sys.executable, "runner.py").ret == 0
+    assert testdir.run(sys.executable, "runner.py", timeout=timeout).ret == 0
 
 
 def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
@@ -857,7 +865,7 @@ def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
         return d
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
 
 
@@ -882,7 +890,7 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
         pass
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert "WrongReactorAlreadyInstalledError" in rr.stderr.str()
 
 
@@ -930,7 +938,7 @@ def test_async_fixture_module_scope(testdir, cmd_opts):
         check_me = 3
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(sys.executable, "-m", "pytest", "-v", *cmd_opts)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
 
 
