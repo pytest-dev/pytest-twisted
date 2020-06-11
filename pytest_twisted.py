@@ -400,9 +400,14 @@ reactor_installers = {
 
 def _install_reactor(reactor_installer, reactor_type):
     """Install the specified reactor and create the greenlet."""
-    try:
+    # TODO: maybe fix this in qt5reactor?  btw, it avoids creating a second
+    #       qt5reactor.core.QtEventReactor and this somehow fixes the hang
+    #       that showed up in 5.15.0.
+    # try:
+    if 'twisted.internet.reactor' not in sys.modules:
         reactor_installer()
-    except error.ReactorAlreadyInstalledError:
+    # except error.ReactorAlreadyInstalledError:
+    else:
         import twisted.internet.reactor
 
         if not isinstance(twisted.internet.reactor, reactor_type):
