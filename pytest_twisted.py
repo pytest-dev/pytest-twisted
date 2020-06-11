@@ -7,8 +7,7 @@ import decorator
 import greenlet
 import pytest
 
-from twisted.internet import defer
-# from twisted.internet import error
+from twisted.internet import defer, error
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
 
@@ -401,14 +400,9 @@ reactor_installers = {
 
 def _install_reactor(reactor_installer, reactor_type):
     """Install the specified reactor and create the greenlet."""
-    # TODO: maybe fix this in qt5reactor?  btw, it avoids creating a second
-    #       qt5reactor.core.QtEventReactor and this somehow fixes the hang
-    #       that showed up in 5.15.0.
-    # try:
-    if 'twisted.internet.reactor' not in sys.modules:
+    try:
         reactor_installer()
-    # except error.ReactorAlreadyInstalledError:
-    else:
+    except error.ReactorAlreadyInstalledError:
         import twisted.internet.reactor
 
         if not isinstance(twisted.internet.reactor, reactor_type):
