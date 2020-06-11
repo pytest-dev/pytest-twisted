@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - name: Linux
+          - name: 🐧
             runs-on: ubuntu-latest
             python_platform: linux
             container:
@@ -31,10 +31,10 @@ jobs:
               3.6: docker://python:3.6-buster
               3.7: docker://python:3.7-buster
               3.8: docker://python:3.8-buster
-          - name: Windows
+          - name: 🗔
             runs-on: windows-latest
             python_platform: win32
-          - name: macOS
+          - name: 🍎
             runs-on: macos-latest
             python_platform: darwin
         python:
