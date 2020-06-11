@@ -1,0 +1,28 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "local-generic-warning",
+            "severity": "warning",
+            "pattern": [
+                {
+                    "regexp": "^(.*\\bWARNING:\\b.*)$",
+                    "message": 1
+                }
+            ]
+        },
+        {
+            "owner": "local-tox-not_in_env_warning",
+            "severity": "error",
+            "pattern": [
+                {
+                    "regexp": "^(\\s*WARNING: test command found but not installed.*)$"
+                },
+                {
+                    "regexp": "^(\\s*(cmd:|env:|Maybe you forgot).*)$",
+                    "message": 1,
+                    "loop": true
+                }
+            ]
+        }
+    ]
+}
