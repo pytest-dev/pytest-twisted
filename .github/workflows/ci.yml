@@ -101,11 +101,19 @@ jobs:
           - python:
               tox: pypy2
             reactor:
-              tox: qt5
+              tox: pyqt5
+          - python:
+              tox: pypy2
+            reactor:
+              tox: pyside2
           - python:
               tox: pypy3
             reactor:
-              tox: qt5
+              tox: pyqt5
+          - python:
+              tox: pypy3
+            reactor:
+              tox: pyside2
     steps:
       - uses: actions/checkout@v2
       - name: Enable Problem Matchers
