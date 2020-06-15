@@ -1,5 +1,6 @@
 import functools
 import inspect
+import itertools
 import sys
 import warnings
 
@@ -120,15 +121,42 @@ def decorator_apply(dec, func):
         dict(decfunc=dec(func)), __wrapped__=func)
 
 
+class DecoratorArgumentsError(Exception):
+    pass
+
+
+def repr_args_kwargs(*args, **kwargs):
+    arguments = ', '.join(itertools.chain(
+        (repr(x) for x in args),
+        ('{}={}'.format(k, repr(v)) for k, v in kwargs.items())
+    ))
+
+    return '({})'.format(arguments)
+
+
+def positional_not_allowed_exception(*args, **kwargs):
+    arguments = repr_args_kwargs(**args, **kwargs)
+
+    return DecoratorArgumentsError(
+        'Positional decorator arguments not allowed: {}'.format(arguments),
+    )
+
+
 def _optional_arguments():
     def decorator_decorator(d):
         # TODO: this should get the signature of d minus the f or something
-        def decorator_wrapper(f=None, **decorator_arguments):
+        def decorator_wrapper(*args, **decorator_arguments):
             """this is decorator_wrapper"""
-            if f is not None:
-                if len(decorator_arguments) > 0 or not callable(f):
-                    raise Exception('positional options not allowed')
+            if len(args) > 1:
+                raise positional_not_allowed_exception()
 
+            if len(args) == 1:
+                maybe_f = args[0]
+
+                if len(decorator_arguments) > 0 or not callable(maybe_f):
+                    raise positional_not_allowed_exception()
+
+                f = maybe_f
                 return d(f)
 
             # TODO: this should get the signature of d minus the kwargs
