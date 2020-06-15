@@ -135,7 +135,7 @@ def repr_args_kwargs(*args, **kwargs):
 
 
 def positional_not_allowed_exception(*args, **kwargs):
-    arguments = repr_args_kwargs(**args, **kwargs)
+    arguments = repr_args_kwargs(*args, **kwargs)
 
     return DecoratorArgumentsError(
         'Positional decorator arguments not allowed: {}'.format(arguments),
