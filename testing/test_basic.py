@@ -665,16 +665,16 @@ def test_async_yield_fixture_in_fixture(testdir, cmd_opts, innerasync):
 def test_blockon_in_hook(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "default")
     conftest_file = """
-    import pytest_twisted as pt
+    import pytest_twisted
     from twisted.internet import reactor, defer
 
     def pytest_configure(config):
-        pt.init_default_reactor()
+        pytest_twisted.init_default_reactor()
         d1, d2 = defer.Deferred(), defer.Deferred()
         reactor.callLater(0.01, d1.callback, 1)
         reactor.callLater(0.02, d2.callback, 1)
-        pt.blockon(d1)
-        pt.blockon(d2)
+        pytest_twisted.blockon(d1)
+        pytest_twisted.blockon(d2)
     """
     testdir.makeconftest(conftest_file)
     test_file = """
@@ -710,18 +710,18 @@ def test_wrong_reactor(testdir, cmd_opts, request):
 def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "qt5reactor")
     conftest_file = """
-    import pytest_twisted as pt
+    import pytest_twisted
     import pytestqt
     from twisted.internet import defer
 
     def pytest_configure(config):
-        pt.init_qt5_reactor()
+        pytest_twisted.init_qt5_reactor()
         d = defer.Deferred()
 
         from twisted.internet import reactor
 
         reactor.callLater(0.01, d.callback, 1)
-        pt.blockon(d)
+        pytest_twisted.blockon(d)
     """
     testdir.makeconftest(conftest_file)
     test_file = """
@@ -812,20 +812,20 @@ def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
     conftest_file = """
     import pytest
-    import pytest_twisted as pt
+    import pytest_twisted
     from twisted.internet import defer
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
-        pt._use_asyncio_selector_if_required(config=config)
+        pytest_twisted._use_asyncio_selector_if_required(config=config)
 
-        pt.init_asyncio_reactor()
+        pytest_twisted.init_asyncio_reactor()
         d = defer.Deferred()
 
         from twisted.internet import reactor
 
         reactor.callLater(0.01, d.callback, 1)
-        pt.blockon(d)
+        pytest_twisted.blockon(d)
     """
     testdir.makeconftest(conftest_file)
     test_file = """
@@ -992,6 +992,22 @@ def test_ensuredeferred_method_with_fixture_gets_fixture(testdir, cmd_opts):
         @pytest_twisted.ensureDeferred
         async def test_self_isinstance(self, foo):
             assert foo == 37
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+
+
+def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
+    conftest_file = """
+    import pytest_twisted
+    """
+    testdir.makeconftest(conftest_file)
+    test_file = """
+    import pytest_twisted
+
+    def test_succeed():
+        pass
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
