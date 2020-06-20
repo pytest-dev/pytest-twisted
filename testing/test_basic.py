@@ -1000,7 +1000,13 @@ def test_ensuredeferred_method_with_fixture_gets_fixture(testdir, cmd_opts):
 
 def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
     conftest_file = """
+    import pytest
     import pytest_twisted
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_configure(config):
+        pytest_twisted._use_asyncio_selector_if_required(config=config)
     """
     testdir.makeconftest(conftest_file)
     test_file = """
