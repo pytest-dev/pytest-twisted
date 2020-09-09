@@ -111,11 +111,6 @@ be explicitly installed earlier by calling
 ``pytest_twisted.init_default_reactor()`` or the corresponding function
 for the desired alternate reactor.
 
-Beware that in situations such as
-a ``conftest.py`` file that the name ``pytest_twisted`` may be
-undesirably detected by ``pytest`` as an unknown hook.  One alternative
-is to ``import pytest_twisted as pt``.
-
 
 inlineCallbacks
 ===============
