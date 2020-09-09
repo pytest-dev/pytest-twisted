@@ -18,7 +18,7 @@ setup(
     extras_require={
         "dev": ["pre-commit", "black"],
         "pyside2": ["pyside2", "qt5reactor"],
-        "pyqt5": ["pyqt5", "qt5reactor>=0.7"],
+        "pyqt5": ["pyqt5", "qt5reactor>=0.6.2"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
