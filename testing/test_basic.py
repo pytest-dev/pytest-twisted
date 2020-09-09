@@ -234,7 +234,16 @@ def test_exception(testdir, cmd_opts):
     assert_outcomes(rr, {"failed": 1})
 
 
-def test_inlineCallbacks(testdir, cmd_opts):
+@pytest.fixture(
+    name="empty_optional_call",
+    params=["", "()"],
+    ids=["no call", "empty call"],
+)
+def empty_optional_call_fixture(request):
+    return request.param
+
+
+def test_inlineCallbacks(testdir, cmd_opts, empty_optional_call):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
@@ -244,19 +253,19 @@ def test_inlineCallbacks(testdir, cmd_opts):
     def foo(request):
         return request.param
 
-    @pytest_twisted.inlineCallbacks
+    @pytest_twisted.inlineCallbacks{optional_call}
     def test_succeed(foo):
         yield defer.succeed(foo)
         if foo == "web":
             raise RuntimeError("baz")
-    """
+    """.format(optional_call=empty_optional_call)
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
 @skip_if_no_async_await()
-def test_async_await(testdir, cmd_opts):
+def test_async_await(testdir, cmd_opts, empty_optional_call):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
@@ -266,12 +275,12 @@ def test_async_await(testdir, cmd_opts):
     def foo(request):
         return request.param
 
-    @pytest_twisted.ensureDeferred
+    @pytest_twisted.ensureDeferred{optional_call}
     async def test_succeed(foo):
         await defer.succeed(foo)
         if foo == "web":
             raise RuntimeError("baz")
-    """
+    """.format(optional_call=empty_optional_call)
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
@@ -384,6 +393,25 @@ def test_async_fixture(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
+@skip_if_no_async_await()
+def test_async_fixture_no_arguments(testdir, cmd_opts, empty_optional_call):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_fixture{optional_call}
+    async def scope(request):
+        return request.scope
+
+    def test_is_function_scope(scope):
+        assert scope == "function"
+    """.format(optional_call=empty_optional_call)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+
+
 @skip_if_no_async_generators()
 def test_async_yield_fixture_concurrent_teardown(testdir, cmd_opts):
     test_file = """
@@ -459,6 +487,29 @@ def test_async_yield_fixture(testdir, cmd_opts):
     rr = testdir.run(*cmd_opts, timeout=timeout)
     # TODO: this is getting super imprecise...
     assert_outcomes(rr, {"passed": 4, "failed": 1, "errors": 2})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_no_arguments(
+        testdir,
+        cmd_opts,
+        empty_optional_call,
+):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_yield_fixture{optional_call}
+    async def scope(request):
+        yield request.scope
+
+    def test_is_function_scope(scope):
+        assert scope == "function"
+    """.format(optional_call=empty_optional_call)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
 
 
 @skip_if_no_async_generators()
