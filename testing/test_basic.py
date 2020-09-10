@@ -486,7 +486,7 @@ def test_async_yield_fixture_failed_test(testdir, cmd_opts):
     import pytest_twisted
 
     @pytest_twisted.async_yield_fixture()
-    async def foo(request):
+    async def foo():
         yield 92
 
     @pytest_twisted.inlineCallbacks
@@ -510,7 +510,7 @@ def test_async_yield_fixture_test_exception(testdir, cmd_opts):
         pass
 
     @pytest_twisted.async_yield_fixture()
-    async def foo(request):
+    async def foo():
         yield 92
 
     @pytest_twisted.inlineCallbacks
