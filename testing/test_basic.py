@@ -234,7 +234,16 @@ def test_exception(testdir, cmd_opts):
     assert_outcomes(rr, {"failed": 1})
 
 
-def test_inlineCallbacks(testdir, cmd_opts):
+@pytest.fixture(
+    name="empty_optional_call",
+    params=["", "()"],
+    ids=["no call", "empty call"],
+)
+def empty_optional_call_fixture(request):
+    return request.param
+
+
+def test_inlineCallbacks(testdir, cmd_opts, empty_optional_call):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
@@ -244,19 +253,19 @@ def test_inlineCallbacks(testdir, cmd_opts):
     def foo(request):
         return request.param
 
-    @pytest_twisted.inlineCallbacks
+    @pytest_twisted.inlineCallbacks{optional_call}
     def test_succeed(foo):
         yield defer.succeed(foo)
         if foo == "web":
             raise RuntimeError("baz")
-    """
+    """.format(optional_call=empty_optional_call)
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
 @skip_if_no_async_await()
-def test_async_await(testdir, cmd_opts):
+def test_async_await(testdir, cmd_opts, empty_optional_call):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
@@ -266,12 +275,12 @@ def test_async_await(testdir, cmd_opts):
     def foo(request):
         return request.param
 
-    @pytest_twisted.ensureDeferred
+    @pytest_twisted.ensureDeferred{optional_call}
     async def test_succeed(foo):
         await defer.succeed(foo)
         if foo == "web":
             raise RuntimeError("baz")
-    """
+    """.format(optional_call=empty_optional_call)
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2, "failed": 1})
@@ -384,6 +393,25 @@ def test_async_fixture(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 2, "failed": 1})
 
 
+@skip_if_no_async_await()
+def test_async_fixture_no_arguments(testdir, cmd_opts, empty_optional_call):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_fixture{optional_call}
+    async def scope(request):
+        return request.scope
+
+    def test_is_function_scope(scope):
+        assert scope == "function"
+    """.format(optional_call=empty_optional_call)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+
+
 @skip_if_no_async_generators()
 def test_async_yield_fixture_concurrent_teardown(testdir, cmd_opts):
     test_file = """
@@ -422,20 +450,16 @@ def test_async_yield_fixture_concurrent_teardown(testdir, cmd_opts):
 
 
 @skip_if_no_async_generators()
-def test_async_yield_fixture(testdir, cmd_opts):
+def test_async_yield_fixture_can_await(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
-    import pytest
     import pytest_twisted
 
-    @pytest_twisted.async_yield_fixture(
-        scope="function",
-        params=["fs", "imap", "web", "gopher", "archie"],
-    )
-    async def foo(request):
+    @pytest_twisted.async_yield_fixture()
+    async def foo():
         d1, d2 = defer.Deferred(), defer.Deferred()
         reactor.callLater(0.01, d1.callback, 1)
-        reactor.callLater(0.02, d2.callback, request.param)
+        reactor.callLater(0.02, d2.callback, 2)
         await d1
 
         # Twisted doesn't allow calling back with a Deferred as a value.
@@ -443,22 +467,124 @@ def test_async_yield_fixture(testdir, cmd_opts):
         # https://github.com/twisted/twisted/blob/c0f1394c7bfb04d97c725a353a1f678fa6a1c602/src/twisted/internet/defer.py#L459
         yield d2,
 
-        if request.param == "gopher":
-            raise RuntimeError("gaz")
-
-        if request.param == "archie":
-            yield 42
-
-    @pytest_twisted.inlineCallbacks
-    def test_succeed(foo):
-        x = yield foo[0]
-        if x == "web":
-            raise RuntimeError("baz")
+    @pytest_twisted.ensureDeferred
+    async def test(foo):
+        x = await foo[0]
+        assert x == 2
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
-    # TODO: this is getting super imprecise...
-    assert_outcomes(rr, {"passed": 4, "failed": 1, "errors": 2})
+    assert_outcomes(rr, {"passed": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_failed_test(testdir, cmd_opts):
+    test_file = """
+    import pytest_twisted
+
+    @pytest_twisted.async_yield_fixture()
+    async def foo():
+        yield 92
+
+    @pytest_twisted.ensureDeferred
+    async def test(foo):
+        assert False
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    rr.stdout.fnmatch_lines(lines2=["E*assert False"])
+    assert_outcomes(rr, {"failed": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_test_exception(testdir, cmd_opts):
+    test_file = """
+    import pytest_twisted
+
+    class UniqueLocalException(Exception):
+        pass
+
+    @pytest_twisted.async_yield_fixture()
+    async def foo():
+        yield 92
+
+    @pytest_twisted.ensureDeferred
+    async def test(foo):
+        raise UniqueLocalException("some message")
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    rr.stdout.fnmatch_lines(lines2=["E*.UniqueLocalException: some message*"])
+    assert_outcomes(rr, {"failed": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_yields_twice(testdir, cmd_opts):
+    test_file = """
+    import pytest_twisted
+
+    @pytest_twisted.async_yield_fixture()
+    async def foo():
+        yield 92
+        yield 36
+
+    @pytest_twisted.ensureDeferred
+    async def test(foo):
+        assert foo == 92
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1, "errors": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_teardown_exception(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    class UniqueLocalException(Exception):
+        pass
+
+    @pytest_twisted.async_yield_fixture()
+    async def foo(request):
+        yield 13
+
+        raise UniqueLocalException("some message")
+
+    @pytest_twisted.ensureDeferred
+    async def test_succeed(foo):
+        assert foo == 13
+    """
+
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    rr.stdout.fnmatch_lines(lines2=["E*.UniqueLocalException: some message*"])
+    assert_outcomes(rr, {"passed": 1, "errors": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_no_arguments(
+        testdir,
+        cmd_opts,
+        empty_optional_call,
+):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    @pytest_twisted.async_yield_fixture{optional_call}
+    async def scope(request):
+        yield request.scope
+
+    def test_is_function_scope(scope):
+        assert scope == "function"
+    """.format(optional_call=empty_optional_call)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
 
 
 @skip_if_no_async_generators()
@@ -665,16 +791,16 @@ def test_async_yield_fixture_in_fixture(testdir, cmd_opts, innerasync):
 def test_blockon_in_hook(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "default")
     conftest_file = """
-    import pytest_twisted as pt
+    import pytest_twisted
     from twisted.internet import reactor, defer
 
     def pytest_configure(config):
-        pt.init_default_reactor()
+        pytest_twisted.init_default_reactor()
         d1, d2 = defer.Deferred(), defer.Deferred()
         reactor.callLater(0.01, d1.callback, 1)
         reactor.callLater(0.02, d2.callback, 1)
-        pt.blockon(d1)
-        pt.blockon(d2)
+        pytest_twisted.blockon(d1)
+        pytest_twisted.blockon(d2)
     """
     testdir.makeconftest(conftest_file)
     test_file = """
@@ -710,18 +836,18 @@ def test_wrong_reactor(testdir, cmd_opts, request):
 def test_blockon_in_hook_with_qt5reactor(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "qt5reactor")
     conftest_file = """
-    import pytest_twisted as pt
+    import pytest_twisted
     import pytestqt
     from twisted.internet import defer
 
     def pytest_configure(config):
-        pt.init_qt5_reactor()
+        pytest_twisted.init_qt5_reactor()
         d = defer.Deferred()
 
         from twisted.internet import reactor
 
         reactor.callLater(0.01, d.callback, 1)
-        pt.blockon(d)
+        pytest_twisted.blockon(d)
     """
     testdir.makeconftest(conftest_file)
     test_file = """
@@ -812,20 +938,20 @@ def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
     conftest_file = """
     import pytest
-    import pytest_twisted as pt
+    import pytest_twisted
     from twisted.internet import defer
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
-        pt._use_asyncio_selector_if_required(config=config)
+        pytest_twisted._use_asyncio_selector_if_required(config=config)
 
-        pt.init_asyncio_reactor()
+        pytest_twisted.init_asyncio_reactor()
         d = defer.Deferred()
 
         from twisted.internet import reactor
 
         reactor.callLater(0.01, d.callback, 1)
-        pt.blockon(d)
+        pytest_twisted.blockon(d)
     """
     testdir.makeconftest(conftest_file)
     test_file = """
@@ -992,6 +1118,28 @@ def test_ensuredeferred_method_with_fixture_gets_fixture(testdir, cmd_opts):
         @pytest_twisted.ensureDeferred
         async def test_self_isinstance(self, foo):
             assert foo == 37
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+
+
+def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
+    conftest_file = """
+    import pytest
+    import pytest_twisted
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_configure(config):
+        pytest_twisted._use_asyncio_selector_if_required(config=config)
+    """
+    testdir.makeconftest(conftest_file)
+    test_file = """
+    import pytest_twisted
+
+    def test_succeed():
+        pass
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)

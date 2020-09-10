@@ -7,8 +7,8 @@ pytest-twisted - test twisted code with pytest
 |PyPI| |Pythons| |Travis| |AppVeyor| |Black|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
-:Version: 1.12
-:Date:    2019-09-26
+:Version: 1.13.1
+:Date:    2020-09-09
 :Download: https://pypi.python.org/pypi/pytest-twisted#downloads
 :Code: https://github.com/pytest-dev/pytest-twisted
 
@@ -111,11 +111,6 @@ be explicitly installed earlier by calling
 ``pytest_twisted.init_default_reactor()`` or the corresponding function
 for the desired alternate reactor.
 
-Beware that in situations such as
-a ``conftest.py`` file that the name ``pytest_twisted`` may be
-undesirably detected by ``pytest`` as an unknown hook.  One alternative
-is to ``import pytest_twisted as pt``.
-
 
 inlineCallbacks
 ===============
@@ -163,10 +158,6 @@ async/await fixtures
 ``async``/``await`` fixtures can be used along with ``yield`` for normal
 pytest fixture semantics of setup, value, and teardown.  At present only
 function and module scope are supported.
-
-Note: You must *call* ``pytest_twisted.async_fixture()`` and
-``pytest_twisted.async_yield_fixture()``.
-This requirement may be removed in a future release.
 
 .. code-block:: python
 
