@@ -72,8 +72,11 @@ jobs:
           - name: default
             tox: default
             dependencies: default
-          - name: Qt5
-            tox: qt5
+          - name: PyQt5
+            tox: pyqt5
+            dependencies: qt5
+          - name: PySide2
+            tox: pyside2
             dependencies: qt5
           - name: asyncio
             tox: asyncio
@@ -82,7 +85,11 @@ jobs:
           - python:
               tox: py27
             reactor:
-              tox: qt5
+              tox: pyqt5
+          - python:
+              tox: py27
+            reactor:
+              tox: pyside2
           - python:
               tox: py27
             reactor:
@@ -94,11 +101,19 @@ jobs:
           - python:
               tox: pypy2
             reactor:
-              tox: qt5
+              tox: pyqt5
+          - python:
+              tox: pypy2
+            reactor:
+              tox: pyside2
           - python:
               tox: pypy3
             reactor:
-              tox: qt5
+              tox: pyqt5
+          - python:
+              tox: pypy3
+            reactor:
+              tox: pyside2
     steps:
       - uses: actions/checkout@v2
       - name: Enable Problem Matchers
