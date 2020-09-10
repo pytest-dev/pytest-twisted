@@ -50,11 +50,6 @@ class _instances:
     reactor = None
 
 
-class _tracking:
-    async_yield_fixture_cache = {}
-    to_be_torn_down = []
-
-
 def _deprecate(deprecated, recommended):
     def decorator(f):
         @functools.wraps(f)
@@ -282,6 +277,13 @@ def pytest_fixture_setup(fixturedef, request):
     return not None
 
 
+def async_yield_fixture_finalizer(coroutine):
+    _run_inline_callbacks(
+        tear_it_down,
+        defer.ensureDeferred(coroutine.__anext__()),
+    )
+
+
 @defer.inlineCallbacks
 def _async_pytest_fixture_setup(fixturedef, request, mark):
     """Setup an async or async yield fixture."""
@@ -299,15 +301,14 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
     elif mark == 'async_yield_fixture':
         coroutine = fixture_function(**kwargs)
 
-        finalizer = functools.partial(
-            _tracking.to_be_torn_down.append,
-            coroutine,
+        request.addfinalizer(
+            functools.partial(
+                async_yield_fixture_finalizer,
+                coroutine=coroutine,
+            ),
         )
-        request.addfinalizer(finalizer)
 
-        arg_value = yield defer.ensureDeferred(
-            coroutine.__anext__(),
-        )
+        arg_value = yield defer.ensureDeferred(coroutine.__anext__())
     else:
         raise UnrecognizedCoroutineMarkError.from_mark(mark=mark)
 
@@ -346,22 +347,6 @@ def _run_inline_callbacks(f, *args):
         if not _instances.reactor.running:
             raise RuntimeError("twisted reactor is not running")
         blockingCallFromThread(_instances.reactor, f, *args)
-
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_teardown(item):
-    """Tear down collected async yield fixtures."""
-    yield
-
-    deferreds = []
-    while len(_tracking.to_be_torn_down) > 0:
-        coroutine = _tracking.to_be_torn_down.pop(0)
-        deferred = defer.ensureDeferred(coroutine.__anext__())
-
-        deferreds.append(deferred)
-
-    for deferred in deferreds:
-        _run_inline_callbacks(tear_it_down, deferred)
 
 
 def pytest_pyfunc_call(pyfuncitem):

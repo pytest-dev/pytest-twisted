@@ -413,40 +413,34 @@ def test_async_fixture_no_arguments(testdir, cmd_opts, empty_optional_call):
 
 
 @skip_if_no_async_generators()
-def test_async_yield_fixture_concurrent_teardown(testdir, cmd_opts):
+def test_async_yield_fixture_ordered_teardown(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
     import pytest
     import pytest_twisted
 
 
-    here = defer.Deferred()
-    there = defer.Deferred()
+    results = []
 
-    @pytest_twisted.async_yield_fixture()
-    async def this():
+    @pytest.fixture(scope='function')
+    def sync_fixture():
         yield 42
+        results.append(2)
 
-        there.callback(None)
-        reactor.callLater(5, here.cancel)
-        await here
+    @pytest_twisted.async_yield_fixture(scope='function')
+    async def async_fixture(sync_fixture):
+        yield sync_fixture
+        results.append(1)
 
-    @pytest_twisted.async_yield_fixture()
-    async def that():
-        yield 37
-
-        here.callback(None)
-        reactor.callLater(5, there.cancel)
-        await there
-
-    def test_succeed(this, that):
-        pass
+    def test_first(async_fixture):
+        assert async_fixture == 42
+    
+    def test_second():
+        assert results == [1, 2]
     """
     testdir.makepyfile(test_file)
-    # TODO: add a timeout, failure just hangs indefinitely for now
-    # https://github.com/pytest-dev/pytest/issues/4073
-    rr = testdir.run(*cmd_opts, timeout=timeout)
-    assert_outcomes(rr, {"passed": 1})
+    rr = testdir.run(*cmd_opts)#, timeout=timeout)
+    assert_outcomes(rr, {"passed": 2})
 
 
 @skip_if_no_async_generators()
