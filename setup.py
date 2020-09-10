@@ -17,7 +17,7 @@ setup(
     install_requires=["greenlet", "pytest>=2.3", "decorator"],
     extras_require={
         "dev": ["pre-commit", "black"],
-        "pyside2": ["pyside2>=5.15.1", "qt5reactor>0.6.2"],
+        "pyside2": ["pyside2>=5.15.1", "qt5reactor>=0.6.2"],
         "pyqt5": ["pyqt5", "qt5reactor>=0.6.2"],
     },
     classifiers=[
