@@ -18,13 +18,10 @@ setup(
     extras_require={
         "dev": ["pre-commit", "black"],
         "pyside2": [
-            # != 5.15.0 for:
-            #   https://bugreports.qt.io/browse/PYSIDE-1317
-            #   https://github.com/pytest-dev/pytest-twisted/pull/107#issuecomment-643679361
-            "pyside2 != 5.15.0",
-            "qt5reactor>=0.6.2",
+            # >= 0.6.3 for PySide2 extra version constraints
+            "qt5reactor[pyside2]>=0.6.3",
         ],
-        "pyqt5": ["pyqt5", "qt5reactor>=0.6.2"],
+        "pyqt5": ["qt5reactor[pyqt5]>=0.6.2"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
