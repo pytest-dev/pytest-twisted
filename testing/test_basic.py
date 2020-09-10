@@ -505,7 +505,7 @@ def test_async_yield_fixture_test_exception(testdir, cmd_opts):
     from twisted.internet import reactor, defer
     import pytest
     import pytest_twisted
-    
+
     class UniqueLocalException(Exception):
         pass
 
