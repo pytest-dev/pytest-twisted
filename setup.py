@@ -6,7 +6,7 @@ with open("README.rst") as f:
 setup(
     name="pytest-twisted",
     version="1.13",
-    description="A twisted plugin for py.test.",
+    description="A twisted plugin for pytest.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Ralf Schmitt, Kyle Altendorf, Victor Titor",
