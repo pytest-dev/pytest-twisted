@@ -453,7 +453,6 @@ def test_async_yield_fixture_concurrent_teardown(testdir, cmd_opts):
 def test_async_yield_fixture_can_await(testdir, cmd_opts):
     test_file = """
     from twisted.internet import reactor, defer
-    import pytest
     import pytest_twisted
 
     @pytest_twisted.async_yield_fixture()
@@ -468,9 +467,9 @@ def test_async_yield_fixture_can_await(testdir, cmd_opts):
         # https://github.com/twisted/twisted/blob/c0f1394c7bfb04d97c725a353a1f678fa6a1c602/src/twisted/internet/defer.py#L459
         yield d2,
 
-    @pytest_twisted.inlineCallbacks
-    def test_succeed(foo):
-        x = yield foo[0]
+    @pytest_twisted.ensureDeferred
+    async def test(foo):
+        x = await foo[0]
         assert x == 2
     """
     testdir.makepyfile(test_file)
@@ -481,16 +480,14 @@ def test_async_yield_fixture_can_await(testdir, cmd_opts):
 @skip_if_no_async_generators()
 def test_async_yield_fixture_failed_test(testdir, cmd_opts):
     test_file = """
-    from twisted.internet import reactor, defer
-    import pytest
     import pytest_twisted
 
     @pytest_twisted.async_yield_fixture()
     async def foo():
         yield 92
 
-    @pytest_twisted.inlineCallbacks
-    def test_succeed(foo):
+    @pytest_twisted.ensureDeferred
+    async def test(foo):
         assert False
     """
     testdir.makepyfile(test_file)
@@ -502,8 +499,6 @@ def test_async_yield_fixture_failed_test(testdir, cmd_opts):
 @skip_if_no_async_generators()
 def test_async_yield_fixture_test_exception(testdir, cmd_opts):
     test_file = """
-    from twisted.internet import reactor, defer
-    import pytest
     import pytest_twisted
 
     class UniqueLocalException(Exception):
@@ -513,8 +508,8 @@ def test_async_yield_fixture_test_exception(testdir, cmd_opts):
     async def foo():
         yield 92
 
-    @pytest_twisted.inlineCallbacks
-    def test_succeed(foo):
+    @pytest_twisted.ensureDeferred
+    async def test(foo):
         raise UniqueLocalException("some message")
     """
     testdir.makepyfile(test_file)
@@ -526,8 +521,6 @@ def test_async_yield_fixture_test_exception(testdir, cmd_opts):
 @skip_if_no_async_generators()
 def test_async_yield_fixture_yields_twice(testdir, cmd_opts):
     test_file = """
-    from twisted.internet import reactor, defer
-    import pytest
     import pytest_twisted
 
     @pytest_twisted.async_yield_fixture()
@@ -535,13 +528,13 @@ def test_async_yield_fixture_yields_twice(testdir, cmd_opts):
         yield 92
         yield 36
 
-    @pytest_twisted.inlineCallbacks
-    def test_succeed(foo):
+    @pytest_twisted.ensureDeferred
+    async def test(foo):
         assert foo == 92
     """
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
-    assert_outcomes(rr, {"errors": 1, "failed": 1})
+    assert_outcomes(rr, {"passed": 1, "errors": 1})
 
 
 @skip_if_no_async_generators()
