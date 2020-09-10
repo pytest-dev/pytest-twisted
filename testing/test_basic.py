@@ -458,7 +458,7 @@ def test_async_yield_fixture(testdir, cmd_opts):
 
     @pytest_twisted.async_yield_fixture(
         scope="function",
-        params=["fs", "imap", "web", "gopher", "archie"],
+        params=["fs", "imap", "web", "archie"],
     )
     async def foo(request):
         d1, d2 = defer.Deferred(), defer.Deferred()
@@ -470,9 +470,6 @@ def test_async_yield_fixture(testdir, cmd_opts):
         # This deferred is being wrapped up in a tuple to sneak through.
         # https://github.com/twisted/twisted/blob/c0f1394c7bfb04d97c725a353a1f678fa6a1c602/src/twisted/internet/defer.py#L459
         yield d2,
-
-        if request.param == "gopher":
-            raise RuntimeError("gaz")
 
         if request.param == "archie":
             yield 42
@@ -486,7 +483,34 @@ def test_async_yield_fixture(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     # TODO: this is getting super imprecise...
-    assert_outcomes(rr, {"passed": 4, "failed": 1, "errors": 2})
+    assert_outcomes(rr, {"passed": 3, "failed": 1, "errors": 1})
+
+
+@skip_if_no_async_generators()
+def test_async_yield_fixture_teardown_exception(testdir, cmd_opts):
+    test_file = """
+    from twisted.internet import reactor, defer
+    import pytest
+    import pytest_twisted
+
+    class UniqueLocalException(Exception):
+        pass
+
+    @pytest_twisted.async_yield_fixture()
+    async def foo(request):
+        yield 13
+
+        raise UniqueLocalException("some message")
+
+    @pytest_twisted.ensureDeferred
+    async def test_succeed(foo):
+        assert foo == 13
+    """
+
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    rr.stdout.fnmatch_lines(lines2=["E*.UniqueLocalException: some message*"])
+    assert_outcomes(rr, {"passed": 1, "errors": 1})
 
 
 @skip_if_no_async_generators()

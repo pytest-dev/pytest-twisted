@@ -323,12 +323,6 @@ def tear_it_down(deferred):
         yield deferred
     except StopAsyncIteration:
         return
-    except Exception:   # as e:
-        pass
-        # e = e
-    else:
-        pass
-        # e = None
 
     # TODO: six.raise_from()
     raise AsyncGeneratorFixtureDidNotStopError.from_generator(
