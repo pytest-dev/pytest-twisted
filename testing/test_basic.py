@@ -434,12 +434,12 @@ def test_async_yield_fixture_ordered_teardown(testdir, cmd_opts):
 
     def test_first(async_fixture):
         assert async_fixture == 42
-    
+
     def test_second():
         assert results == [1, 2]
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(*cmd_opts)#, timeout=timeout)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 2})
 
 
