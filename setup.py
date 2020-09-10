@@ -17,7 +17,13 @@ setup(
     install_requires=["greenlet", "pytest>=2.3", "decorator"],
     extras_require={
         "dev": ["pre-commit", "black"],
-        "pyside2": ["pyside2>=5.15.1", "qt5reactor>=0.6.2"],
+        "pyside2": [
+            # != 5.15.0 for:
+            #   https://bugreports.qt.io/browse/PYSIDE-1317
+            #   https://github.com/pytest-dev/pytest-twisted/pull/107#issuecomment-643679361
+            "pyside2 != 5.15.0",
+            "qt5reactor>=0.6.2",
+        ],
         "pyqt5": ["pyqt5", "qt5reactor>=0.6.2"],
     },
     classifiers=[
