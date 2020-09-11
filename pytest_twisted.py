@@ -280,7 +280,7 @@ def pytest_fixture_setup(fixturedef, request):
 def create_async_yield_fixture_finalizer(coroutine):
     def finalizer():
         _run_inline_callbacks(
-            tear_it_down,
+            _tear_it_down,
             defer.ensureDeferred(coroutine.__anext__()),
         )
 
