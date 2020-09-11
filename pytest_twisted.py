@@ -133,7 +133,7 @@ def repr_args_kwargs(*args, **kwargs):
     return '({})'.format(arguments)
 
 
-def positional_not_allowed_exception(*args, **kwargs):
+def _positional_not_allowed_exception(*args, **kwargs):
     arguments = repr_args_kwargs(*args, **kwargs)
 
     return DecoratorArgumentsError(
@@ -147,13 +147,13 @@ def _optional_arguments():
         def decorator_wrapper(*args, **decorator_arguments):
             """this is decorator_wrapper"""
             if len(args) > 1:
-                raise positional_not_allowed_exception()
+                raise _positional_not_allowed_exception()
 
             if len(args) == 1:
                 maybe_f = args[0]
 
                 if len(decorator_arguments) > 0 or not callable(maybe_f):
-                    raise positional_not_allowed_exception()
+                    raise _positional_not_allowed_exception()
 
                 f = maybe_f
                 return d(f)
