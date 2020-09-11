@@ -317,7 +317,7 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
 
 
 @defer.inlineCallbacks
-def tear_it_down(deferred):
+def _tear_it_down(deferred):
     """Tear down a specific async yield fixture."""
     try:
         yield deferred
@@ -361,7 +361,7 @@ def pytest_runtest_teardown(item):
         deferreds.append(deferred)
 
     for deferred in deferreds:
-        _run_inline_callbacks(tear_it_down, deferred)
+        _run_inline_callbacks(_tear_it_down, deferred)
 
 
 def pytest_pyfunc_call(pyfuncitem):
