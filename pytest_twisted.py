@@ -277,11 +277,14 @@ def pytest_fixture_setup(fixturedef, request):
     return not None
 
 
-def async_yield_fixture_finalizer(coroutine):
-    _run_inline_callbacks(
-        tear_it_down,
-        defer.ensureDeferred(coroutine.__anext__()),
-    )
+def create_async_yield_fixture_finalizer(coroutine):
+    def finalizer():
+        _run_inline_callbacks(
+            tear_it_down,
+            defer.ensureDeferred(coroutine.__anext__()),
+        )
+
+    return finalizer
 
 
 @defer.inlineCallbacks
@@ -302,10 +305,7 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
         coroutine = fixture_function(**kwargs)
 
         request.addfinalizer(
-            functools.partial(
-                async_yield_fixture_finalizer,
-                coroutine=coroutine,
-            ),
+            create_async_yield_fixture_finalizer(coroutine=coroutine),
         )
 
         arg_value = yield defer.ensureDeferred(coroutine.__anext__())
