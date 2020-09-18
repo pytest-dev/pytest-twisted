@@ -13,6 +13,9 @@ on:
     # Daily at 05:47
     - cron: '47 5 * * *'
 
+env:
+  PIP_NO_PYTHON_VERSION_WARNING: 1
+
 jobs:
   test:
     name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
@@ -136,11 +139,11 @@ jobs:
           echo
           echo "    <=======>"
           echo
-          pip list --no-python-version-warning
+          pip list
           echo
           echo "    <=======>"
           echo
-          pip freeze --all --no-python-version-warning
+          pip freeze --all
       - name: Install Linux Qt5 dependencies
         if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
         run: |
