@@ -126,6 +126,7 @@ jobs:
           python-version: ${{ matrix.python.action }}
           architecture: x64
       - name: pip/setuptools/wheel
+        shell: bash
         run: |
           pip install --upgrade pip setuptools wheel
       - name: Report Python information
