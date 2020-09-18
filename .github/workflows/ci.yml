@@ -127,7 +127,7 @@ jobs:
           architecture: x64
       - name: pip/setuptools/wheel
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          pip install --upgrade pip setuptools wheel
       - name: Report Python information
         shell: bash
         run: |
