@@ -128,7 +128,7 @@ jobs:
       - name: pip/setuptools/wheel
         shell: bash
         run: |
-          pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip setuptools wheel
       - name: Report Python information
         shell: bash
         run: |
