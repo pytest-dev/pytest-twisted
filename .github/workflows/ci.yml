@@ -74,7 +74,7 @@ jobs:
             tox: pypy2
             action: pypy2
             docker: pypy2
-            command: pypy2
+            command: pypy
           - name: PyPy 3
             tox: pypy3
             action: pypy3
