@@ -34,6 +34,7 @@ jobs:
               3.6: docker://python:3.6-buster
               3.7: docker://python:3.7-buster
               3.8: docker://python:3.8-buster
+              3.9: docker://python:3.9-rc-buster
               pypy2: docker://pypy:2-jessie
               pypy3: docker://pypy:3-stretch
           - name: Windows
@@ -63,6 +64,10 @@ jobs:
             tox: py38
             action: 3.8
             docker: 3.8
+          - name: CPython 3.9
+            tox: py39
+            action: 3.9
+            docker: 3.9
           - name: PyPy 2
             tox: pypy2
             action: pypy2
@@ -126,7 +131,7 @@ jobs:
         if: ${{ job.container == '' }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python.action }}
+          python-version: '${{ matrix.python.action }}.0-alpha - ${{ matrix.python.action }}.X'
           architecture: x64
       - name: Report Python information
         shell: bash
