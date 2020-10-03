@@ -48,34 +48,42 @@ jobs:
             tox: py27
             action: 2.7
             docker: 2.7
+            implementation: cpython
           - name: CPython 3.5
             tox: py35
             action: 3.5
             docker: 3.5
+            implementation: cpython
           - name: CPython 3.6
             tox: py36
             action: 3.6
             docker: 3.6
+            implementation: cpython
           - name: CPython 3.7
             tox: py37
             action: 3.7
             docker: 3.7
+            implementation: cpython
           - name: CPython 3.8
             tox: py38
             action: 3.8
             docker: 3.8
+            implementation: cpython
           - name: CPython 3.9
             tox: py39
             action: 3.9
             docker: 3.9
+            implementation: cpython
           - name: PyPy 2
             tox: pypy2
             action: pypy2
             docker: pypy2
+            implementation: pypy
           - name: PyPy 3
             tox: pypy3
             action: pypy3
             docker: pypy3
+            implementation: pypy
         reactor:
           - name: default
             tox: default
@@ -128,10 +136,16 @@ jobs:
         run: |
           echo "::add-matcher::.github/local-problem-matchers.json"
       - name: Set up ${{ matrix.python.name }}
-        if: ${{ job.container == '' }}
+        if: ${{ job.container == '' && matrix.python.implementation == 'cpython'}}
         uses: actions/setup-python@v2
         with:
           python-version: '${{ matrix.python.action }}.0-alpha - ${{ matrix.python.action }}.X'
+          architecture: x64
+      - name: Set up ${{ matrix.python.name }}
+        if: ${{ job.container == '' && matrix.python.implementation == 'pypy'}}
+        uses: actions/setup-python@v2
+        with:
+          python-version: '${{ matrix.python.action }}'
           architecture: x64
       - name: Report Python information
         shell: bash
