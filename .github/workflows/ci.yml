@@ -121,19 +121,11 @@ jobs:
             reactor:
               tox: asyncio
           - python:
-              tox: pypy2
+              implementation: pypy
             reactor:
               tox: pyqt5
           - python:
-              tox: pypy2
-            reactor:
-              tox: pyside2
-          - python:
-              tox: pypy3
-            reactor:
-              tox: pyqt5
-          - python:
-              tox: pypy3
+              implementation: pypy
             reactor:
               tox: pyside2
           - python:
