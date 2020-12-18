@@ -35,9 +35,9 @@ jobs:
               3.7: docker://python:3.7-buster
               3.8: docker://python:3.8-buster
               3.9: docker://python:3.9-rc-buster
-              pypy2.7: docker://pypy:27-jessie
-              pypy3.6: docker://pypy:36-stretch
-              pypy3.7: docker://pypy:37-stretch
+              pypy2.7: docker://pypy:2.7-jessie
+              pypy3.6: docker://pypy:3.6-stretch
+              pypy3.7: docker://pypy:3.7-stretch
           - name: Windows
             runs-on: windows-latest
             python_platform: win32
