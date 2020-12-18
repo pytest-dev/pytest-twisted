@@ -75,7 +75,7 @@ jobs:
             action: 3.9
             docker: 3.9
             implementation: cpython
-          - name: PyPy 2
+          - name: PyPy 2.7
             tox: pypy27
             action: pypy-2.7
             docker: pypy2.7
