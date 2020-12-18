@@ -35,8 +35,9 @@ jobs:
               3.7: docker://python:3.7-buster
               3.8: docker://python:3.8-buster
               3.9: docker://python:3.9-rc-buster
-              pypy2: docker://pypy:2-jessie
-              pypy3: docker://pypy:3-stretch
+              pypy2.7: docker://pypy:27-jessie
+              pypy3.6: docker://pypy:36-stretch
+              pypy3.7: docker://pypy:37-stretch
           - name: Windows
             runs-on: windows-latest
             python_platform: win32
@@ -75,14 +76,19 @@ jobs:
             docker: 3.9
             implementation: cpython
           - name: PyPy 2
-            tox: pypy2
-            action: pypy2
-            docker: pypy2
+            tox: pypy27
+            action: pypy-2.7
+            docker: pypy2.7
             implementation: pypy
-          - name: PyPy 3
-            tox: pypy3
-            action: pypy3
-            docker: pypy3
+          - name: PyPy 3.6
+            tox: pypy36
+            action: pypy-3.6
+            docker: pypy3.6
+            implementation: pypy
+          - name: PyPy 3.7
+            tox: pypy37
+            action: pypy-3.7
+            docker: pypy3.7
             implementation: pypy
         reactor:
           - name: default
