@@ -4,7 +4,7 @@
 pytest-twisted - test twisted code with pytest
 ==============================================================================
 
-|PyPI| |Pythons| |Travis| |AppVeyor| |Black|
+|PyPI| |Pythons| |Travis| |AppVeyor| |Actions| |Black|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
 :Version: 1.13.2
@@ -228,6 +228,10 @@ v1.9
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/eb1vp9hysp463c66/branch/master?svg=true
    :alt: AppVeyor build status
    :target: https://ci.appveyor.com/project/pytestbot/pytest-twisted
+
+.. |Actions| image:: https://img.shields.io/github/workflow/status/pytest-dev/pytest-twisted/CI/master?logo=GitHub-Actions
+   :alt: GitHub Actions build status
+   :target: https://github.com/pytest-dev/pytest-twisted/actions?query=branch%3Amaster
 
 .. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :alt: Black code style
