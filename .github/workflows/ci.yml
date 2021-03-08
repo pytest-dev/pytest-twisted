@@ -142,17 +142,11 @@ jobs:
       - name: Enable Problem Matchers
         run: |
           echo "::add-matcher::.github/local-problem-matchers.json"
-      - name: Set up ${{ matrix.python.name }} (if CPython)
-        if: ${{ job.container == '' && matrix.python.implementation == 'cpython'}}
+      - name: Set up ${{ matrix.python.name }}
+        if: ${{ job.container == '' }}
         uses: actions/setup-python@v2
         with:
-          python-version: '${{ matrix.python.action }}.0-alpha - ${{ matrix.python.action }}.X'
-          architecture: x64
-      - name: Set up ${{ matrix.python.name }} (if PyPy)
-        if: ${{ job.container == '' && matrix.python.implementation == 'pypy'}}
-        uses: actions/setup-python@v2
-        with:
-          python-version: '${{ matrix.python.action }}'
+          python-version: ${{ fromJSON(format('["{0}", "{1}"]', format('{0}.0-alpha - {0}.X', matrix.python), matrix.python))[startsWith(matrix.python, 'pypy')] }}
           architecture: x64
       - name: Report Python information
         shell: bash
