@@ -13,6 +13,9 @@ on:
     # Daily at 05:47
     - cron: '47 5 * * *'
 
+env:
+  PIP_NO_PYTHON_VERSION_WARNING: 1
+
 jobs:
   test:
     name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
@@ -31,8 +34,10 @@ jobs:
               3.6: docker://python:3.6-buster
               3.7: docker://python:3.7-buster
               3.8: docker://python:3.8-buster
-              pypy2: docker://pypy:2-jessie
-              pypy3: docker://pypy:3-stretch
+              3.9: docker://python:3.9-buster
+              pypy2.7: docker://pypy:2.7-buster
+              pypy3.6: docker://pypy:3.6-buster
+              pypy3.7: docker://pypy:3.7-buster
           - name: 🪟
             runs-on: windows-latest
             python_platform: win32
@@ -44,61 +49,90 @@ jobs:
             tox: py27
             action: 2.7
             docker: 2.7
+            implementation: cpython
+            major: 2
           - name: CPython 3.5
             tox: py35
             action: 3.5
             docker: 3.5
+            implementation: cpython
+            major: 3
           - name: CPython 3.6
             tox: py36
             action: 3.6
             docker: 3.6
+            implementation: cpython
+            major: 3
           - name: CPython 3.7
             tox: py37
             action: 3.7
             docker: 3.7
+            implementation: cpython
+            major: 3
           - name: CPython 3.8
             tox: py38
             action: 3.8
             docker: 3.8
-          - name: PyPy 2
-            tox: pypy2
-            action: pypy2
-            docker: pypy2
-          - name: PyPy 3
-            tox: pypy3
-            action: pypy3
-            docker: pypy3
+            implementation: cpython
+            major: 3
+          - name: CPython 3.9
+            tox: py39
+            action: 3.9
+            docker: 3.9
+            implementation: cpython
+            major: 3
+          - name: PyPy 2.7
+            tox: pypy27
+            action: pypy-2.7
+            docker: pypy2.7
+            implementation: pypy
+            major: 2
+          - name: PyPy 3.6
+            tox: pypy36
+            action: pypy-3.6
+            docker: pypy3.6
+            implementation: pypy
+            major: 3
+          - name: PyPy 3.7
+            tox: pypy37
+            action: pypy-3.7
+            docker: pypy3.7
+            implementation: pypy
+            major: 3
         reactor:
           - name: default
             tox: default
             dependencies: default
-          - name: Qt5
-            tox: qt5
+          - name: PyQt5
+            tox: pyqt5
+            dependencies: qt5
+          - name: PySide2
+            tox: pyside2
             dependencies: qt5
           - name: asyncio
             tox: asyncio
             dependencies: asyncio
         exclude:
           - python:
-              tox: py27
+              major: 2
             reactor:
-              tox: qt5
+              tox: pyqt5
           - python:
-              tox: py27
+              major: 2
+            reactor:
+              tox: pyside2
+          - python:
+              major: 2
             reactor:
               tox: asyncio
           - python:
-              tox: pypy2
+              implementation: pypy
             reactor:
-              tox: asyncio
+              tox: pyqt5
           - python:
-              tox: pypy2
+              implementation: pypy
             reactor:
-              tox: qt5
-          - python:
-              tox: pypy3
-            reactor:
-              tox: qt5
+              tox: pyside2
     steps:
       - uses: actions/checkout@v2
       - name: Enable Problem Matchers
@@ -108,7 +142,15 @@ jobs:
         if: ${{ job.container == '' }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python.action }}
+          # This allows the matrix to specify just the major.minor version while still
+          # expanding it to get the latest patch version including alpha releases.
+          # This avoids the need to update for each new alpha, beta, release candidate,
+          # and then finally an actual release version.  actions/setup-python doesn't
+          # support this for PyPy presently so we get no help there.
+          #
+          # CPython -> 3.9.0-alpha - 3.9.X
+          # PyPy    -> pypy-3.7
+          python-version: ${{ fromJSON(format('["{0}", "{1}"]', format('{0}.0-alpha - {0}.X', matrix.python.action), matrix.python.action))[startsWith(matrix.python.action, 'pypy')] }}
           architecture: x64
       - name: Report Python information
         shell: bash
@@ -121,11 +163,11 @@ jobs:
           echo
           echo "    <=======>"
           echo
-          pip list --no-python-version-warning
+          pip list
           echo
           echo "    <=======>"
           echo
-          pip freeze --all --no-python-version-warning
+          pip freeze --all
       - name: Install Linux Qt5 dependencies
         if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
         run: |

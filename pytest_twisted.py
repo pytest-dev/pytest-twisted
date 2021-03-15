@@ -1,5 +1,6 @@
 import functools
 import inspect
+import itertools
 import sys
 import warnings
 
@@ -7,8 +8,7 @@ import decorator
 import greenlet
 import pytest
 
-from twisted.internet import defer
-# from twisted.internet import error
+from twisted.internet import defer, error
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
 
@@ -48,11 +48,6 @@ class _config:
 class _instances:
     gr_twisted = None
     reactor = None
-
-
-class _tracking:
-    async_yield_fixture_cache = {}
-    to_be_torn_down = []
 
 
 def _deprecate(deprecated, recommended):
@@ -120,6 +115,56 @@ def decorator_apply(dec, func):
         dict(decfunc=dec(func)), __wrapped__=func)
 
 
+class DecoratorArgumentsError(Exception):
+    pass
+
+
+def repr_args_kwargs(*args, **kwargs):
+    arguments = ', '.join(itertools.chain(
+        (repr(x) for x in args),
+        ('{}={}'.format(k, repr(v)) for k, v in kwargs.items())
+    ))
+
+    return '({})'.format(arguments)
+
+
+def _positional_not_allowed_exception(*args, **kwargs):
+    arguments = repr_args_kwargs(*args, **kwargs)
+
+    return DecoratorArgumentsError(
+        'Positional decorator arguments not allowed: {}'.format(arguments),
+    )
+
+
+def _optional_arguments():
+    def decorator_decorator(d):
+        # TODO: this should get the signature of d minus the f or something
+        def decorator_wrapper(*args, **decorator_arguments):
+            """this is decorator_wrapper"""
+            if len(args) > 1:
+                raise _positional_not_allowed_exception()
+
+            if len(args) == 1:
+                maybe_f = args[0]
+
+                if len(decorator_arguments) > 0 or not callable(maybe_f):
+                    raise _positional_not_allowed_exception()
+
+                f = maybe_f
+                return d(f)
+
+            # TODO: this should get the signature of d minus the kwargs
+            def decorator_closure_on_arguments(f):
+                return d(f, **decorator_arguments)
+
+            return decorator_closure_on_arguments
+
+        return decorator_wrapper
+
+    return decorator_decorator
+
+
+@_optional_arguments()
 def inlineCallbacks(f):
     """
     Mark as inline callbacks test for pytest-twisted processing and apply
@@ -136,6 +181,7 @@ def inlineCallbacks(f):
     return decorated
 
 
+@_optional_arguments()
 def ensureDeferred(f):
     """
     Mark as async test for pytest-twisted processing.
@@ -178,7 +224,8 @@ def _set_mark(o, mark):
 
 def _marked_async_fixture(mark):
     @functools.wraps(pytest.fixture)
-    def fixture(*args, **kwargs):
+    @_optional_arguments()
+    def fixture(f, *args, **kwargs):
         try:
             scope = args[0]
         except IndexError:
@@ -198,13 +245,10 @@ def _marked_async_fixture(mark):
             #       https://github.com/pytest-dev/pytest-twisted/issues/56
             raise AsyncFixtureUnsupportedScopeError.from_scope(scope=scope)
 
-        def decorator(f):
-            _set_mark(f, mark)
-            result = pytest.fixture(*args, **kwargs)(f)
+        _set_mark(f, mark)
+        result = pytest.fixture(*args, **kwargs)(f)
 
-            return result
-
-        return decorator
+        return result
 
     return fixture
 
@@ -233,6 +277,16 @@ def pytest_fixture_setup(fixturedef, request):
     return not None
 
 
+def _create_async_yield_fixture_finalizer(coroutine):
+    def finalizer():
+        _run_inline_callbacks(
+            _tear_it_down,
+            defer.ensureDeferred(coroutine.__anext__()),
+        )
+
+    return finalizer
+
+
 @defer.inlineCallbacks
 def _async_pytest_fixture_setup(fixturedef, request, mark):
     """Setup an async or async yield fixture."""
@@ -250,15 +304,11 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
     elif mark == 'async_yield_fixture':
         coroutine = fixture_function(**kwargs)
 
-        finalizer = functools.partial(
-            _tracking.to_be_torn_down.append,
-            coroutine,
+        request.addfinalizer(
+            _create_async_yield_fixture_finalizer(coroutine=coroutine),
         )
-        request.addfinalizer(finalizer)
 
-        arg_value = yield defer.ensureDeferred(
-            coroutine.__anext__(),
-        )
+        arg_value = yield defer.ensureDeferred(coroutine.__anext__())
     else:
         raise UnrecognizedCoroutineMarkError.from_mark(mark=mark)
 
@@ -268,18 +318,12 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
 
 
 @defer.inlineCallbacks
-def tear_it_down(deferred):
+def _tear_it_down(deferred):
     """Tear down a specific async yield fixture."""
     try:
         yield deferred
     except StopAsyncIteration:
         return
-    except Exception:   # as e:
-        pass
-        # e = e
-    else:
-        pass
-        # e = None
 
     # TODO: six.raise_from()
     raise AsyncGeneratorFixtureDidNotStopError.from_generator(
@@ -303,22 +347,6 @@ def _run_inline_callbacks(f, *args):
         if not _instances.reactor.running:
             raise RuntimeError("twisted reactor is not running")
         blockingCallFromThread(_instances.reactor, f, *args)
-
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_teardown(item):
-    """Tear down collected async yield fixtures."""
-    yield
-
-    deferreds = []
-    while len(_tracking.to_be_torn_down) > 0:
-        coroutine = _tracking.to_be_torn_down.pop(0)
-        deferred = defer.ensureDeferred(coroutine.__anext__())
-
-        deferreds.append(deferred)
-
-    for deferred in deferreds:
-        _run_inline_callbacks(tear_it_down, deferred)
 
 
 def pytest_pyfunc_call(pyfuncitem):
@@ -401,14 +429,9 @@ reactor_installers = {
 
 def _install_reactor(reactor_installer, reactor_type):
     """Install the specified reactor and create the greenlet."""
-    # TODO: maybe fix this in qt5reactor?  btw, it avoids creating a second
-    #       qt5reactor.core.QtEventReactor and this somehow fixes the hang
-    #       that showed up in 5.15.0.
-    # try:
-    if 'twisted.internet.reactor' not in sys.modules:
+    try:
         reactor_installer()
-    # except error.ReactorAlreadyInstalledError:
-    else:
+    except error.ReactorAlreadyInstalledError:
         import twisted.internet.reactor
 
         if not isinstance(twisted.internet.reactor, reactor_type):

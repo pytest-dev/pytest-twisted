@@ -5,17 +5,24 @@ with open("README.rst") as f:
 
 setup(
     name="pytest-twisted",
-    version="1.12",
-    description="A twisted plugin for py.test.",
+    version="1.13.2",
+    description="A twisted plugin for pytest.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Ralf Schmitt, Kyle Altendorf, Victor Titor",
-    author_email="ralf@brainbot.com",
+    author_email="sda@fstab.net",
     url="https://github.com/pytest-dev/pytest-twisted",
     py_modules=["pytest_twisted"],
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     install_requires=["greenlet", "pytest>=2.3", "decorator"],
-    extras_require={"dev": ["pre-commit", "black"]},
+    extras_require={
+        "dev": ["pre-commit", "black"],
+        "pyside2": [
+            # >= 0.6.3 for PySide2 extra version constraints
+            "qt5reactor[pyside2]>=0.6.3",
+        ],
+        "pyqt5": ["qt5reactor[pyqt5]>=0.6.2"],
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
