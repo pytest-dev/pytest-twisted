@@ -133,10 +133,6 @@ jobs:
               implementation: pypy
             reactor:
               tox: pyside2
-          - python:
-              tox: py39
-            os:
-              python_platform: win32
     steps:
       - uses: actions/checkout@v2
       - name: Enable Problem Matchers
