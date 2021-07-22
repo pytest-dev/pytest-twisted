@@ -211,8 +211,8 @@ def stop_twisted_greenlet():
         try:
             _instances.reactor.stop()
         except error.ReactorNotRunning:
-            # Sometimes the reactor is stopped before we get here.  For example, this can
-            # happen in response to a SIGINT in some cases.
+            # Sometimes the reactor is stopped before we get here.  For
+            # example, this can happen in response to a SIGINT in some cases.
             pass
         _instances.gr_twisted.switch()
 
