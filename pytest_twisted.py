@@ -208,15 +208,12 @@ def init_twisted_greenlet():
 
 def stop_twisted_greenlet():
     if _instances.gr_twisted:
-        # check if the reactor is not stopped first to prevent calling stop() twice which results
-        # into an error, traceback printed and process hanging until it is killed with SIGKILL.
-        # This sometimes happens when the pytest process is sent a SIGINT signal.
-        # The reactor will stop itself as it register a SIGINT signal for itself and then it is
-        # stopped second time here.
-        # I don't understand when exactly is this happening but I am also observing here that
-        # reactor.running == True and reactor._stopped == True.
-        if not _instances.reactor._stopped:
+        try:
             _instances.reactor.stop()
+        except error.ReactorNotRunning:
+            # Sometimes the reactor is stopped before we get here.  For example, this can
+            # happen in response to a SIGINT in some cases.
+            pass
         _instances.gr_twisted.switch()
 
 
