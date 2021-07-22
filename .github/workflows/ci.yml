@@ -25,7 +25,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - name: Linux
+          - name: 🐧
             runs-on: ubuntu-latest
             python_platform: linux
             container:
@@ -38,10 +38,10 @@ jobs:
               pypy2.7: docker://pypy:2.7-buster
               pypy3.6: docker://pypy:3.6-buster
               pypy3.7: docker://pypy:3.7-buster
-          - name: Windows
+          - name: 🪟
             runs-on: windows-latest
             python_platform: win32
-          - name: macOS
+          - name: 🍎
             runs-on: macos-latest
             python_platform: darwin
         python:
@@ -147,7 +147,7 @@ jobs:
           # This avoids the need to update for each new alpha, beta, release candidate,
           # and then finally an actual release version.  actions/setup-python doesn't
           # support this for PyPy presently so we get no help there.
-          # 
+          #
           # CPython -> 3.9.0-alpha - 3.9.X
           # PyPy    -> pypy-3.7
           python-version: ${{ fromJSON(format('["{0}", "{1}"]', format('{0}.0-alpha - {0}.X', matrix.python.action), matrix.python.action))[startsWith(matrix.python.action, 'pypy')] }}
