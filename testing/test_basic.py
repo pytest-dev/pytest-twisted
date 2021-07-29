@@ -13,7 +13,10 @@ ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
 timeout = 15
 
-pytest_version = tuple(int(segment) for segment in pytest.__version__.split(".")[:3])
+pytest_version = tuple(
+    int(segment)
+    for segment in pytest.__version__.split(".")[:3]
+)
 
 
 # https://github.com/pytest-dev/pytest/issues/6505
