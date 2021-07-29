@@ -199,7 +199,9 @@ def init_twisted_greenlet():
         return
 
     if not _instances.reactor.running:
-        _instances.gr_twisted = greenlet.greenlet(_instances.reactor.run)
+        _instances.gr_twisted = greenlet.greenlet(
+            lambda: _instances.reactor.run(installSignalHandlers=False),
+        )
         # give me better tracebacks:
         failure.Failure.cleanFailure = lambda self: None
     else:

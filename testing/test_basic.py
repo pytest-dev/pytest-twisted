@@ -1138,3 +1138,55 @@ def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
+
+
+def test_sigint_for_regular_tests(testdir, cmd_opts):
+    test_file = """
+    import os
+    import signal
+    import time
+
+    import twisted.internet
+    import twisted.internet.task
+
+    def test_self_cancel():
+        os.kill(os.getpid(), signal.SIGINT)
+        time.sleep(10)
+
+    def test_should_not_run():
+        assert False
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {})
+    rr.stdout.re_match_lines(lines2=[r".* no tests ran in .*"])
+
+
+def test_sigint_for_inline_callbacks_tests(testdir, cmd_opts):
+    test_file = """
+    import os
+    import signal
+
+    import twisted.internet
+    import twisted.internet.task
+
+    import pytest_twisted
+
+    @pytest_twisted.inlineCallbacks
+    def test_self_cancel():
+        os.kill(os.getpid(), signal.SIGINT)
+        yield twisted.internet.task.deferLater(
+           twisted.internet.reactor,
+           9999,
+           lambda: None,
+        )
+
+    @pytest_twisted.inlineCallbacks
+    def test_should_not_run():
+        assert False
+        yield
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {})
+    rr.stdout.re_match_lines(lines2=[r".* no tests ran in .*"])
