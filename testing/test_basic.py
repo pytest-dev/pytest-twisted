@@ -1,3 +1,4 @@
+import re
 import sys
 import textwrap
 
@@ -11,6 +12,8 @@ ASYNC_AWAIT = sys.version_info >= (3, 5)
 ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
 timeout = 15
+
+pytest_version = tuple(int(segment) for segment in pytest.__version__.split(".")[:3])
 
 
 # https://github.com/pytest-dev/pytest/issues/6505
@@ -1163,7 +1166,13 @@ def test_sigint_for_regular_tests(testdir, cmd_opts):
         # on Windows pytest isn't even reporting the status, just stopping...
         assert_outcomes(rr, {})
         rr.stdout.re_match_lines(lines2=[r".* no tests ran in .*"])
-    rr.stdout.no_re_match_line(pat=r".*test_should_not_run.*")
+
+    pattern = r".*test_should_not_run.*"
+
+    if pytest_version >= (5, 3, 0):
+        rr.stdout.no_re_match_line(pat=pattern)
+    else:
+        assert re.match(pattern, rr.stdout.str()) is None
 
 
 def test_sigint_for_inline_callbacks_tests(testdir, cmd_opts):
@@ -1196,4 +1205,10 @@ def test_sigint_for_inline_callbacks_tests(testdir, cmd_opts):
         # on Windows pytest isn't even reporting the status, just stopping...
         assert_outcomes(rr, {})
         rr.stdout.re_match_lines(lines2=[r".* no tests ran in .*"])
-    rr.stdout.no_re_match_line(pat=r".*test_should_not_run.*")
+
+    pattern = r".*test_should_not_run.*"
+
+    if pytest_version >= (5, 3, 0):
+        rr.stdout.no_re_match_line(pat=pattern)
+    else:
+        assert re.match(pattern, rr.stdout.str()) is None
