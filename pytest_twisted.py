@@ -201,7 +201,10 @@ def init_twisted_greenlet():
 
     if not _instances.reactor.running:
         if signal.getsignal(signal.SIGINT) == signal.default_int_handler:
-            signal.signal(signal.SIGINT, functools.partial(signal.default_int_handler))
+            signal.signal(
+                signal.SIGINT,
+                functools.partial(signal.default_int_handler),
+            )
         _instances.gr_twisted = greenlet.greenlet(_instances.reactor.run)
         # give me better tracebacks:
         failure.Failure.cleanFailure = lambda self: None
