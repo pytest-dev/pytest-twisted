@@ -1138,3 +1138,33 @@ def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
+
+
+@pytest.mark.parametrize(argnames="kill", argvalues=[False, True])
+@pytest.mark.parametrize(argnames="event", argvalues=["shutdown"])
+@pytest.mark.parametrize(argnames="phase", argvalues=["before", "during", "after"])
+def test_addSystemEventTrigger(testdir, cmd_opts, kill, event, phase):
+    test_string = "1kljgf90u0lkj13l4jjklsfdo89898y24hlkjalkjs38"
+
+    test_file = """
+    import os
+
+    import pytest_twisted
+
+    def output_stuff():
+        print({test_string!r})
+
+    @pytest_twisted.inlineCallbacks
+    def test_succeed():
+        from twisted.internet import reactor
+        reactor.addSystemEventTrigger(phase={phase!r}, eventType={event!r}, callable=output_stuff)
+
+        if {kill!r}:
+            os.kill(os.get_pid())
+
+        yield
+    """.format(kill=kill, event=event, phase=phase, test_string=test_string)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+    rr.stdout.fnmatch_lines(lines2=[test_string])
