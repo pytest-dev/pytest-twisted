@@ -1170,5 +1170,4 @@ def test_addSystemEventTrigger(testdir, cmd_opts, kill, event, phase):
     """.format(kill=kill, event=event, phase=phase, test_string=test_string)
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
-    assert_outcomes(rr, {"passed": 1})
     rr.stdout.fnmatch_lines(lines2=[test_string])
