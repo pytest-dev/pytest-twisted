@@ -1148,6 +1148,7 @@ def test_addSystemEventTrigger(testdir, cmd_opts, kill, event, phase):
 
     test_file = """
     import os
+    import signal
 
     import pytest_twisted
 
@@ -1160,7 +1161,7 @@ def test_addSystemEventTrigger(testdir, cmd_opts, kill, event, phase):
         reactor.addSystemEventTrigger(phase={phase!r}, eventType={event!r}, callable=output_stuff)
 
         if {kill!r}:
-            os.kill(os.get_pid())
+            os.kill(os.getpid(), signal.SIGINT)
 
         yield
     """.format(kill=kill, event=event, phase=phase, test_string=test_string)
