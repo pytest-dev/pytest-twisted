@@ -1161,11 +1161,7 @@ def test_addSystemEventTrigger(testdir, cmd_opts, kill, event, phase):
     @pytest_twisted.inlineCallbacks
     def test_succeed():
         from twisted.internet import reactor
-        reactor.addSystemEventTrigger(
-            phase={phase!r},
-            eventType={event!r},
-            callable=output_stuff,
-        )
+        reactor.addSystemEventTrigger({phase!r}, {event!r}, output_stuff)
 
         if {kill!r}:
             os.kill(os.getpid(), signal.SIGINT)
