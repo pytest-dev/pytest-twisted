@@ -1141,14 +1141,6 @@ def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 1})
 
 
-@pytest.mark.xfail(
-    condition=(
-        sys.platform == "win32"
-        or os.environ.get("REACTOR", "").startswith("qt")
-    ),
-    reason="Needs handled on Windows and with qt5reactor.",
-    strict=True,
-)
 @pytest.mark.parametrize(argnames="kill", argvalues=[False, True])
 @pytest.mark.parametrize(argnames="event", argvalues=["shutdown"])
 @pytest.mark.parametrize(
@@ -1156,6 +1148,13 @@ def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
     argvalues=["before", "during", "after"],
 )
 def test_addSystemEventTrigger(testdir, cmd_opts, kill, event, phase):
+    is_win32 = sys.platform == "win32"
+    is_qt = os.environ.get("REACTOR", "").startswith("qt")
+    is_kill = kill
+
+    if (is_win32 or is_qt) and is_kill:
+        pytest.xfail(reason="Needs handled on Windows and with qt5reactor.")
+
     test_string = "1kljgf90u0lkj13l4jjklsfdo89898y24hlkjalkjs38"
 
     test_file = """
