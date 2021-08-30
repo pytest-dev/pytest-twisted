@@ -1147,6 +1147,7 @@ def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
         or os.environ.get("REACTOR", "").startswith("qt")
     ),
     reason="Needs handled on Windows and with qt5reactor.",
+    strict=True,
 )
 @pytest.mark.parametrize(argnames="kill", argvalues=[False, True])
 @pytest.mark.parametrize(argnames="event", argvalues=["shutdown"])
