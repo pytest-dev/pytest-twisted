@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import textwrap
 
@@ -12,6 +13,11 @@ ASYNC_AWAIT = sys.version_info >= (3, 5)
 ASYNC_GENERATORS = sys.version_info >= (3, 6)
 
 timeout = 15
+
+pytest_version = tuple(
+    int(segment)
+    for segment in pytest.__version__.split(".")[:3]
+)
 
 
 # https://github.com/pytest-dev/pytest/issues/6505
@@ -1179,3 +1185,73 @@ def test_addSystemEventTrigger(testdir, cmd_opts, kill, event, phase):
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     rr.stdout.fnmatch_lines(lines2=[test_string])
+
+
+def test_sigint_for_regular_tests(testdir, cmd_opts):
+    test_file = """
+    import os
+    import signal
+    import time
+
+    import twisted.internet
+    import twisted.internet.task
+
+    def test_self_cancel():
+        os.kill(os.getpid(), signal.SIGINT)
+        time.sleep(10)
+
+    def test_should_not_run():
+        assert False
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    if sys.platform != "win32":
+        # on Windows pytest isn't even reporting the status, just stopping...
+        assert_outcomes(rr, {})
+        rr.stdout.re_match_lines(lines2=[r".* no tests ran in .*"])
+
+    pattern = r".*test_should_not_run.*"
+
+    if pytest_version >= (5, 3, 0):
+        rr.stdout.no_re_match_line(pat=pattern)
+    else:
+        assert re.match(pattern, rr.stdout.str()) is None
+
+
+def test_sigint_for_inline_callbacks_tests(testdir, cmd_opts):
+    test_file = """
+    import os
+    import signal
+
+    import twisted.internet
+    import twisted.internet.task
+
+    import pytest_twisted
+
+    @pytest_twisted.inlineCallbacks
+    def test_self_cancel():
+        os.kill(os.getpid(), signal.SIGINT)
+        yield twisted.internet.task.deferLater(
+           twisted.internet.reactor,
+           9999,
+           lambda: None,
+        )
+
+    @pytest_twisted.inlineCallbacks
+    def test_should_not_run():
+        assert False
+        yield
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    if sys.platform != "win32":
+        # on Windows pytest isn't even reporting the status, just stopping...
+        assert_outcomes(rr, {})
+        rr.stdout.re_match_lines(lines2=[r".* no tests ran in .*"])
+
+    pattern = r".*test_should_not_run.*"
+
+    if pytest_version >= (5, 3, 0):
+        rr.stdout.no_re_match_line(pat=pattern)
+    else:
+        assert re.match(pattern, rr.stdout.str()) is None
