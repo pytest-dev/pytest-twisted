@@ -882,7 +882,6 @@ def test_wrong_reactor_with_qt5reactor(testdir, cmd_opts, request):
 
 
 def test_pytest_from_reactor_thread(testdir, cmd_opts, request):
-    return
     skip_if_reactor_not(request, "default")
     test_file = """
     import pytest
