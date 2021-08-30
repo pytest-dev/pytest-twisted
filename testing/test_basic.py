@@ -1,3 +1,4 @@
+import os
 import sys
 import textwrap
 
@@ -1140,6 +1141,13 @@ def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 1})
 
 
+@pytest.mark.xfail(
+    condition=(
+        sys.platform == "win32"
+        or os.environ.get("REACTOR", "").startswith("qt")
+    ),
+    reason="Needs handled on Windows and with qt5reactor.",
+)
 @pytest.mark.parametrize(argnames="kill", argvalues=[False, True])
 @pytest.mark.parametrize(argnames="event", argvalues=["shutdown"])
 @pytest.mark.parametrize(
