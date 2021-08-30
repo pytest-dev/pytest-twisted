@@ -1,3 +1,4 @@
+import os
 import sys
 import textwrap
 
@@ -1138,3 +1139,43 @@ def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
     testdir.makepyfile(test_file)
     rr = testdir.run(*cmd_opts, timeout=timeout)
     assert_outcomes(rr, {"passed": 1})
+
+
+@pytest.mark.parametrize(argnames="kill", argvalues=[False, True])
+@pytest.mark.parametrize(argnames="event", argvalues=["shutdown"])
+@pytest.mark.parametrize(
+    argnames="phase",
+    argvalues=["before", "during", "after"],
+)
+def test_addSystemEventTrigger(testdir, cmd_opts, kill, event, phase):
+    is_win32 = sys.platform == "win32"
+    is_qt = os.environ.get("REACTOR", "").startswith("qt")
+    is_kill = kill
+
+    if (is_win32 or is_qt) and is_kill:
+        pytest.xfail(reason="Needs handled on Windows and with qt5reactor.")
+
+    test_string = "1kljgf90u0lkj13l4jjklsfdo89898y24hlkjalkjs38"
+
+    test_file = """
+    import os
+    import signal
+
+    import pytest_twisted
+
+    def output_stuff():
+        print({test_string!r})
+
+    @pytest_twisted.inlineCallbacks
+    def test_succeed():
+        from twisted.internet import reactor
+        reactor.addSystemEventTrigger({phase!r}, {event!r}, output_stuff)
+
+        if {kill!r}:
+            os.kill(os.getpid(), signal.SIGINT)
+
+        yield
+    """.format(kill=kill, event=event, phase=phase, test_string=test_string)
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    rr.stdout.fnmatch_lines(lines2=[test_string])
