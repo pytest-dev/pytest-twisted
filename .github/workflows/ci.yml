@@ -84,8 +84,8 @@ jobs:
             major: 3
           - name: CPython 3.10
             tox: py310
-            action: 3.10
-            docker: 3.10
+            action: "3.10"
+            docker: "3.10"
             implementation: cpython
             major: 3
           - name: PyPy 2.7
