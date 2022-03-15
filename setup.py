@@ -21,6 +21,11 @@ setup(
             # >= 0.6.3 for PySide2 extra version constraints
             "qt5reactor[pyside2]>=0.6.3",
         ],
+        "pyside6": [
+            # TODO: specify version
+            # >= 0.6.x for PySide6 support
+            "qt5reactor[pyside6] @ https://github.com/sveinse/qt5reactor@feature_pyside6",
+        ],
         "pyqt5": ["qt5reactor[pyqt5]>=0.6.2"],
     },
     classifiers=[

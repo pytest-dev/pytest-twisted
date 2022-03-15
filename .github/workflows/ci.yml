@@ -109,6 +109,9 @@ jobs:
           - name: PySide2
             tox: pyside2
             dependencies: qt5
+          - name: PySide6
+            tox: pyside6
+            dependencies: qt6
           - name: asyncio
             tox: asyncio
             dependencies: asyncio
@@ -124,6 +127,10 @@ jobs:
           - python:
               major: 2
             reactor:
+              tox: pyside6
+          - python:
+              major: 2
+            reactor:
               tox: asyncio
           - python:
               implementation: pypy
@@ -133,6 +140,10 @@ jobs:
               implementation: pypy
             reactor:
               tox: pyside2
+          - python:
+              implementation: pypy
+            reactor:
+              tox: pyside6
     steps:
       - uses: actions/checkout@v2
       - name: Enable Problem Matchers
@@ -169,7 +180,7 @@ jobs:
           echo
           pip freeze --all
       - name: Install Linux Qt5 dependencies
-        if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
+        if: matrix.os.python_platform == 'linux' && contains(['qt5', 'qt6'], matrix.reactor.dependencies)
         run: |
           apt-get update --yes
           apt-get install --yes libgl1
