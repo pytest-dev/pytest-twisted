@@ -367,12 +367,26 @@ def pytest_pyfunc_call(pyfuncitem):
     #       from arbitrary tests so we kinda have to keep this up for now
     maybe_hypothesis = getattr(pyfuncitem.obj, "hypothesis", None)
     if maybe_hypothesis is None:
-        _run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem, pyfuncitem.obj, {})
+        _run_inline_callbacks(
+            _async_pytest_pyfunc_call,
+            pyfuncitem,
+            pyfuncitem.obj,
+            {}
+        )
         result = not None
     else:
         hypothesis = maybe_hypothesis
         f = hypothesis.inner_test
-        pyfuncitem.obj.hypothesis.inner_test = lambda **kwargs: _run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem, f, kwargs)
+
+        def inner_test(**kwargs):
+            return _run_inline_callbacks(
+                _async_pytest_pyfunc_call,
+                pyfuncitem,
+                f,
+                kwargs,
+            )
+
+        pyfuncitem.obj.hypothesis.inner_test = inner_test
         result = None
 
     return result

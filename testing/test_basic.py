@@ -96,7 +96,7 @@ def skip_if_no_async_generators():
 def skip_if_hypothesis_unavailable():
     def hypothesis_unavailable():
         try:
-            import hypothesis
+            import hypothesis  # noqa: F401
         except ImportError:
             return True
 
