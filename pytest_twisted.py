@@ -365,27 +365,28 @@ def pytest_pyfunc_call(pyfuncitem):
     # TODO: only handle 'our' tests?  what is the point of handling others?
     #       well, because our interface allowed people to return deferreds
     #       from arbitrary tests so we kinda have to keep this up for now
-    _run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem)
-    return not None
+    f = pyfuncitem.obj.hypothesis.inner_test
+    pyfuncitem.obj.hypothesis.inner_test = lambda **kwargs: _run_inline_callbacks(_async_pytest_pyfunc_call, pyfuncitem, f, kwargs)
+    return None
 
 
 @defer.inlineCallbacks
-def _async_pytest_pyfunc_call(pyfuncitem):
+def _async_pytest_pyfunc_call(pyfuncitem, f, kwargs):
     """Run test function."""
-    kwargs = {
+    kwargs.update({
         name: value
         for name, value in pyfuncitem.funcargs.items()
         if name in pyfuncitem._fixtureinfo.argnames
-    }
+    })
 
-    maybe_mark = _get_mark(pyfuncitem.obj)
+    maybe_mark = _get_mark(f)
     if maybe_mark == 'async_test':
-        result = yield defer.ensureDeferred(pyfuncitem.obj(**kwargs))
+        result = yield defer.ensureDeferred(f(**kwargs))
     elif maybe_mark == 'inline_callbacks_test':
-        result = yield pyfuncitem.obj(**kwargs)
+        result = yield f(**kwargs)
     else:
         # TODO: maybe deprecate this
-        result = yield pyfuncitem.obj(**kwargs)
+        result = yield f(**kwargs)
 
     defer.returnValue(result)
 
