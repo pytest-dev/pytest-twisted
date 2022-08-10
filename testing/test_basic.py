@@ -1255,3 +1255,75 @@ def test_sigint_for_inline_callbacks_tests(testdir, cmd_opts):
         rr.stdout.no_re_match_line(pat=pattern)
     else:
         assert re.match(pattern, rr.stdout.str()) is None
+
+
+def test_hypothesis_async_passes(testdir, cmd_opts):
+    test_file = """
+    import hypothesis
+    import hypothesis.strategies
+
+    import pytest_twisted
+
+    @hypothesis.given(x=hypothesis.strategies.integers())
+    @pytest_twisted.ensureDeferred
+    async def test_async(x):
+        assert isinstance(x, int)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+
+
+def test_hypothesis_inline_callbacks_passes(testdir, cmd_opts):
+    test_file = """
+    import hypothesis
+    import hypothesis.strategies
+
+    import pytest_twisted
+
+    @hypothesis.given(x=hypothesis.strategies.integers())
+    @pytest_twisted.inlineCallbacks
+    def test_inline_callbacks(x):
+        assert isinstance(x, int)
+        return
+        yield
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"passed": 1})
+
+
+def test_hypothesis_async_ils(testdir, cmd_opts):
+    test_file = """
+    import hypothesis
+    import hypothesis.strategies
+
+    import pytest_twisted
+
+    @hypothesis.given(x=hypothesis.strategies.integers())
+    @pytest_twisted.ensureDeferred
+    async def test_async(x):
+        assert isinstance(x, str)
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"failed": 1})
+
+
+def test_hypothesis_inline_callbacks_fails(testdir, cmd_opts):
+    test_file = """
+    import hypothesis
+    import hypothesis.strategies
+
+    import pytest_twisted
+
+    @hypothesis.given(x=hypothesis.strategies.integers())
+    @pytest_twisted.inlineCallbacks
+    def test_inline_callbacks(x):
+        assert isinstance(x, str)
+        return
+        yield
+    """
+    testdir.makepyfile(test_file)
+    rr = testdir.run(*cmd_opts, timeout=timeout)
+    assert_outcomes(rr, {"failed": 1})
