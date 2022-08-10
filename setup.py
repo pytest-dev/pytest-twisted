@@ -16,7 +16,7 @@ setup(
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     install_requires=["greenlet", "pytest>=2.3", "decorator"],
     extras_require={
-        "dev": ["pre-commit", "black", "hypothesis"],
+        "dev": ["pre-commit", "black"],
         "pyside2": [
             # >= 0.6.3 for PySide2 extra version constraints
             "qt5reactor[pyside2]>=0.6.3",
