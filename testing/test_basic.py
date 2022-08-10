@@ -93,6 +93,21 @@ def skip_if_no_async_generators():
     )
 
 
+def skip_if_hypothesis_unavailable():
+    def hypothesis_unavailable():
+        try:
+            import hypothesis
+        except ImportError:
+            return True
+
+        return False
+
+    return pytest.mark.skipif(
+        hypothesis_unavailable(),
+        reason="hypothesis not installed",
+    )
+
+
 @pytest.fixture
 def cmd_opts(request):
     reactor = request.config.getoption("reactor", "default")
@@ -1257,6 +1272,8 @@ def test_sigint_for_inline_callbacks_tests(testdir, cmd_opts):
         assert re.match(pattern, rr.stdout.str()) is None
 
 
+@skip_if_no_async_await()
+@skip_if_hypothesis_unavailable()
 def test_hypothesis_async_passes(testdir, cmd_opts):
     test_file = """
     import hypothesis
@@ -1274,6 +1291,7 @@ def test_hypothesis_async_passes(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 1})
 
 
+@skip_if_hypothesis_unavailable()
 def test_hypothesis_inline_callbacks_passes(testdir, cmd_opts):
     test_file = """
     import hypothesis
@@ -1293,7 +1311,9 @@ def test_hypothesis_inline_callbacks_passes(testdir, cmd_opts):
     assert_outcomes(rr, {"passed": 1})
 
 
-def test_hypothesis_async_ils(testdir, cmd_opts):
+@skip_if_no_async_await()
+@skip_if_hypothesis_unavailable()
+def test_hypothesis_async_fails(testdir, cmd_opts):
     test_file = """
     import hypothesis
     import hypothesis.strategies
@@ -1310,6 +1330,7 @@ def test_hypothesis_async_ils(testdir, cmd_opts):
     assert_outcomes(rr, {"failed": 1})
 
 
+@skip_if_hypothesis_unavailable()
 def test_hypothesis_inline_callbacks_fails(testdir, cmd_opts):
     test_file = """
     import hypothesis
