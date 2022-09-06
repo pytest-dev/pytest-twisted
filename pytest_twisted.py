@@ -3,6 +3,7 @@ import inspect
 import itertools
 import signal
 import sys
+import threading
 import warnings
 
 import decorator
