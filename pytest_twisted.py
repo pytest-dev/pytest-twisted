@@ -204,8 +204,8 @@ def init_twisted_greenlet():
         if not isinstance(threading.current_thread(), threading._MainThread):
             warnings.warn(
                 (
-                    'Failed to block Twisted signal configuration due to not'
-                    ' running in the main thread.  See'
+                    'Will not attempt to block Twisted signal configuration'
+                    ' since we are not running in the main thread.  See'
                     ' https://github.com/pytest-dev/pytest-twisted/issues/153.'
                 ),
                 RuntimeWarning,
