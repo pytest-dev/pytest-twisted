@@ -3,6 +3,7 @@ import inspect
 import itertools
 import signal
 import sys
+import threading
 import warnings
 
 import decorator
@@ -200,7 +201,16 @@ def init_twisted_greenlet():
         return
 
     if not _instances.reactor.running:
-        if signal.getsignal(signal.SIGINT) == signal.default_int_handler:
+        if not isinstance(threading.current_thread(), threading._MainThread):
+            warnings.warn(
+                (
+                    'Will not attempt to block Twisted signal configuration'
+                    ' since we are not running in the main thread.  See'
+                    ' https://github.com/pytest-dev/pytest-twisted/issues/153.'
+                ),
+                RuntimeWarning,
+            )
+        elif signal.getsignal(signal.SIGINT) == signal.default_int_handler:
             signal.signal(
                 signal.SIGINT,
                 functools.partial(signal.default_int_handler),
