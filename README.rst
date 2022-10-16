@@ -182,6 +182,18 @@ function and module scope are supported.
       await d2
 
 
+Hypothesis
+==========
+pytest-twisted can be used with Hypothesis.
+
+.. code-block:: python
+
+   @hypothesis.given(x=hypothesis.strategies.integers())
+   @pytest_twisted.ensureDeferred
+   async def test_async(x):
+       assert isinstance(x, int)
+
+
 The twisted greenlet
 ====================
 Some libraries (e.g. corotwine) need to know the greenlet, which is
