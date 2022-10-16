@@ -2,7 +2,7 @@ import pytest
 import pytest_twisted
 
 
-pytest_plugins = "_pytest.pytester"
+pytest_plugins = "pytester"
 
 
 @pytest.hookimpl(tryfirst=True)
