@@ -89,6 +89,7 @@ jobs:
             implementation: cpython
             major: 3
 # disabled due to installation failures
+# https://github.com/pytest-dev/pytest-twisted/pull/157
 #           - name: PyPy 2.7
 #             tox: pypy27
 #             action: pypy-2.7
