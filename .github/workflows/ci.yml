@@ -88,12 +88,14 @@ jobs:
             docker: "3.10"
             implementation: cpython
             major: 3
-          - name: PyPy 2.7
-            tox: pypy27
-            action: pypy-2.7
-            docker: pypy2.7
-            implementation: pypy
-            major: 2
+# disabled due to installation failures
+# https://github.com/pytest-dev/pytest-twisted/pull/157
+#           - name: PyPy 2.7
+#             tox: pypy27
+#             action: pypy-2.7
+#             docker: pypy2.7
+#             implementation: pypy
+#             major: 2
           - name: PyPy 3.7
             tox: pypy37
             action: pypy-3.7
