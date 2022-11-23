@@ -35,14 +35,15 @@ jobs:
             container:
               "2.7": docker://python:2.7-buster
               "3.5": docker://python:3.5-buster
-              "3.6": docker://python:3.6-buster
-              "3.7": docker://python:3.7-buster
-              "3.8": docker://python:3.8-buster
-              "3.9": docker://python:3.9-buster
-              "3.10": docker://python:3.10-buster
-              "pypy2.7": docker://pypy:2.7-buster
-              "pypy3.7": docker://pypy:3.7-buster
-              "pypy3.8": docker://pypy:3.8-buster
+              "3.6": docker://python:3.6-bullseye
+              "3.7": docker://python:3.7-bullseye
+              "3.8": docker://python:3.8-bullseye
+              "3.9": docker://python:3.9-bullseye
+              "3.10": docker://python:3.10-bullseye
+              "pypy2.7": docker://pypy:2.7-bullseye
+              "pypy3.7": docker://pypy:3.7-bullseye
+              "pypy3.8": docker://pypy:3.8-bullseye
+              "pypy3.9": docker://pypy:3.8-bullseye
           - name: 🪟
             runs-on: windows-latest
             python_platform: win32
@@ -92,6 +93,12 @@ jobs:
             docker: "3.10"
             implementation: cpython
             major: 3
+          - name: CPython 3.11
+            tox: py311
+            action: "3.11"
+            docker: "3.11"
+            implementation: cpython
+            major: 3
 # disabled due to installation failures
 # https://github.com/pytest-dev/pytest-twisted/pull/157
 #           - name: PyPy 2.7
@@ -110,6 +117,12 @@ jobs:
             tox: pypy38
             action: pypy-3.8
             docker: pypy3.8
+            implementation: pypy
+            major: 3
+          - name: PyPy 3.9
+            tox: pypy39
+            action: pypy-3.9
+            docker: pypy3.9
             implementation: pypy
             major: 3
         reactor:
