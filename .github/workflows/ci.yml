@@ -40,6 +40,7 @@ jobs:
               "3.8": docker://python:3.8-buster
               "3.9": docker://python:3.9-buster
               "3.10": docker://python:3.10-buster
+              "3.11": docker://python:3.11-buster
               "pypy2.7": docker://pypy:2.7-buster
               "pypy3.7": docker://pypy:3.7-buster
               "pypy3.8": docker://pypy:3.8-buster
@@ -91,6 +92,12 @@ jobs:
             tox: py310
             action: "3.10"
             docker: "3.10"
+            implementation: cpython
+            major: 3
+          - name: CPython 3.11
+            tox: py311
+            action: "3.11"
+            docker: "3.11"
             implementation: cpython
             major: 3
 # disabled due to installation failures
