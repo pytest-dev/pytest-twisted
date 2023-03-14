@@ -43,6 +43,7 @@ jobs:
               "pypy2.7": docker://pypy:2.7-buster
               "pypy3.7": docker://pypy:3.7-buster
               "pypy3.8": docker://pypy:3.8-buster
+              "pypy3.9": docker://pypy:3.9-buster
           - name: 🪟
             runs-on: windows-latest
             python_platform: win32
@@ -110,6 +111,12 @@ jobs:
             tox: pypy38
             action: pypy-3.8
             docker: pypy3.8
+            implementation: pypy
+            major: 3
+          - name: PyPy 3.9
+            tox: pypy39
+            action: pypy-3.9
+            docker: pypy3.9
             implementation: pypy
             major: 3
         reactor:
