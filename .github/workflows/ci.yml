@@ -130,24 +130,36 @@ jobs:
           - name: default
             tox: default
             dependencies: default
+            qt: false
           - name: PyQt5
             tox: pyqt5
             dependencies: qt5
+            qt: true
+            qt-major: 5
+          - name: PyQt6
+            tox: pyqt6
+            dependencies: qt6
+            qt: true
+            qt-major: 6
           - name: PySide2
             tox: pyside2
             dependencies: qt5
+            qt: true
+            qt-major: 5
+          - name: PySide6
+            tox: pyside6
+            dependencies: qt6
+            qt: true
+            qt-major: 6
           - name: asyncio
             tox: asyncio
             dependencies: asyncio
+            qt: false
         exclude:
           - python:
               major: 2
             reactor:
-              tox: pyqt5
-          - python:
-              major: 2
-            reactor:
-              tox: pyside2
+              qt: true
           - python:
               action: "3.11"
             reactor:
@@ -159,11 +171,15 @@ jobs:
           - python:
               implementation: pypy
             reactor:
-              tox: pyqt5
+              qt: true
           - python:
-              implementation: pypy
+              action: "3.5"
             reactor:
-              tox: pyside2
+              qt-major: 6
+          - python:
+              action: "3.6"
+            reactor:
+              qt-major: 6
     steps:
       - uses: actions/checkout@v2
       - name: Enable Problem Matchers
