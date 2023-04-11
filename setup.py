@@ -17,10 +17,18 @@ setup(
     install_requires=["greenlet", "pytest>=2.3", "decorator"],
     extras_require={
         "dev": ["pre-commit", "black"],
-        "pyside2": ["qt5reactor[pyside2] @ git+https://github.com/twisted/qt5reactor@master"],
-        "pyside6": ["qt5reactor[pyside6] @ git+https://github.com/twisted/qt5reactor@master"],
-        "pyqt5": ["qt5reactor[pyqt5] @ git+https://github.com/twisted/qt5reactor@master"],
-        "pyqt6": ["qt5reactor[pyqt6] @ git+https://github.com/twisted/qt5reactor@master"],
+        "pyside2": [
+            "qt5reactor[pyside2] @ git+https://github.com/twisted/qt5reactor@master",
+        ],
+        "pyside6": [
+            "qt5reactor[pyside6] @ git+https://github.com/twisted/qt5reactor@master",
+        ],
+        "pyqt5": [
+            "qt5reactor[pyqt5] @ git+https://github.com/twisted/qt5reactor@master",
+        ],
+        "pyqt6": [
+            "qt5reactor[pyqt6] @ git+https://github.com/twisted/qt5reactor@master",
+        ],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
