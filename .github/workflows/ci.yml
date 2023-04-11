@@ -219,7 +219,7 @@ jobs:
         if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
         run: |
           apt-get update --yes
-          apt-get install --yes libgl1
+          apt-get install --yes libgl1 libegl1
       - name: Install
         run: |
           pip install tox
