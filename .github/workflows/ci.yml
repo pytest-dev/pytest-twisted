@@ -219,7 +219,7 @@ jobs:
         if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt'
         run: |
           apt-get update --yes
-          apt-get install --yes libgl1 libegl1
+          apt-get install --yes libgl1 libegl1 libxkbcommon-x11-0
       - name: Install
         run: |
           pip install tox
