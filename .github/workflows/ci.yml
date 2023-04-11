@@ -133,22 +133,22 @@ jobs:
             qt: false
           - name: PyQt5
             tox: pyqt5
-            dependencies: qt5
+            dependencies: qt
             qt: true
             qt-major: 5
           - name: PyQt6
             tox: pyqt6
-            dependencies: qt6
+            dependencies: qt
             qt: true
             qt-major: 6
           - name: PySide2
             tox: pyside2
-            dependencies: qt5
+            dependencies: qt
             qt: true
             qt-major: 5
           - name: PySide6
             tox: pyside6
-            dependencies: qt6
+            dependencies: qt
             qt: true
             qt-major: 6
           - name: asyncio
@@ -216,7 +216,7 @@ jobs:
           echo
           pip freeze --all
       - name: Install Linux Qt5 dependencies
-        if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
+        if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt'
         run: |
           apt-get update --yes
           apt-get install --yes libgl1
