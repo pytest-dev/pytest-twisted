@@ -18,10 +18,17 @@ setup(
     extras_require={
         "dev": ["pre-commit", "black"],
         "pyside2": [
-            # >= 0.6.3 for PySide2 extra version constraints
-            "qt5reactor[pyside2]>=0.6.3",
+            "qt5reactor[pyside2] @ git+https://github.com/twisted/qt5reactor@master",
         ],
-        "pyqt5": ["qt5reactor[pyqt5]>=0.6.2"],
+        "pyside6": [
+            "qt5reactor[pyside6] @ git+https://github.com/twisted/qt5reactor@master",
+        ],
+        "pyqt5": [
+            "qt5reactor[pyqt5] @ git+https://github.com/twisted/qt5reactor@master",
+        ],
+        "pyqt6": [
+            "qt5reactor[pyqt6] @ git+https://github.com/twisted/qt5reactor@master",
+        ],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
