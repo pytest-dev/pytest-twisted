@@ -35,7 +35,7 @@ jobs:
           python -m venv venv
           venv/bin/pip install --upgrade pip
           venv/bin/pip install build
-          python -m build --outdir/ dist
+          venv/bin/python -m build --outdir/ dist
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -45,6 +45,7 @@ jobs:
 
   test:
     name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
+    needs: build
     runs-on: ${{ matrix.os.runs-on }}
     container: ${{ matrix.os.container[matrix.python.docker] }}
     strategy:
