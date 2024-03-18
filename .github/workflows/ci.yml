@@ -57,16 +57,18 @@ jobs:
             container:
               "2.7": docker://python:2.7-buster
               "3.5": docker://python:3.5-buster
-              "3.6": docker://python:3.6-buster
-              "3.7": docker://python:3.7-buster
-              "3.8": docker://python:3.8-buster
-              "3.9": docker://python:3.9-buster
-              "3.10": docker://python:3.10-buster
-              "3.11": docker://python:3.11-buster
-              "pypy2.7": docker://pypy:2.7-buster
-              "pypy3.7": docker://pypy:3.7-buster
-              "pypy3.8": docker://pypy:3.8-buster
-              "pypy3.9": docker://pypy:3.9-buster
+              "3.6": docker://python:3.6-bullseye
+              "3.7": docker://python:3.7-bookworm
+              "3.8": docker://python:3.8-bookworm
+              "3.9": docker://python:3.9-bookworm
+              "3.10": docker://python:3.10-bookworm
+              "3.11": docker://python:3.11-bookworm
+              "3.12": docker://python:3.12-bookworm
+              "pypy2.7": docker://pypy:2.7-bookworm
+              "pypy3.7": docker://pypy:3.7-bullseye
+              "pypy3.8": docker://pypy:3.8-bookworm
+              "pypy3.9": docker://pypy:3.9-bookworm
+              "pypy3.10": docker://pypy:3.10-bookworm
           - name: 🪟
             runs-on: windows-latest
             python_platform: win32
@@ -122,6 +124,12 @@ jobs:
             docker: "3.11"
             implementation: cpython
             major: 3
+          - name: CPython 3.12
+            tox: py312
+            action: "3.12"
+            docker: "3.12"
+            implementation: cpython
+            major: 3
 # disabled due to installation failures
 # https://github.com/pytest-dev/pytest-twisted/pull/157
 #           - name: PyPy 2.7
@@ -146,6 +154,12 @@ jobs:
             tox: pypy39
             action: pypy-3.9
             docker: pypy3.9
+            implementation: pypy
+            major: 3
+          - name: PyPy 3.10
+            tox: pypy310
+            action: pypy-3.10
+            docker: pypy3.10
             implementation: pypy
             major: 3
         reactor:
@@ -180,6 +194,10 @@ jobs:
               tox: pyside2
           - python:
               action: "3.11"
+            reactor:
+              tox: pyside2
+          - python:
+              action: "3.12"
             reactor:
               tox: pyside2
           - python:
@@ -250,8 +268,8 @@ jobs:
     strategy:
       matrix:
         python:
-          - short: 39
-            dotted: 3.9
+          - short: 311
+            dotted: "3.11"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python.dotted }}
