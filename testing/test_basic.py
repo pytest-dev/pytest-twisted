@@ -396,7 +396,6 @@ def test_async_fixture(testdir, cmd_opts):
         scope="function",
         params=["fs", "imap", "web"],
     )
-    @pytest.mark.redgreenblue
     async def foo(request):
         d1, d2 = defer.Deferred(), defer.Deferred()
         reactor.callLater(0.01, d1.callback, 1)
