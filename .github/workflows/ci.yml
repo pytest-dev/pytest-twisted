@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: 
       - "*"
+  release:
+    types:
+      - published
   schedule:
     # Daily at 05:47
     - cron: '47 5 * * *'
@@ -21,6 +24,25 @@ env:
   PIP_NO_PYTHON_VERSION_WARNING: 1
 
 jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: docker://python:3.11-buster
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: |
+          python -m venv venv
+          venv/bin/pip install --uprade pip
+          venv/bin/pip install build
+          python -m build --outdir/ dist
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dist
+          path: dist/*
+          if-no-files-found: error
+
   test:
     name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
     runs-on: ${{ matrix.os.runs-on }}
@@ -215,9 +237,13 @@ jobs:
       - name: Install
         run: |
           pip install tox
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
       - name: Test
         run: |
-          tox -v -e "${{ matrix.python.tox }}-${{ matrix.reactor.tox }}reactor"
+          tox --installpkg dist/*.whl -v -e "${{ matrix.python.tox }}-${{ matrix.reactor.tox }}reactor"
   linting:
     name: Linting
     runs-on: ubuntu-latest
@@ -239,12 +265,31 @@ jobs:
       - name: Test
         run: |
           tox -v -e linting
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - test
+      - linting
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'release'
+        with:
+          packages-dir: dist/
+          skip-existing: true
   all:
     name: All
     runs-on: ubuntu-latest
     needs:
+      - build
       - test
       - linting
+      - publish
     steps:
       - name: This
         shell: python
