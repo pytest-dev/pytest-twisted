@@ -175,6 +175,10 @@ jobs:
             reactor:
               tox: pyside2
           - python:
+              action: "3.12"
+            reactor:
+              tox: pyside2
+          - python:
               major: 2
             reactor:
               tox: asyncio
