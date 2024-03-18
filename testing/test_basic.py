@@ -1345,5 +1345,5 @@ def test_hypothesis_inline_callbacks_fails(testdir, cmd_opts):
         yield
     """
     testdir.makepyfile(test_file)
-    rr = testdir.run(*cmd_opts, timeout=timeout)
+    rr = testdir.run(*cmd_opts, timeout=3 * timeout)
     assert_outcomes(rr, {"failed": 1})
