@@ -43,7 +43,7 @@ jobs:
               "3.11": docker://python:3.11-bookworm
               "3.12": docker://python:3.12-bookworm
               "pypy2.7": docker://pypy:2.7-bookworm
-              "pypy3.7": docker://pypy:3.7-bookworm
+              "pypy3.7": docker://pypy:3.7-bullseye
               "pypy3.8": docker://pypy:3.8-bookworm
               "pypy3.9": docker://pypy:3.9-bookworm
               "pypy3.10": docker://pypy:3.10-bookworm
