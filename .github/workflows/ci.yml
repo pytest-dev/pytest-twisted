@@ -261,8 +261,10 @@ jobs:
           name: dist
           path: dist/
       - name: Test
+        shell: bash
         run: |
           tox --installpkg dist/*.whl -v -e "${{ matrix.python.tox }}-${{ matrix.reactor.tox }}reactor"
+
   linting:
     name: Linting
     runs-on: ubuntu-latest
@@ -284,6 +286,7 @@ jobs:
       - name: Test
         run: |
           tox -v -e linting
+
   publish:
     name: Publish
     runs-on: ubuntu-latest
@@ -301,6 +304,7 @@ jobs:
         with:
           packages-dir: dist/
           skip-existing: true
+
   all:
     name: All
     runs-on: ubuntu-latest
