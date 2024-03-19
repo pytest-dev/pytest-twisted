@@ -23,6 +23,9 @@ concurrency:
 env:
   PIP_NO_PYTHON_VERSION_WARNING: 1
 
+permissions:
+  id-token: write
+
 jobs:
   build:
     name: Build
