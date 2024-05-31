@@ -170,15 +170,31 @@ jobs:
           - name: default
             tox: default
             dependencies: default
+            qt: false
           - name: PyQt5
             tox: pyqt5
-            dependencies: qt5
+            dependencies: qt
+            qt: true
+            qt-major: 5
+          - name: PyQt6
+            tox: pyqt6
+            dependencies: qt
+            qt: true
+            qt-major: 6
           - name: PySide2
             tox: pyside2
-            dependencies: qt5
+            dependencies: qt
+            qt: true
+            qt-major: 5
+          - name: PySide6
+            tox: pyside6
+            dependencies: qt
+            qt: true
+            qt-major: 6
           - name: asyncio
             tox: asyncio
             dependencies: asyncio
+            qt: false
         exclude:
           - python:
               major: 2
@@ -191,11 +207,7 @@ jobs:
           - python:
               major: 2
             reactor:
-              tox: pyqt5
-          - python:
-              major: 2
-            reactor:
-              tox: pyside2
+              qt: true
           - python:
               action: "3.11"
             reactor:
@@ -211,11 +223,15 @@ jobs:
           - python:
               implementation: pypy
             reactor:
-              tox: pyqt5
+              qt: true
           - python:
-              implementation: pypy
+              action: "3.5"
             reactor:
-              tox: pyside2
+              qt-major: 6
+          - python:
+              action: "3.6"
+            reactor:
+              qt-major: 6
     steps:
       - uses: actions/checkout@v4
       - name: Enable Problem Matchers
@@ -252,10 +268,10 @@ jobs:
           echo
           pip freeze --all
       - name: Install Linux Qt5 dependencies
-        if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt5'
+        if: matrix.os.python_platform == 'linux' && matrix.reactor.dependencies == 'qt'
         run: |
           apt-get update --yes
-          apt-get install --yes libgl1
+          apt-get install --yes libgl1-mesa-dev libdbus-1-3 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
       - name: Install
         run: |
           pip install tox
