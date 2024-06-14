@@ -235,6 +235,10 @@ jobs:
           # PyPy    -> pypy-3.7
           python-version: ${{ fromJSON(format('["{0}", "{1}"]', format('{0}.0-alpha - {0}.X', matrix.python.action), matrix.python.action))[startsWith(matrix.python.action, 'pypy')] }}
           architecture: x64
+      - name: pip/setuptools/wheel
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
       - name: Report Python information
         shell: bash
         run: |
