@@ -333,7 +333,7 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
     else:
         raise UnrecognizedCoroutineMarkError.from_mark(mark=mark)
 
-    fixturedef.cached_result = (arg_value, request.param_index, None)
+    fixturedef.cached_result = (arg_value, fixturedef.cache_key(request), None)
 
     defer.returnValue(arg_value)
 
