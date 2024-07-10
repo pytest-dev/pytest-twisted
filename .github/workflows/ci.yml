@@ -60,7 +60,6 @@ jobs:
             python_platform: linux
             container:
               "2.7": docker://python:2.7-buster
-              "3.5": docker://python:3.5-buster
               "3.6": docker://python:3.6-bullseye
               "3.7": docker://python:3.7-bookworm
               "3.8": docker://python:3.8-bookworm
@@ -86,12 +85,6 @@ jobs:
             docker: 2.7
             implementation: cpython
             major: 2
-          - name: CPython 3.5
-            tox: py35
-            action: 3.5
-            docker: 3.5
-            implementation: cpython
-            major: 3
           - name: CPython 3.6
             tox: py36
             action: 3.6
