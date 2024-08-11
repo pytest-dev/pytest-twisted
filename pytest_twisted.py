@@ -335,7 +335,10 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
 
     fixturedef.cached_result = (arg_value, fixturedef.cache_key(request), None)
 
-    return arg_value
+    if sys.version_info >= (3,):
+        return arg_value
+    else:
+        defer.returnValue(arg_value)
 
 
 @defer.inlineCallbacks
