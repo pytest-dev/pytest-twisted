@@ -1,5 +1,6 @@
+[flake8]
 ignore =
     N802
 
 per-file-ignores =
-    src/pytest_twisted/__init__.py:F401
+    src/pytest_twisted/__init__.py: F401
