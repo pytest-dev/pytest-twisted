@@ -1,5 +1,3 @@
-# noqa: F401
-
 from pytest_twisted.core import (
     async_fixture,
     async_yield_fixture,
