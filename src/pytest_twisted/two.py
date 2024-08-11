@@ -22,4 +22,4 @@ def _async_pytest_pyfunc_call(pyfuncitem, f, kwargs):
         # TODO: maybe deprecate this
         result = yield f(**kwargs)
 
-    return result
+    defer.returnValue(result)
