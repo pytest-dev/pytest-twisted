@@ -43,5 +43,5 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
     ],
-    entry_points={"pytest11": ["twisted = pytest_twisted"]},
+    entry_points={"pytest11": ["twisted = pytest_twisted.core"]},
 )

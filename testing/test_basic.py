@@ -62,12 +62,12 @@ def format_run_result_output_for_assert(run_result):
 def _default_conftest(testdir):
     testdir.makeconftest(textwrap.dedent("""
     import pytest
-    import pytest_twisted
+    import pytest_twisted.core
 
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
-        pytest_twisted._use_asyncio_selector_if_required(config=config)
+        pytest_twisted.core._use_asyncio_selector_if_required(config=config)
     """))
 
 
@@ -954,11 +954,12 @@ def test_blockon_in_hook_with_asyncio(testdir, cmd_opts, request):
     conftest_file = """
     import pytest
     import pytest_twisted
+    import pytest_twisted.core
     from twisted.internet import defer
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
-        pytest_twisted._use_asyncio_selector_if_required(config=config)
+        pytest_twisted.core._use_asyncio_selector_if_required(config=config)
 
         pytest_twisted.init_asyncio_reactor()
         d = defer.Deferred()
@@ -986,12 +987,12 @@ def test_wrong_reactor_with_asyncio(testdir, cmd_opts, request):
     skip_if_reactor_not(request, "asyncio")
     conftest_file = """
     import pytest
-    import pytest_twisted
+    import pytest_twisted.core
 
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
-        pytest_twisted._use_asyncio_selector_if_required(config=config)
+        pytest_twisted.core._use_asyncio_selector_if_required(config=config)
 
     def pytest_addhooks():
         import twisted.internet.default
@@ -1142,12 +1143,12 @@ def test_ensuredeferred_method_with_fixture_gets_fixture(testdir, cmd_opts):
 def test_import_pytest_twisted_in_conftest_py_not_a_problem(testdir, cmd_opts):
     conftest_file = """
     import pytest
-    import pytest_twisted
+    import pytest_twisted.core
 
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_configure(config):
-        pytest_twisted._use_asyncio_selector_if_required(config=config)
+        pytest_twisted.core._use_asyncio_selector_if_required(config=config)
     """
     testdir.makeconftest(conftest_file)
     test_file = """
