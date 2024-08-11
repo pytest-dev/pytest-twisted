@@ -15,7 +15,10 @@ from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
 
 if sys.version_info[0] == 3:
-    from pytest_twisted.three import _async_pytest_fixture_setup, _async_pytest_pyfunc_call
+    from pytest_twisted.three import (
+        _async_pytest_fixture_setup,
+        _async_pytest_pyfunc_call,
+    )
 elif sys.version_info[0] == 2:
     from pytest_twisted.two import _async_pytest_pyfunc_call
 
@@ -249,7 +252,6 @@ def _set_mark(o, mark):
 
 
 def _marked_async_fixture(mark):
-    print(pytest)
     @functools.wraps(pytest.fixture)
     @_optional_arguments()
     def fixture(f, *args, **kwargs):
