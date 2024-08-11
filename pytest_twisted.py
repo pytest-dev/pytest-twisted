@@ -335,7 +335,7 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
 
     fixturedef.cached_result = (arg_value, fixturedef.cache_key(request), None)
 
-    defer.returnValue(arg_value)
+    return arg_value
 
 
 @defer.inlineCallbacks
@@ -421,7 +421,7 @@ def _async_pytest_pyfunc_call(pyfuncitem, f, kwargs):
         # TODO: maybe deprecate this
         result = yield f(**kwargs)
 
-    defer.returnValue(result)
+    return result
 
 
 @pytest.fixture(scope="session", autouse=True)
