@@ -1,9 +1,9 @@
-from setuptools import setup
+import setuptools
 
 with open("README.rst") as f:
     long_description = f.read()
 
-setup(
+setuptools.setup(
     name="pytest-twisted",
     version="1.14.2",
     description="A twisted plugin for pytest.",
@@ -12,7 +12,8 @@ setup(
     author="Ralf Schmitt, Kyle Altendorf, Victor Titor",
     author_email="sda@fstab.net",
     url="https://github.com/pytest-dev/pytest-twisted",
-    py_modules=["pytest_twisted"],
+    packages=setuptools.find_packages('src'),
+    package_dir={'': 'src'},
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*',
     install_requires=["greenlet", "pytest>=2.3", "decorator"],
     extras_require={

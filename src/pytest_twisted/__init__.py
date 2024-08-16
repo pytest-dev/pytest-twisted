@@ -14,6 +14,14 @@ from twisted.internet import defer, error
 from twisted.internet.threads import blockingCallFromThread
 from twisted.python import failure
 
+if sys.version_info[0] == 3:
+    from pytest_twisted.three import (
+        _async_pytest_fixture_setup,
+        _async_pytest_pyfunc_call,
+    )
+elif sys.version_info[0] == 2:
+    from pytest_twisted.two import _async_pytest_pyfunc_call
+
 
 class WrongReactorAlreadyInstalledError(Exception):
     pass
@@ -309,36 +317,6 @@ def _create_async_yield_fixture_finalizer(coroutine):
 
 
 @defer.inlineCallbacks
-def _async_pytest_fixture_setup(fixturedef, request, mark):
-    """Setup an async or async yield fixture."""
-    fixture_function = fixturedef.func
-
-    kwargs = {
-        name: request.getfixturevalue(name)
-        for name in fixturedef.argnames
-    }
-
-    if mark == 'async_fixture':
-        arg_value = yield defer.ensureDeferred(
-            fixture_function(**kwargs)
-        )
-    elif mark == 'async_yield_fixture':
-        coroutine = fixture_function(**kwargs)
-
-        request.addfinalizer(
-            _create_async_yield_fixture_finalizer(coroutine=coroutine),
-        )
-
-        arg_value = yield defer.ensureDeferred(coroutine.__anext__())
-    else:
-        raise UnrecognizedCoroutineMarkError.from_mark(mark=mark)
-
-    fixturedef.cached_result = (arg_value, fixturedef.cache_key(request), None)
-
-    defer.returnValue(arg_value)
-
-
-@defer.inlineCallbacks
 def _tear_it_down(deferred):
     """Tear down a specific async yield fixture."""
     try:
@@ -400,28 +378,6 @@ def pytest_pyfunc_call(pyfuncitem):
         result = None
 
     return result
-
-
-@defer.inlineCallbacks
-def _async_pytest_pyfunc_call(pyfuncitem, f, kwargs):
-    """Run test function."""
-    fixture_kwargs = {
-        name: value
-        for name, value in pyfuncitem.funcargs.items()
-        if name in pyfuncitem._fixtureinfo.argnames
-    }
-    kwargs.update(fixture_kwargs)
-
-    maybe_mark = _get_mark(f)
-    if maybe_mark == 'async_test':
-        result = yield defer.ensureDeferred(f(**kwargs))
-    elif maybe_mark == 'inline_callbacks_test':
-        result = yield f(**kwargs)
-    else:
-        # TODO: maybe deprecate this
-        result = yield f(**kwargs)
-
-    defer.returnValue(result)
 
 
 @pytest.fixture(scope="session", autouse=True)
