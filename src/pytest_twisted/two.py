@@ -4,7 +4,7 @@ from twisted.internet import defer
 @defer.inlineCallbacks
 def _async_pytest_pyfunc_call(pyfuncitem, f, kwargs):
     """Run test function."""
-    from pytest_twisted.core import _get_mark
+    from pytest_twisted import _get_mark
 
     fixture_kwargs = {
         name: value

@@ -4,7 +4,7 @@ from twisted.internet import defer
 @defer.inlineCallbacks
 def _async_pytest_fixture_setup(fixturedef, request, mark):
     """Setup an async or async yield fixture."""
-    from pytest_twisted.core import (
+    from pytest_twisted import (
         UnrecognizedCoroutineMarkError,
         _create_async_yield_fixture_finalizer,
     )
@@ -39,7 +39,7 @@ def _async_pytest_fixture_setup(fixturedef, request, mark):
 @defer.inlineCallbacks
 def _async_pytest_pyfunc_call(pyfuncitem, f, kwargs):
     """Run test function."""
-    from pytest_twisted.core import _get_mark
+    from pytest_twisted import _get_mark
 
     fixture_kwargs = {
         name: value
