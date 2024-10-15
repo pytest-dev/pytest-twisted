@@ -183,7 +183,7 @@ jobs:
           - name: ARM
             matrix: arm
             setup-python:
-              architecture: ""
+              architecture: arm64
           - name: Intel
             matrix: intel
             setup-python:
@@ -231,6 +231,21 @@ jobs:
               matrix: arm
           - os:
               matrix: windows
+            arch:
+              matrix: arm
+          - os:
+              matrix: macos
+            python:
+              action: "3.7"
+            arch:
+              matrix: arm
+          - arch:
+              matrix: arm
+            reactor:
+              tox: pyside2
+          - python:
+              action: "3.7"
+              implementation: pypy
             arch:
               matrix: arm
     steps:
