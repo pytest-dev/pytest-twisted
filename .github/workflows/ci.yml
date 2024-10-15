@@ -182,8 +182,12 @@ jobs:
         arch:
           - name: ARM
             matrix: arm
+            setup-python:
+              architecture: ""
           - name: Intel
             matrix: intel
+            setup-python:
+              architecture: x64
         exclude:
           - python:
               major: 2
@@ -247,7 +251,7 @@ jobs:
           # CPython -> 3.9.0-alpha - 3.9.X
           # PyPy    -> pypy-3.7
           python-version: ${{ fromJSON(format('["{0}", "{1}"]', format('{0}.0-alpha - {0}.X', matrix.python.action), matrix.python.action))[startsWith(matrix.python.action, 'pypy')] }}
-          architecture: x64
+          architecture: ${{ matrix.arch.setup-python.architecture }}
       - name: Report Python information
         shell: bash
         run: |
