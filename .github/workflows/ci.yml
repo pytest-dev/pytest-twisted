@@ -82,8 +82,8 @@ jobs:
           - name: 🍎
             matrix: macos
             runs-on: 
-              - intel: macos-13
               - arm: macos-latest
+              - intel: macos-13
             python_platform: darwin
         arch:
           - name: ARM
@@ -227,10 +227,6 @@ jobs:
               matrix: arm
           - os:
               matrix: windows
-            arch:
-              matrix: arm
-          - os:
-              matrix: macos
             arch:
               matrix: arm
     steps:
