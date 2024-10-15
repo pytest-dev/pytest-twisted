@@ -58,7 +58,7 @@ jobs:
           - name: 🐧
             matrix: linux
             runs-on: 
-              - intel: ubuntu-latest
+              intel: ubuntu-latest
             python_platform: linux
             container:
               "2.7": docker://python:2.7-buster
@@ -77,13 +77,13 @@ jobs:
           - name: 🪟
             matrix: windows
             runs-on: 
-              - intel: windows-latest
+              intel: windows-latest
             python_platform: win32
           - name: 🍎
             matrix: macos
             runs-on: 
-              - arm: macos-latest
-              - intel: macos-13
+              arm: macos-latest
+              intel: macos-13
             python_platform: darwin
         arch:
           - name: ARM
