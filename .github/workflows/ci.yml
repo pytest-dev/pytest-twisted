@@ -49,7 +49,7 @@ jobs:
   test:
     name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
     needs: build
-    runs-on: ${{ matrix.os.runs-on }}
+    runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
     container: ${{ matrix.os.container[matrix.python.docker] }}
     strategy:
       fail-fast: false
