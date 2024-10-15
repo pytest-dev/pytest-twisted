@@ -47,7 +47,7 @@ jobs:
           if-no-files-found: error
 
   test:
-    name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }}
+    name: ${{ matrix.os.name }} ${{ matrix.python.name }} ${{ matrix.reactor.name }} ${{ matrix.arch.name }}
     needs: build
     runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
     container: ${{ matrix.os.container[matrix.python.docker] }}
@@ -85,11 +85,6 @@ jobs:
               arm: macos-latest
               intel: macos-13
             python_platform: darwin
-        arch:
-          - name: ARM
-            matrix: arm
-          - name: Intel
-            matrix: intel
         python:
           - name: CPython 2.7
             tox: py27
@@ -184,6 +179,11 @@ jobs:
           - name: asyncio
             tox: asyncio
             dependencies: asyncio
+        arch:
+          - name: ARM
+            matrix: arm
+          - name: Intel
+            matrix: intel
         exclude:
           - python:
               major: 2
