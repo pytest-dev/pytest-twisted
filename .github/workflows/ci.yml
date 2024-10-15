@@ -56,7 +56,9 @@ jobs:
       matrix:
         os:
           - name: 🐧
-            runs-on: ubuntu-latest
+            matrix: linux
+            runs-on: 
+              - intel: ubuntu-latest
             python_platform: linux
             container:
               "2.7": docker://python:2.7-buster
@@ -73,11 +75,21 @@ jobs:
               "pypy3.9": docker://pypy:3.9-bookworm
               "pypy3.10": docker://pypy:3.10-bookworm
           - name: 🪟
-            runs-on: windows-latest
+            matrix: windows
+            runs-on: 
+              - intel: windows-latest
             python_platform: win32
           - name: 🍎
-            runs-on: macos-latest
+            matrix: macos
+            runs-on: 
+              - intel: macos-13
+              - arm: macos-latest
             python_platform: darwin
+        arch:
+          - name: ARM
+            matrix: arm
+          - name: Intel
+            matrix: intel
         python:
           - name: CPython 2.7
             tox: py27
@@ -209,6 +221,18 @@ jobs:
               implementation: pypy
             reactor:
               tox: pyside2
+          - os:
+              matrix: linux
+            arch:
+              matrix: arm
+          - os:
+              matrix: windows
+            arch:
+              matrix: arm
+          - os:
+              matrix: macos
+            arch:
+              matrix: arm
     steps:
       - uses: actions/checkout@v4
       - name: Enable Problem Matchers
