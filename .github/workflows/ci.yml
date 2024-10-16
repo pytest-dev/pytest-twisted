@@ -88,48 +88,56 @@ jobs:
         python:
           - name: CPython 2.7
             tox: py27
+            major-dot-minor: 2.7
             action: 2.7
             docker: 2.7
             implementation: cpython
             major: 2
           - name: CPython 3.6
             tox: py36
+            major-dot-minor: 3.6
             action: 3.6
             docker: 3.6
             implementation: cpython
             major: 3
           - name: CPython 3.7
             tox: py37
+            major-dot-minor: 3.7
             action: 3.7
             docker: 3.7
             implementation: cpython
             major: 3
           - name: CPython 3.8
             tox: py38
+            major-dot-minor: 3.8
             action: 3.8
             docker: 3.8
             implementation: cpython
             major: 3
           - name: CPython 3.9
             tox: py39
+            major-dot-minor: 3.9
             action: 3.9
             docker: 3.9
             implementation: cpython
             major: 3
           - name: CPython 3.10
             tox: py310
+            major-dot-minor: "3.10"
             action: "3.10"
             docker: "3.10"
             implementation: cpython
             major: 3
           - name: CPython 3.11
             tox: py311
+            major-dot-minor: "3.11"
             action: "3.11"
             docker: "3.11"
             implementation: cpython
             major: 3
           - name: CPython 3.12
             tox: py312
+            major-dot-minor: "3.12"
             action: "3.12"
             docker: "3.12"
             implementation: cpython
@@ -144,24 +152,28 @@ jobs:
 #             major: 2
           - name: PyPy 3.7
             tox: pypy37
+            major-dot-minor: 3.7
             action: pypy-3.7
             docker: pypy3.7
             implementation: pypy
             major: 3
           - name: PyPy 3.8
             tox: pypy38
+            major-dot-minor: 3.8
             action: pypy-3.8
             docker: pypy3.8
             implementation: pypy
             major: 3
           - name: PyPy 3.9
             tox: pypy39
+            major-dot-minor: 3.9
             action: pypy-3.9
             docker: pypy3.9
             implementation: pypy
             major: 3
           - name: PyPy 3.10
             tox: pypy310
+            major-dot-minor: "3.10"
             action: pypy-3.10
             docker: pypy3.10
             implementation: pypy
@@ -206,11 +218,11 @@ jobs:
             reactor:
               tox: pyside2
           - python:
-              action: "3.11"
+              major-dot-minor: "3.11"
             reactor:
               tox: pyside2
           - python:
-              action: "3.12"
+              major-dot-minor: "3.12"
             reactor:
               tox: pyside2
           - python:
@@ -236,18 +248,19 @@ jobs:
           - os:
               matrix: macos
             python:
-              action: "3.7"
+              major-dot-minor: "3.6"
+            arch:
+              matrix: arm
+          - os:
+              matrix: macos
+            python:
+              major-dot-minor: "3.7"
             arch:
               matrix: arm
           - arch:
               matrix: arm
             reactor:
               tox: pyside2
-          - python:
-              action: "3.7"
-              implementation: pypy
-            arch:
-              matrix: arm
     steps:
       - uses: actions/checkout@v4
       - name: Enable Problem Matchers
