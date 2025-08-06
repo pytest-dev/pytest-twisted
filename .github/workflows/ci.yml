@@ -304,7 +304,7 @@ jobs:
       - name: Install
         run: |
           pip install tox
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: dist
           path: dist/
@@ -343,7 +343,7 @@ jobs:
       - test
       - linting
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: dist
           path: dist/
