@@ -83,7 +83,7 @@ jobs:
             matrix: macos
             runs-on: 
               arm: macos-latest
-              intel: macos-13
+              intel: macos-15-intel
             python_platform: darwin
         python:
           - name: CPython 2.7
