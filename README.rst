@@ -4,12 +4,12 @@
 pytest-twisted - test twisted code with pytest
 ==============================================================================
 
-|PyPI| |Pythons| |Travis| |AppVeyor| |Actions| |Black|
+|PyPI| |Pythons| |Actions| |Black|
 
 :Authors: Ralf Schmitt, Kyle Altendorf, Victor Titor
 :Version: 1.14.3
 :Date:    2024-08-21
-:Download: https://pypi.python.org/pypi/pytest-twisted#downloads
+:Download: https://pypi.org/project/pytest-twisted/#files
 :Code: https://github.com/pytest-dev/pytest-twisted
 
 
@@ -227,19 +227,11 @@ v1.9
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pytest-twisted.svg
    :alt: PyPI version
-   :target: https://pypi.python.org/pypi/pytest-twisted
+   :target: https://pypi.org/project/pytest-twisted/
 
 .. |Pythons| image:: https://img.shields.io/pypi/pyversions/pytest-twisted.svg
    :alt: Supported Python versions
-   :target: https://pypi.python.org/pypi/pytest-twisted
-
-.. |Travis| image:: https://travis-ci.org/pytest-dev/pytest-twisted.svg?branch=master
-   :alt: Travis build status
-   :target: https://travis-ci.org/pytest-dev/pytest-twisted
-
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/eb1vp9hysp463c66/branch/master?svg=true
-   :alt: AppVeyor build status
-   :target: https://ci.appveyor.com/project/pytestbot/pytest-twisted
+   :target: https://pypi.org/project/pytest-twisted/
 
 .. |Actions| image:: https://img.shields.io/github/workflow/status/pytest-dev/pytest-twisted/CI/master?logo=GitHub-Actions
    :alt: GitHub Actions build status
@@ -247,6 +239,6 @@ v1.9
 
 .. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :alt: Black code style
-   :target: https://github.com/ambv/black
+   :target: https://github.com/psf/black
 
 .. _guide: CONTRIBUTING.rst
