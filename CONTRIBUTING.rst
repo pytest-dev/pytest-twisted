@@ -17,14 +17,10 @@ What it takes to add a new reactor:
   * Add conditional ``deps`` for the new reactor such as ``foo: foobar`` to the appropriate test environments
   * Add ``fooreactor: pytest --reactor=foo`` to the commands list
 
-* In ``.travis.yml``
+* In ``.github/workflows/ci.yml``
 
   * Consider any extra system packages which may be required
 
-* In ``appveyor.yml``
-
-  * Add the new reactor environment to the ``TOXENV`` for each relevant Python
-  
 Reference reactor additions:
   * `asyncio`_
   * `qt5reactor`_
