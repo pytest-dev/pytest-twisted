@@ -32,14 +32,14 @@ jobs:
     runs-on: ubuntu-latest
     container: docker://python:3.11-buster
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build
         run: |
           python -m venv venv
           venv/bin/pip install --upgrade pip
           venv/bin/pip install build
           venv/bin/python -m build --outdir dist/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: dist
@@ -83,7 +83,7 @@ jobs:
             matrix: macos
             runs-on: 
               arm: macos-latest
-              intel: macos-13
+              intel: macos-15-intel
             python_platform: darwin
         python:
           - name: CPython 2.7
@@ -262,7 +262,7 @@ jobs:
             reactor:
               tox: pyside2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Enable Problem Matchers
         run: |
           echo "::add-matcher::.github/local-problem-matchers.json"
@@ -304,7 +304,7 @@ jobs:
       - name: Install
         run: |
           pip install tox
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: dist
           path: dist/
@@ -322,7 +322,7 @@ jobs:
           - short: 311
             dotted: "3.11"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python.dotted }}
         uses: actions/setup-python@v6
         with:
@@ -343,7 +343,7 @@ jobs:
       - test
       - linting
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: dist
           path: dist/
