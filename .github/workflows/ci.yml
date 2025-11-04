@@ -268,7 +268,7 @@ jobs:
           echo "::add-matcher::.github/local-problem-matchers.json"
       - name: Set up ${{ matrix.python.name }}
         if: ${{ job.container == '' }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           # This allows the matrix to specify just the major.minor version while still
           # expanding it to get the latest patch version including alpha releases.
@@ -324,7 +324,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python.dotted }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python.dotted }}
           architecture: x64
