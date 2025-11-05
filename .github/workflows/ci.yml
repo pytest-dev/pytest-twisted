@@ -70,6 +70,7 @@ jobs:
               "3.11": docker://python:3.11-bookworm
               "3.12": docker://python:3.12-bookworm
               "3.13": docker://python:3.13-bookworm
+              "3.14": docker://python:3.13-bookworm
               "pypy2.7": docker://pypy:2.7-bookworm
               "pypy3.7": docker://pypy:3.7-bullseye
               "pypy3.8": docker://pypy:3.8-bookworm
@@ -148,6 +149,13 @@ jobs:
             major-dot-minor: "3.13"
             action: "3.13"
             docker: "3.13"
+            implementation: cpython
+            major: 3
+          - name: CPython 3.14
+            tox: py314
+            major-dot-minor: "3.14"
+            action: "3.14"
+            docker: "3.14"
             implementation: cpython
             major: 3
 # disabled due to installation failures
@@ -235,6 +243,10 @@ jobs:
               tox: pyside2
           - python:
               major-dot-minor: "3.13"
+            reactor:
+              tox: pyside2
+          - python:
+              major-dot-minor: "3.14"
             reactor:
               tox: pyside2
           - python:
