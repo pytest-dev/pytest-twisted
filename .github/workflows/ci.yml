@@ -234,6 +234,10 @@ jobs:
             reactor:
               tox: pyside2
           - python:
+              major-dot-minor: "3.13"
+            reactor:
+              tox: pyside2
+          - python:
               major: 2
             reactor:
               tox: asyncio
